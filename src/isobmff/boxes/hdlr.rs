@@ -92,9 +92,9 @@ impl HDLR {
     while hdlr_data[start] != 0 {
       if !hdlr_data[start].is_ascii() {
         // Error("")
+        todo!()
       }
       let character = hdlr_data[start] as char;
-      println!("{:?}",character);
       name.push(character);
       start = start + 1;
     }

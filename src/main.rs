@@ -1,6 +1,7 @@
 use std::{ fs, process };
-use crate::isobmff::boxes::{ iso_box, mvhd, sidx, hdlr };
-// use crate::isobmff::boxes::sidx;
+
+use crate::isobmff::sample_entry::avc_sample_entry;
+use crate::isobmff::boxes::{ iso_box, mvhd, sidx, hdlr, stsd };
 use crate::manifest::hls::hls_generator;
 use crate::manifest::manifest_generator::ManifestGenerator;
 
@@ -58,7 +59,16 @@ fn main() {
       let offset = iso_box::get_init_segment_end(&mp4);
       hls_generator::HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
       let hdlr = hdlr::HDLR::parse(&mp4).expect("whatever hdlr");
-      print!("{:#?}", hdlr);
+      let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
+      print!("{:#?}", stsd.get_samples_length());
+      let some = stsd.read_sample_entry("avc1");
+      match some {
+        Some(byte_data) => {
+          let avc_sample_entry = avc_sample_entry::AVCSampleEntry::parse(byte_data);
+          print!("{:#?}", avc_sample_entry.config);
+        }
+        None => {print!("NOT FOUND :(")}
+      }
     } else {
         let mut error_message = "main: Could not open file = ".to_owned();
         error_message.push_str(file_path);
