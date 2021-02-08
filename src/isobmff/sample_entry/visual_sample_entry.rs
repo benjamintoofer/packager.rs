@@ -63,7 +63,6 @@ impl VisualSampleEntry {
         todo!()
       }
       let character = data[index] as char;
-      println!("{:?}",character);
       compressor_name.push(character);
     }
 

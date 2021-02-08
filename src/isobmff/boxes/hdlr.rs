@@ -95,7 +95,6 @@ impl HDLR {
         todo!()
       }
       let character = hdlr_data[start] as char;
-      println!("{:?}",character);
       name.push(character);
       start = start + 1;
     }
