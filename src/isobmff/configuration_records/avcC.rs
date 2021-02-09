@@ -15,8 +15,8 @@ pub struct AVCDecoderConfigurationRecord {
 }
 
 impl  AVCDecoderConfigurationRecord {
-  pub fn parse(data: &[u8], offset: usize) -> AVCDecoderConfigurationRecord {
-    let mut start = offset + 8;
+  pub fn parse(data: &[u8]) -> AVCDecoderConfigurationRecord {
+    let mut start = 8usize;
     let mut end = start + 1;
     // Parse configuration version
     let configuration_version = util::get_u8(data, start, end)
