@@ -1,7 +1,9 @@
-use super::{audio_sample_entry, sample_entry::{self, SampleEntry}};
+use super::{sample_entry::{SampleEntry}};
 use super::audio_sample_entry::AudioSampleEntry;
-use crate::isobmff::configuration_records::es_descriptor::ESDescriptor;
+use crate::isobmff::descriptors::es_descriptor::ESDescriptor;
 use crate::isobmff::boxes::iso_box::find_box;
+use crate::isobmff::descriptors::find_descriptor;
+use crate::isobmff::descriptors::DescriptorTags;
 
 #[derive(Debug)]
 pub struct MP4ASampleEntry {
@@ -18,10 +20,12 @@ impl MP4ASampleEntry {
     println!("{:?}", sample_entry);
     println!("{:?}", audio_sample_entry);
     let es_descriptor = find_box("esds", offset, data)
-      .map(|esds_data| ESDescriptor::parse(esds_data))
-      // TODO (benjamintoofer@gmail.com): Add proper error handling around this.
+      .and_then(|esds_data| find_descriptor(DescriptorTags::ES_DESC, 12, esds_data)) 
+      .map(|es_data| ESDescriptor::parse(es_data))
       .unwrap()
-      .expect("something");
+      .expect("Fail at MP4ASampleEntry");
+
+      // TODO (benjamintoofer@gmail.com): Add proper error handling around this.
     println!("------WHAT UP----");
 
     MP4ASampleEntry {

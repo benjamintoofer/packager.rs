@@ -1,6 +1,7 @@
 pub mod boxes;
 pub mod sample_entry;
 pub mod configuration_records;
+pub mod descriptors;
 
 #[derive(Debug)]
 pub enum HandlerType {
