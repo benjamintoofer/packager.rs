@@ -16,17 +16,12 @@ impl MP4ASampleEntry {
   pub fn parse(data: &[u8]) -> MP4ASampleEntry {
     let sample_entry = SampleEntry::parse(data);
     let (audio_sample_entry, offset) = AudioSampleEntry::parse(data);
-    println!("----------------HELLO----------------------");
-    println!("{:?}", sample_entry);
-    println!("{:?}", audio_sample_entry);
     let es_descriptor = find_box("esds", offset, data)
       .and_then(|esds_data| find_descriptor(DescriptorTags::ES_DESC, 12, esds_data)) 
       .map(|es_data| ESDescriptor::parse(es_data))
-      .unwrap()
-      .expect("Fail at MP4ASampleEntry");
+      .expect("Cannot parse ESDescriptor");
 
       // TODO (benjamintoofer@gmail.com): Add proper error handling around this.
-    println!("------WHAT UP----");
 
     MP4ASampleEntry {
       sample_entry,

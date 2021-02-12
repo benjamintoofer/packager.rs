@@ -1,5 +1,9 @@
 use crate::util;
 
+use super::find_descriptor;
+use super::DescriptorTags;
+use super::aac_audio_specific_config::AACAudioSpecificConfig;
+
 static CLASS: &str = "DecoderConfigDescriptor";
 #[derive(Debug)]
 pub struct DecoderConfigDescriptor {
@@ -9,6 +13,7 @@ pub struct DecoderConfigDescriptor {
   buffer_size_db: u32,         // 24 bit
   max_bitrate: u32,
   avg_bitrate: u32,
+  audio_sepcific_info: AACAudioSpecificConfig
 }
 
 impl  DecoderConfigDescriptor {
@@ -46,7 +51,9 @@ impl  DecoderConfigDescriptor {
     let avg_bitrate = util::get_u32(data, start, end)
       .expect(format!("{}.parse.avg_bitrate: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
 
-    
+    let audio_sepcific_info = find_descriptor(DescriptorTags::DEC_SPECIFIC_INFO, end, data)
+      .and_then(|dec_info|Some(AACAudioSpecificConfig::parse(dec_info)))
+      .expect("No DecoderConfigDescriptor");
     DecoderConfigDescriptor {
       object_type_indication,
       stream_type,
@@ -54,6 +61,7 @@ impl  DecoderConfigDescriptor {
       buffer_size_db,
       max_bitrate,
       avg_bitrate,
+      audio_sepcific_info
     }
   }
 }

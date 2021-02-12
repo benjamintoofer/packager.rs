@@ -18,25 +18,9 @@ pub struct ESDescriptor {
 }
 
 impl ESDescriptor {
-  pub fn parse(data: &[u8]) -> Result<ESDescriptor, String> {
-    let mut start = 0usize;
-    let mut end = start + 1;
-    // Parse descriptor tag
-    let descriptor_tag = util::get_u8(data, start, end)
-      .expect(format!("{}.parse.descriptor_tag: cannot get u8 from start = {}; end = {}",CLASS, start, end).as_ref());
-    
-    if descriptor_tag != DescriptorTags::ES_DESC.value() {
-      return Err(format!("Wrong descritor tag. Found {}; Expected {}", descriptor_tag, DescriptorTags::ES_DESC.value()));
-    }
-
-    start = end;
-    end = start + 1;
-    // Parse length
-    let length = util::get_u8(data, start, end)
-      .expect(format!("{}.parse.id: cannot get u16 from start = {}; end = {}",CLASS, start, end).as_ref());
-
-    start = end;
-    end = start + 2;
+  pub fn parse(data: &[u8]) -> ESDescriptor{
+    let mut start = 2usize;
+    let mut end = start + 2;
     // Parse es id
     let id = util::get_u16(data, start, end)
       .expect(format!("{}.parse.id: cannot get u16 from start = {}; end = {}",CLASS, start, end).as_ref());
@@ -66,8 +50,8 @@ impl ESDescriptor {
      let dec_config_descr = find_descriptor(DescriptorTags::DECODER_CONFIG_DESC, end, data)
       .and_then(|dec_desc|Some(DecoderConfigDescriptor::parse(dec_desc)))
       .expect("No DecoderConfigDescriptor");
-    // let dec_config_descr = DecoderConfigDescriptor::parse(data);
-    Ok(ESDescriptor{
+    
+    ESDescriptor{
       id,
       stream_dependence_flag,
       url_flag,
@@ -77,6 +61,6 @@ impl ESDescriptor {
       depends_on_es_id: None,
       url_length: None,
       url_string: None,
-    })
+    }
   }
 }

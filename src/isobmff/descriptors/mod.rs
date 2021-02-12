@@ -4,6 +4,7 @@ use std::str;
 
 pub mod es_descriptor;
 pub mod dec_config_descriptor;
+pub mod aac_audio_specific_config;
 
 pub enum DescriptorTags {
   FORBIDDEN,
@@ -36,10 +37,9 @@ pub fn find_descriptor<'a>(search_tag: DescriptorTags, offset: usize, current_bo
     let tag = current_box_data[tag_index];
     let length = current_box_data[length_index] as usize;
 
-    if let desc_tag = tag {
-      if desc_tag == search_tag.value() {
-        return Some(current_box_data[tag_index..(tag_index + length)].as_ref())
-      }
+    
+    if tag == search_tag.value() {
+      return Some(current_box_data[tag_index..(length_index + length)].as_ref())
     }
     tag_index += length;
   }
