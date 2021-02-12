@@ -1,7 +1,7 @@
 use std::str;
 use std::convert::TryFrom;
 
-use crate::{iso_box::{IsoBox, IsoFullBox, find_box}, isobmff::sample_entry::{SampleEntryType, avc_sample_entry::AVCSampleEntry}};
+use crate::{iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::util;
 
 static CLASS: &str = "STSD";

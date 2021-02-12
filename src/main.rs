@@ -1,5 +1,7 @@
 use std::{ fs, process };
 
+use isobmff::sample_entry::mp4a_sample_entry;
+
 use crate::isobmff::sample_entry::avc_sample_entry;
 use crate::isobmff::boxes::{ iso_box, mvhd, sidx, hdlr, stsd };
 use crate::manifest::hls::hls_generator;
@@ -47,7 +49,7 @@ PARSE AAC(MP4A) codec string
 
 fn main() {
   println!("TP");
-    let file_path = "./assets/v_frag.mp4";
+    let file_path = "./assets/a_frag.mp4";
     
     let mp4_file = fs::read(file_path);
     if let Ok(mp4) = mp4_file {
@@ -61,11 +63,13 @@ fn main() {
       let hdlr = hdlr::HDLR::parse(&mp4).expect("whatever hdlr");
       let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
       print!("{:#?}", stsd.get_samples_length());
-      let some = stsd.read_sample_entry("avc1");
+      // let some = stsd.read_sample_entry("avc1");
+      let some = stsd.read_sample_entry("mp4a");
       match some {
         Some(byte_data) => {
-          let avc_sample_entry = avc_sample_entry::AVCSampleEntry::parse(byte_data);
-          print!("{:#?}", avc_sample_entry.config);
+          // let avc_sample_entry = avc_sample_entry::AVCSampleEntry::parse(byte_data);
+          let mp4a_sample_entry = mp4a_sample_entry::MP4ASampleEntry::parse(byte_data);
+          print!("{:#?}", mp4a_sample_entry);
         }
         None => {print!("NOT FOUND :(")}
       }
