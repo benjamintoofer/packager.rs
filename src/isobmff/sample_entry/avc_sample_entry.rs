@@ -13,6 +13,7 @@ impl AVCSampleEntry {
   pub fn parse(data: &[u8]) -> AVCSampleEntry {
     let sample_entry = SampleEntry::parse(data);
     let (visual_sample_entry, offset) = VisualSampleEntry::parse(data);
+    #[allow(non_snake_case)]
     let avcC: AVCDecoderConfigurationRecord = find_box("avcC", offset, data)
       .map(|avcc_data| AVCDecoderConfigurationRecord::parse(avcc_data))
       // TODO (benjamintoofer@gmail.com): Add proper error handling around this.

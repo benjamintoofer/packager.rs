@@ -1,11 +1,7 @@
-use std::convert::TryInto;
-use std::convert::TryFrom;
-use std::str;
-
 pub mod es_descriptor;
 pub mod dec_config_descriptor;
 pub mod aac_audio_specific_config;
-
+#[allow(non_camel_case_types)]
 pub enum DescriptorTags {
   FORBIDDEN,
   OBJ_DESC,

@@ -21,7 +21,7 @@ impl AACAudioSpecificConfig {
 
   fn get_audio_object_type(data: u8) -> u8 {
     // 5 bit
-    let mut audio_object_type: u8 = (data & 0xF8) >> 3;
+    let audio_object_type: u8 = (data & 0xF8) >> 3;
     if audio_object_type == 31 {
       // audio_object_type = 32 + audio_object_type_ext;
     }
