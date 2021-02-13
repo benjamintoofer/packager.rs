@@ -9,10 +9,9 @@ pub struct AACAudioSpecificConfig {
 impl AACAudioSpecificConfig {
   pub fn parse(data: &[u8]) -> AACAudioSpecificConfig {
     let start = 2usize;
-    let end = start + 1;
     let audio_object_type = AACAudioSpecificConfig::get_audio_object_type(
-      util::get_u8(data, start, end)
-      .expect(format!("{}.parse.audio_object_type: cannot get u8 from start = {}; end = {}",CLASS, start, end).as_ref())
+      util::get_u8(data, start)
+      .expect(format!("{}.parse.audio_object_type: cannot get u8 from start = {}",CLASS, start).as_ref())
     );
     AACAudioSpecificConfig {
       audio_object_type,

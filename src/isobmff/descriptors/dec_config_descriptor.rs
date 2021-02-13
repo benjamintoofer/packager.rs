@@ -19,39 +19,33 @@ pub struct DecoderConfigDescriptor {
 impl  DecoderConfigDescriptor {
   pub fn parse(data: &[u8]) -> DecoderConfigDescriptor {
     let mut start = 2usize;
-    let mut end = start + 1;
     // Parse object_type_indication
-    let object_type_indication = util::get_u8(data, start, end)
-      .expect(format!("{}.parse.object_type_indication: cannot get u8 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let object_type_indication = util::get_u8(data, start)
+      .expect(format!("{}.parse.object_type_indication: cannot get u8 from start = {}",CLASS, start).as_ref());
 
-    start = end;
-    end = start + 1;
-    let temp = util::get_u8(data, start, end)
-      .expect(format!("{}.parse.temp: cannot get u8 from start = {}; end = {}",CLASS, start, end).as_ref());
+    start = start + 1;
+    let temp = util::get_u8(data, start)
+      .expect(format!("{}.parse.temp: cannot get u8 from start = {}",CLASS, start).as_ref());
     let stream_type = (temp & 0xFC) >> 2;
     let upstream = (temp & 0x2) != 0;
 
     let mut buffer_size_db: u32 = 0;
     for i in 0..3 {
-      println!("{}", i);
-      start = end;
-      end = start + 1;
-      let buff = util::get_u8(data, start, end)
-        .expect(format!("{}.parse.temp: cannot get u8 from start = {}; end = {}",CLASS, start, end).as_ref());
+      start = start +1;
+      let buff = util::get_u8(data, start)
+        .expect(format!("{}.parse.buff: cannot get u8 from start = {}",CLASS, start).as_ref());
         buffer_size_db =  buffer_size_db | (u32::from(buff) << (8 * (2 - i)));
     }
 
-    start = end;
-    end = start + 4;
-    let max_bitrate = util::get_u32(data, start, end)
-      .expect(format!("{}.parse.temp: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
+    start = start + 1;
+    let max_bitrate = util::get_u32(data, start)
+      .expect(format!("{}.parse.temp: cannot get u32 from start = {}",CLASS, start).as_ref());
 
-    start = end;
-    end = start + 4;
-    let avg_bitrate = util::get_u32(data, start, end)
-      .expect(format!("{}.parse.avg_bitrate: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
+    start = start + 4;
+    let avg_bitrate = util::get_u32(data, start)
+      .expect(format!("{}.parse.avg_bitrate: cannot get u32 from start = {}",CLASS, start).as_ref());
 
-    let audio_sepcific_info = find_descriptor(DescriptorTags::DEC_SPECIFIC_INFO, end, data)
+    let audio_sepcific_info = find_descriptor(DescriptorTags::DEC_SPECIFIC_INFO, start + 4, data)
       .and_then(|dec_info|Some(AACAudioSpecificConfig::parse(dec_info)))
       .expect("No DecoderConfigDescriptor");
     DecoderConfigDescriptor {

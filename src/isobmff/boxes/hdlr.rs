@@ -60,14 +60,12 @@ impl HDLR {
 
   fn parse_hdlr(hdlr_data: &[u8]) -> HDLR {
     let mut start = 0usize;
-    let mut end = start + 4;
-
     // Parse size
-    let size = util::get_u32(hdlr_data, start, end)
-      .expect(format!("HDLR.parse_hdlr.size: cannot get u32 from start = {}; end = {}",start, end).as_ref());
+    let size = util::get_u32(hdlr_data, start)
+      .expect(format!("HDLR.parse_hdlr.size: cannot get u32 from start = {}",start).as_ref());
 
-    start = end;
-    end = start + 4;
+    start = start + 4;
+    let end = start + 4;
     let box_type = str::from_utf8(hdlr_data[start..end].as_ref()); 
     
     let box_type= match box_type {
@@ -80,8 +78,7 @@ impl HDLR {
     start = end + 8;
 
     // Parse handler type
-    end = start + 4;
-    let handler_type = util::get_u32(hdlr_data, start, end)
+    let handler_type = util::get_u32(hdlr_data, start)
       .expect(format!("HDLR.parse_hdlr.handler_type: cannot get u32 from start = {}; end = {}",start, end).as_ref());
 
     // Skip 3 * 32 bit reserved

@@ -20,16 +20,14 @@ pub struct ESDescriptor {
 impl ESDescriptor {
   pub fn parse(data: &[u8]) -> ESDescriptor{
     let mut start = 2usize;
-    let mut end = start + 2;
     // Parse es id
-    let id = util::get_u16(data, start, end)
-      .expect(format!("{}.parse.id: cannot get u16 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let id = util::get_u16(data, start)
+      .expect(format!("{}.parse.id: cannot get u16 from start = {}",CLASS, start).as_ref());
 
-    start = end;
-    end = start + 1;
+    start = start + 2;
     // Parse streamDependenceFlag, URL_Flag, OCRstreamFlag, and streamPriority
-    let flags = util::get_u8(data, start, end)
-      .expect(format!("{}.parse.flags: cannot get u16 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let flags = util::get_u8(data, start)
+      .expect(format!("{}.parse.flags: cannot get u16 from start = {}",CLASS, start).as_ref());
 
     let stream_dependence_flag = (flags & 0x80) != 0;
     let url_flag = (flags & 0x40) != 0;
@@ -47,7 +45,7 @@ impl ESDescriptor {
     if ocr_stream_flag {
       println!("OCR STREAM FLAG")
     }
-     let dec_config_descr = find_descriptor(DescriptorTags::DECODER_CONFIG_DESC, end, data)
+     let dec_config_descr = find_descriptor(DescriptorTags::DECODER_CONFIG_DESC, start + 1, data)
       .and_then(|dec_desc|Some(DecoderConfigDescriptor::parse(dec_desc)))
       .expect("No DecoderConfigDescriptor");
     

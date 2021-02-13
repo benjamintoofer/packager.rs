@@ -3,6 +3,8 @@ use std::str;
 use crate::iso_box::{ IsoBox, IsoFullBox, find_box };
 use crate::util;
 
+static CLASS: &str = "MVHD";
+
 #[derive(Debug, Eq)]
 pub struct MVHD {
   size: u32,
@@ -83,14 +85,13 @@ impl MVHD {
 
   fn parse_mvhd(mvhd_data: &[u8]) -> MVHD {
     let mut start = 0usize;
-    let mut end = start + 4;
 
     // Parse size
-    let size = util::get_u32(mvhd_data, start, end)
-      .expect(format!("MVHD.parse_mvhd.size: cannot get u32 from start = {}; end = {}",start, end).as_ref());
+    let size = util::get_u32(mvhd_data, start)
+      .expect(format!("{}.parse_mvhd.size: cannot get u32 from start = {}", CLASS, start).as_ref());
 
-    start = end;
-    end = start + 4;
+    start = start + 4;
+    let end = start + 4;
     let box_type = str::from_utf8(mvhd_data[start..end].as_ref()); 
     
     let box_type= match box_type {
@@ -100,56 +101,51 @@ impl MVHD {
 
     // Parse version
     start = end;
-    end = start + 1;
-    let version = util::get_u8(mvhd_data, start, end)
-      .expect(format!("MVHD.parse_mvhd.version: cannot get u32 from start = {}; end = {}",start, end).as_ref());
+    let version = util::get_u8(mvhd_data, start)
+      .expect(format!("{}.parse_mvhd.version: cannot get u32 from start = {}",CLASS, start).as_ref());
 
     // Parse creation_time
-    start = end + 3;
+    start = start + 3;
     let creation_time: u64;
     if version == 0 {
-      end = start + 4;
-      creation_time = u64::from(util::get_u32(mvhd_data, start, end)
-        .expect(format!("MVHD.parse_mvhd.creation_time: cannot get u32 from start = {}; end = {}",start, end).as_ref()));
+      creation_time = u64::from(util::get_u32(mvhd_data, start)
+        .expect(format!("{}.parse_mvhd.creation_time: cannot get u32 from start = {}",CLASS, start).as_ref()));
+      start = start + 4;
 
     } else {
-      end = start + 8;
-      creation_time = util::get_u64(mvhd_data, start, end)
-        .expect(format!("MVHD.parse_mvhd.creation_time: cannot get u64 from start = {}; end = {}",start, end).as_ref());
+      creation_time = util::get_u64(mvhd_data, start)
+        .expect(format!("{}.parse_mvhd.creation_time: cannot get u64 from start = {}",CLASS, start).as_ref());
+      start = start + 8;
     }
 
     // Parse modification_time
-    start = end;
     let modification_time: u64;
     if version == 0 {
-      end = start + 4;
-      modification_time = u64::from(util::get_u32(mvhd_data, start, end)
-        .expect(format!("MVHD.parse_mvhd.modification_time: cannot get u32 from start = {}; end = {}",start, end).as_ref()));
-
+      modification_time = u64::from(util::get_u32(mvhd_data, start)
+        .expect(format!("{}.parse_mvhd.modification_time: cannot get u32 from start = {}",CLASS, start).as_ref()));
+      start = start + 4;
     } else {
-      end = start + 8;
-      modification_time = util::get_u64(mvhd_data, start, end)
-        .expect(format!("MVHD.parse_mvhd.modification_time: cannot get u64 from start = {}; end = {}",start, end).as_ref());
+      modification_time = util::get_u64(mvhd_data, start)
+        .expect(format!("{}.parse_mvhd.modification_time: cannot get u64 from start = {}",CLASS, start).as_ref());
+      start = start + 8;
     }
 
     // Parse timescale
-    start = end;
-    end = start + 4;
-    let timescale = util::get_u32(mvhd_data, start, end)
-        .expect(format!("MVHD.parse_mvhd.timescale: cannot get u32 from start = {}; end = {}",start, end).as_ref());
+    let timescale = util::get_u32(mvhd_data, start)
+        .expect(format!("{}.parse_mvhd.timescale: cannot get u32 from start = {}",CLASS, start).as_ref());
 
     // Parse duration
-    start = end;
+    start = start + 4;
     let duration: u64;
     if version == 0 {
-      end = start + 4;
-      duration = u64::from(util::get_u32(mvhd_data, start, end)
-        .expect(format!("MVHD.parse_mvhd.duration: cannot get u32 from start = {}; end = {}",start, end).as_ref()));
+      duration = u64::from(util::get_u32(mvhd_data, start)
+        .expect(format!("{}.parse_mvhd.duration: cannot get u32 from start = {}",CLASS, start).as_ref()));
+      start = start + 4;
 
     } else {
-      end = start + 8;
-      duration = util::get_u64(mvhd_data, start, end)
-        .expect(format!("MVHD.parse_mvhd.duration: cannot get u64 from start = {}; end = {}",start, end).as_ref());
+      duration = util::get_u64(mvhd_data, start)
+        .expect(format!("{}.parse_mvhd.duration: cannot get u64 from start = {}",CLASS, start).as_ref());
+      start = start + 8;
     }
     
     MVHD{
