@@ -2,8 +2,7 @@ use std::{ fs, process };
 
 use isobmff::sample_entry::mp4a_sample_entry;
 
-use crate::isobmff::sample_entry::avc_sample_entry;
-use crate::isobmff::boxes::{ iso_box, mvhd, sidx, hdlr, stsd };
+use crate::isobmff::boxes::{ iso_box, mvhd, sidx, stsd };
 use crate::manifest::hls::hls_generator;
 use crate::manifest::manifest_generator::ManifestGenerator;
 
@@ -12,8 +11,6 @@ pub mod isobmff;
 pub mod manifest;
 pub mod util;
 pub mod error;
-pub mod media;
-pub mod core;
 
 //  1. Given a path to the asset and it's transcoded mp4's (must be fragmented for now and seperated tracks (Need to add ability to parse single mp4 with both tracks))
 //  2. Iterate through each rendition, collect the correct metadata to generate master manifest
@@ -60,7 +57,6 @@ fn main() {
       let mvhd_duration = mvhd_box.get_duration() as f64;
       let offset = iso_box::get_init_segment_end(&mp4);
       hls_generator::HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
-      let hdlr = hdlr::HDLR::parse(&mp4).expect("whatever hdlr");
       let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
       print!("{:#?}", stsd.get_samples_length());
       // let some = stsd.read_sample_entry("avc1");

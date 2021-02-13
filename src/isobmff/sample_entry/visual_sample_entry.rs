@@ -20,44 +20,39 @@ impl VisualSampleEntry {
   pub fn parse(data: &[u8]) -> (VisualSampleEntry, usize) {
     let offset = 32usize;
     let mut start = offset;
-    let mut end = start + 2;
     // Parse width
-    let width = util::get_u16(data, start, end)
-      .expect(format!("{}.parse.width: cannot get u16 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let width = util::get_u16(data, start)
+      .expect(format!("{}.parse.width: cannot get u16 from start = {}",CLASS, start).as_ref());
     
-    start = end;
-    end = start + 2;
+    start = start + 2;
     // Parse height
-    let height = util::get_u16(data, start, end)
-      .expect(format!("{}.parse.height: cannot get u16 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let height = util::get_u16(data, start)
+      .expect(format!("{}.parse.height: cannot get u16 from start = {}",CLASS, start).as_ref());
 
-    start = end;
-    end = start + 4;
+    start = start + 2;
     // Parse horiz resolution
-    let horiz_resolution = util::get_u32(data, start, end)
-      .expect(format!("{}.parse.horiz_resolution: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let horiz_resolution = util::get_u32(data, start)
+      .expect(format!("{}.parse.horiz_resolution: cannot get u32 from start = {}",CLASS, start).as_ref());
 
-    start = end;
-    end = start + 4;
+    start = start + 4;
     // Parse vert resolution
-    let vert_resolution = util::get_u32(data, start, end)
-      .expect(format!("{}.parse.vert_resolution: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let vert_resolution = util::get_u32(data, start)
+      .expect(format!("{}.parse.vert_resolution: cannot get u32 from start = {}",CLASS, start).as_ref());
 
-    start = end + 4;
-    end = start + 2;
+    start = start + 8;
     // Parse frame count
-    let frame_count = util::get_u16(data, start, end)
-      .expect(format!("{}.parse.frame_count: cannot get u16 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let frame_count = util::get_u16(data, start)
+      .expect(format!("{}.parse.frame_count: cannot get u16 from start = {}",CLASS, start).as_ref());
 
-    start = end;
-    end = start + 1;
+    start = start + 2;
     // Parse compressor name size
-    let compressor_name_size = util::get_u8(data, start, end)
-      .expect(format!("{}.parse.compressor_name_size: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
-    
+    let compressor_name_size = util::get_u8(data, start)
+      .expect(format!("{}.parse.compressor_name_size: cannot get u32 from start = {}",CLASS, start).as_ref());
+
+    start = start + 1;
     let mut compressor_name = String::from("");
     for i in 0..compressor_name_size {
-      let index = end + i as usize;
+      let index = start + i as usize;
       if !data[index].is_ascii() {
         // Error("")
         todo!()
@@ -67,14 +62,12 @@ impl VisualSampleEntry {
     }
 
     start = start + 32;
-    end = start + 2;
     // Parse depth
-    let depth = util::get_u16(data, start, end)
-      .expect(format!("{}.parse.depth: cannot get u16 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let depth = util::get_u16(data, start)
+      .expect(format!("{}.parse.depth: cannot get u16 from start = {}",CLASS, start).as_ref());
 
     // Skip predefined value
-    start = end;
-    end = start + 2;
+    start = start + 2;
     // Parse CleanApertureBox
     // todo!();
     // Parse PixelAspectRatioBox
@@ -90,6 +83,6 @@ impl VisualSampleEntry {
       depth,
       clean_aperture_box: None,
       pixel_aspect_ratio_box: None
-    }, end)
+    }, start)
   }
 }

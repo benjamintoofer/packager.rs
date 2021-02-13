@@ -76,14 +76,13 @@ impl<'a> STSD<'a> {
 
   fn parse_stsd(stsd_data: &'a [u8]) -> STSD {
     let mut start = 0usize;
-    let mut end = start + 4;
 
     // Parse size
-    let size = util::get_u32(stsd_data, start, end)
-      .expect(format!("{}.parse_stsd.size: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let size = util::get_u32(stsd_data, start)
+      .expect(format!("{}.parse_stsd.size: cannot get u32 from start = {}",CLASS, start).as_ref());
 
-    start = end;
-    end = start + 4;
+    start = start + 4;
+    let mut end = start + 4;
     let box_type = str::from_utf8(stsd_data[start..end].as_ref()); 
     
     let box_type= match box_type {
@@ -92,12 +91,11 @@ impl<'a> STSD<'a> {
     };
 
     // Parse entry count
-    start = end + 4;
-    end = start + 4;
-    let entry_count = util::get_u32(stsd_data, start, end)
-      .expect(format!("{}.parse_stsd.entry_count: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
+    start = start + 4;
+    let entry_count = util::get_u32(stsd_data, start)
+      .expect(format!("{}.parse_stsd.entry_count: cannot get u32 from start = {}",CLASS, start).as_ref());
     
-    start = end;
+    start = start + 4;
     end = usize::try_from(size).expect("cannot convert u32 (num) to usize");
     let entries: &[u8] = stsd_data[start..end].as_ref();
 

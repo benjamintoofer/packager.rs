@@ -3,6 +3,8 @@ use std::str;
 use crate::iso_box::{IsoBox, IsoFullBox, find_box};
 use crate::util;
 
+static CLASS: &str = "TFDT";
+
 #[derive(Debug)]
 pub struct TFDT {
   size: u32,
@@ -46,14 +48,12 @@ impl TFDT {
 
     if let Some(tfdt_data) = tfdt_option {
       let mut start = 0;
-      let mut end = start + 4;
-
       // Parse size
-      let size = util::get_u32(tfdt_data, start, end)
-        .expect(format!("TFDT.parse.size: cannot get u32 from start = {}; end = {}",start, end).as_ref());
+      let size = util::get_u32(tfdt_data, start)
+        .expect(format!("{}.parse.size: cannot get u32 from start = {}", CLASS, start).as_ref());
 
-      start = end;
-      end = start + 4;
+      start = start + 4;
+      let end = start + 4;
       let box_type = str::from_utf8(tfdt_data[start..end].as_ref()); 
       
       let box_type= match box_type {
@@ -62,22 +62,19 @@ impl TFDT {
       };
 
       // Parse version
-      start = end;
-      end = start + 1;
-      let version = util::get_u8(tfdt_data, start, end)
-        .expect(format!("TFDT.parse.version: cannot get u32 from start = {}; end = {}",start, end).as_ref());
+      start = start + 4;
+      let version = util::get_u8(tfdt_data, start)
+        .expect(format!("{}.parse.version: cannot get u8 from start = {}", CLASS, start).as_ref());
 
       // Parse base_media_decode_time
-      start = end + 3;
+      start = start + 4;
       let base_media_decode_time: u64;
       if version == 0 {
-        end = start + 4;
-          base_media_decode_time = u64::from(util::get_u32(tfdt_data, start, end)
-          .expect(format!("TFDT.parse.base_media_decode_time: cannot get u32 from start = {}; end = {}",start, end).as_ref()));
+        base_media_decode_time = u64::from(util::get_u32(tfdt_data, start)
+          .expect(format!("{}.parse.base_media_decode_time: cannot get u32 from start = {}", CLASS, start).as_ref()));
       } else {
-        end = start + 8;
-          base_media_decode_time = util::get_u64(tfdt_data, start, end)
-          .expect(format!("TFDT.parse.base_media_decode_time: cannot get u64 from start = {}; end = {}",start, end).as_ref());
+        base_media_decode_time = util::get_u64(tfdt_data, start)
+          .expect(format!("{}.parse.base_media_decode_time: cannot get u64 from start = {}", CLASS, start).as_ref());
       }
       return Ok(TFDT {
         box_type: box_type,
