@@ -1,11 +1,18 @@
 use std::{convert::TryInto};
-use crate::error::ParseUnsignedError;
+use crate::error::{error_code:: {MajorCode, UtilMinorCode}, construct_error, CustomError};
 
 pub mod logger;
 
-pub fn get_u64(data: &[u8], start: usize) -> Result<u64, ParseUnsignedError> {
+pub fn get_u64(data: &[u8], start: usize) -> Result<u64, CustomError> {
   if data.len() < 8 {
-    return Err(ParseUnsignedError{ message: "Invalid data length to parse u64".to_string(), file: file!(), line: line!()});
+    return Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        "Invalid data length to parse u64".to_string(), 
+        file!(), 
+        line!())
+    );
   }
   let slice_data = data[start..(start + 8)]
     .as_ref()
@@ -13,13 +20,27 @@ pub fn get_u64(data: &[u8], start: usize) -> Result<u64, ParseUnsignedError> {
   
   match slice_data {
     Ok(val) => Ok(u64::from_be_bytes(val)),
-    Err(err) => Err(ParseUnsignedError{ message: err.to_string(), file: file!(), line: line!()}),
+    Err(err) => Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        err.to_string(), 
+        file!(), 
+        line!())
+    )
   }
 }
 
-pub fn get_u32(data: &[u8], start: usize) -> Result<u32, ParseUnsignedError> {
+pub fn get_u32(data: &[u8], start: usize) -> Result<u32, CustomError> {
   if data.len() < 4 {
-    return Err(ParseUnsignedError{ message: "Invalid data length to parse u32".to_string(), file: file!(), line: line!()});
+    return Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        "Invalid data length to parse u32".to_string(), 
+        file!(), 
+        line!())
+    );
   }
   let slice_data = data[start..(start + 4)]
     .as_ref()
@@ -27,13 +48,27 @@ pub fn get_u32(data: &[u8], start: usize) -> Result<u32, ParseUnsignedError> {
   
   match slice_data {
     Ok(val) => Ok(u32::from_be_bytes(val)),
-    Err(err) => Err(ParseUnsignedError{ message: err.to_string(), file: file!(), line: line!()}),
+    Err(err) => Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        err.to_string(), 
+        file!(), 
+        line!())
+    )
   }
 }
 
-pub fn get_u16(data: &[u8], start: usize) -> Result<u16, ParseUnsignedError> {
+pub fn get_u16(data: &[u8], start: usize) -> Result<u16, CustomError> {
   if data.len() < 2 {
-    return Err(ParseUnsignedError{ message: "Invalid data length to parse u16".to_string(), file: file!(), line: line!()});
+    return Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        "Invalid data length to parse u16".to_string(), 
+        file!(), 
+        line!())
+    );
   }
   let slice_data = data[start..(start + 2)]
     .as_ref()
@@ -41,13 +76,27 @@ pub fn get_u16(data: &[u8], start: usize) -> Result<u16, ParseUnsignedError> {
   
   match slice_data {
     Ok(val) => Ok(u16::from_be_bytes(val)),
-    Err(err) => Err(ParseUnsignedError{ message: err.to_string(), file: file!(), line: line!()}),
+    Err(err) => Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        err.to_string(), 
+        file!(), 
+        line!())
+    )
   }
 }
 
-pub fn get_u8(data: &[u8], start: usize) -> Result<u8, ParseUnsignedError> {
+pub fn get_u8(data: &[u8], start: usize) -> Result<u8, CustomError> {
   if data.len() == 0 {
-    return Err(ParseUnsignedError{ message: "No data available to parse u8".to_string(), file: file!(), line: line!()});
+    return Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        "No data available to parse u8".to_string(), 
+        file!(), 
+        line!())
+    );
   }
   let slice_data = data[start];
   Ok(slice_data)
