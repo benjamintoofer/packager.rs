@@ -5,7 +5,7 @@ use crate::util;
 
 static CLASS: &str = "TFDT";
 
-#[derive(Debug)]
+#[derive(Debug, Eq)]
 pub struct TFDT {
   size: u32,
   box_type: String,
@@ -30,6 +30,13 @@ impl IsoFullBox for TFDT {
 
   fn get_flags(&self) -> u32 {
     0u32
+  }
+}
+
+impl PartialEq for TFDT {
+  fn eq(&self, other: &Self) -> bool {
+      self.size == other.size &&
+      self.base_media_decode_time == other.base_media_decode_time
   }
 }
 
@@ -84,6 +91,32 @@ impl TFDT {
       })
     } else {
       Err("unable to find the tfdt".to_string())
+    }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+
+  use super::*;
+  use std::fs;
+
+  #[test]
+  fn test_parse_tfdt() {
+    let file_path = "./assets/v_frag.mp4";
+    
+    let expected_tfdt: TFDT = TFDT{
+      box_type: "tfdt".to_string(),
+      size: 20,
+      version: 0,
+      base_media_decode_time: 0,
+    };
+    let mp4_file = fs::read(file_path);
+    if let Ok(mp4) = mp4_file {
+      let moof_data = find_box("moof", 0, mp4.as_ref()).unwrap();
+      assert_eq!(TFDT::parse(&moof_data).unwrap(), expected_tfdt);
+    } else {
+      panic!("mp4 file {:} cannot be opened", file_path);
     }
   }
 }

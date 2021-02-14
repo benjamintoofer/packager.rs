@@ -37,7 +37,8 @@ impl<'a> IsoFullBox for STSD<'a> {
 
 impl<'a> PartialEq for STSD<'a> {
   fn eq(&self, other: &Self) -> bool {
-      self.size == other.size
+      self.size == other.size &&
+      self.entry_count == other.entry_count
   }
 }
 
@@ -91,7 +92,7 @@ impl<'a> STSD<'a> {
     };
 
     // Parse entry count
-    start = start + 4;
+    start = start + 8;
     let entry_count = util::get_u32(stsd_data, start)
       .expect(format!("{}.parse_stsd.entry_count: cannot get u32 from start = {}",CLASS, start).as_ref());
     
@@ -104,6 +105,31 @@ impl<'a> STSD<'a> {
       size,
       entry_count,
       sample_entries: entries
+    }
+  }
+}
+
+#[cfg(test)]
+mod tests {
+
+  use super::*;
+  use std::fs;
+
+  #[test]
+  fn test_parse_stsd() {
+    let file_path = "./assets/v_frag.mp4";
+  
+    let expected_stsd: STSD = STSD{
+      box_type: "stsd".to_string(),
+      size: 166,
+      entry_count: 1,
+      sample_entries: &[], // We dont compare this
+    };
+    let mp4_file = fs::read(file_path);
+    if let Ok(mp4) = mp4_file {
+      assert_eq!(STSD::parse(&mp4).unwrap(), expected_stsd);
+    } else {
+      panic!("mp4 file {:} cannot be opened", file_path);
     }
   }
 }

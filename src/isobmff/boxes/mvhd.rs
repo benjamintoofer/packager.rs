@@ -176,8 +176,8 @@ mod tests {
       version: 0,
       creation_time: 0,
       modification_time: 0,
-      timescale: 1000,
-      duration: 30033
+      timescale: 3,
+      duration: 3892314229
     };
     let mp4_file = fs::read(file_path);
     if let Ok(mp4) = mp4_file {
