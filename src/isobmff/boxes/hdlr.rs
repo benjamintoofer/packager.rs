@@ -3,6 +3,7 @@ use std::str;
 use crate::iso_box::{IsoBox, IsoFullBox, find_box};
 use crate::util;
 
+static CLASS: &str = "HDLR";
 // HandlerBox 14496-12; 8.4.3
 #[derive(Eq, Debug)]
 pub struct HDLR {
@@ -34,7 +35,9 @@ impl IsoFullBox for HDLR {
 
 impl PartialEq for HDLR {
   fn eq(&self, other: &Self) -> bool {
-      self.size == other.size
+      self.size == other.size &&
+      self.handler_type == other.handler_type &&
+      self.name == other.name
   }
 }
 
@@ -62,7 +65,7 @@ impl HDLR {
     let mut start = 0usize;
     // Parse size
     let size = util::get_u32(hdlr_data, start)
-      .expect(format!("HDLR.parse_hdlr.size: cannot get u32 from start = {}",start).as_ref());
+      .expect(format!("{}.parse_hdlr.size: cannot get u32 from start = {}", CLASS, start).as_ref());
 
     start = start + 4;
     let end = start + 4;
@@ -75,14 +78,13 @@ impl HDLR {
 
 
     // Skip version, flag, and 32 bit predfined
-    start = end + 8;
-
+    start = start + 12;
     // Parse handler type
     let handler_type = util::get_u32(hdlr_data, start)
-      .expect(format!("HDLR.parse_hdlr.handler_type: cannot get u32 from start = {}; end = {}",start, end).as_ref());
+      .expect(format!("{}.parse_hdlr.handler_type: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
 
     // Skip 3 * 32 bit reserved
-    start = end + 12;
+    start = start + 12 + 4;
 
     // Parse name
     let mut name = String::from("");
@@ -102,6 +104,31 @@ impl HDLR {
       name: name
     }
   }
-
 }
 
+#[cfg(test)]
+mod tests {
+
+  use std::fs;
+
+    use super::*;
+
+  #[test]
+  fn test_parse_hdlr() {
+    let file_path = "./assets/v_frag.mp4";
+  
+    let expected_mvhd: HDLR = HDLR{
+      box_type: "hdlr".to_string(),
+      size: 53,
+      handler_type: 0x76696465,
+      name: "Bento4 Video Handler".to_string(),
+    };
+    let mp4_file = fs::read(file_path);
+    if let Ok(mp4) = mp4_file {
+      assert_eq!(HDLR::parse(&mp4).unwrap(), expected_mvhd);
+    } else {
+      panic!("mp4 file {:} cannot be opened", file_path);
+    }
+  }
+
+}

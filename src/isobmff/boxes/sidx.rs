@@ -203,6 +203,7 @@ impl SIDX {
       let four_bytes = util::get_u32(sidx_data, start)
         .expect(format!("{}.parse_sidx.starts_with_sap: cannot get u32 from start = {}",CLASS, start).as_ref());
       
+      start = start + 4;
       let starts_with_sap = (four_bytes & 0x80000000) != 0;
       let sap_type = ((four_bytes & 0x70000000) >> 28) as u8;
       let sap_delta_time = four_bytes & 0xFFFFFFF ;
@@ -243,7 +244,7 @@ mod tests {
   
     let expected_sidx: SIDX = SIDX{
       box_type: "sidx".to_string(),
-      size: 152,
+      size: 164,
       version: 0,
       reference_id: 1,
       timescale: 30,
@@ -325,12 +326,20 @@ mod tests {
         },
          SIDXReference{
           reference_type: false,
-          referenced_size: 109240,
-          subsegment_duration: 91,
+          referenced_size: 105008,
+          subsegment_duration: 90,
           starts_with_sap: true,
           sap_type: 0,
           sap_delta_time: 0,
         },
+         SIDXReference{
+          reference_type: false,
+          referenced_size: 4344,
+          subsegment_duration: 1,
+          starts_with_sap: true,
+          sap_type: 0,
+          sap_delta_time: 0,
+        }
       ]
     };
     let mp4_file = fs::read(file_path);
