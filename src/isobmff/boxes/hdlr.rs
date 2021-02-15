@@ -1,6 +1,7 @@
 use std::str;
 
-use crate::iso_box::{IsoBox, IsoFullBox, find_box};
+use crate::{error::{CustomError, construct_error}, iso_box::{IsoBox, IsoFullBox, find_box}};
+use crate::error::error_code::{MajorCode, ISOBMFFMinorCode};
 use crate::util;
 
 static CLASS: &str = "HDLR";
@@ -48,24 +49,29 @@ impl HDLR {
 
 // Implement HDLR static methods
 impl HDLR {
-  pub fn parse(mp4: &[u8]) -> Result<HDLR, String> {
+  pub fn parse(mp4: &[u8]) -> Result<HDLR, CustomError> {
     let hdlr_option = find_box("moov", 0, mp4)
       .and_then(|moov|find_box("trak", 8, moov))
       .and_then(|trak|find_box("mdia", 8, trak))
       .and_then(|mdia|find_box("hdlr", 8, mdia));
     
     if let Some(hdlr_data) = hdlr_option {
-      Ok(HDLR::parse_hdlr(hdlr_data))
+      Ok(HDLR::parse_hdlr(hdlr_data)?)
     } else {
-      Err("unable to find the hdlr".to_string())
+      Err(construct_error(
+        MajorCode::ISOBMFF,
+        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        format!("{}: Unable to find box", CLASS),
+        file!(),
+        line!()))
     }
   }
 
-  fn parse_hdlr(hdlr_data: &[u8]) -> HDLR {
+  fn parse_hdlr(hdlr_data: &[u8]) -> Result<HDLR, CustomError> {
     let mut start = 0usize;
     // Parse size
-    let size = util::get_u32(hdlr_data, start)
-      .expect(format!("{}.parse_hdlr.size: cannot get u32 from start = {}", CLASS, start).as_ref());
+    let size = util::get_u32(hdlr_data, start).unwrap();
+      // .expect(format!("{}.parse_hdlr.size: cannot get u32 from start = {}", CLASS, start).as_ref());
 
     start = start + 4;
     let end = start + 4;
@@ -80,8 +86,7 @@ impl HDLR {
     // Skip version, flag, and 32 bit predfined
     start = start + 12;
     // Parse handler type
-    let handler_type = util::get_u32(hdlr_data, start)
-      .expect(format!("{}.parse_hdlr.handler_type: cannot get u32 from start = {}; end = {}",CLASS, start, end).as_ref());
+    let handler_type = util::get_u32(hdlr_data, start)?;
 
     // Skip 3 * 32 bit reserved
     start = start + 12 + 4;
@@ -90,19 +95,23 @@ impl HDLR {
     let mut name = String::from("");
     while hdlr_data[start] != 0 {
       if !hdlr_data[start].is_ascii() {
-        // Error("")
-        todo!()
+        return Err(construct_error(
+          MajorCode::ISOBMFF,
+          Box::new(ISOBMFFMinorCode::PARSE_BOX_ERROR),
+          "Handler name; character is not an ascii value".to_string(),
+          file!(),
+          line!()));
       }
       let character = hdlr_data[start] as char;
       name.push(character);
       start = start + 1;
     }
-    HDLR {
+    Ok(HDLR {
       box_type: box_type,
       size: size,
       handler_type: handler_type,
       name: name
-    }
+    })
   }
 }
 

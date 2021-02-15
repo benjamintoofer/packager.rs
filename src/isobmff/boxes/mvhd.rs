@@ -1,6 +1,6 @@
 use std::str;
 
-use crate::iso_box::{ IsoBox, IsoFullBox, find_box };
+use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{ IsoBox, IsoFullBox, find_box }};
 use crate::util;
 
 static CLASS: &str = "MVHD";
@@ -72,23 +72,27 @@ impl MVHD {
 }
 
 impl MVHD {
-  pub fn parse(mp4: &[u8]) -> Result<MVHD, String> {
+  pub fn parse(mp4: &[u8]) -> Result<MVHD, CustomError> {
     let mvhd_option = find_box("moov", 0, mp4)
       .and_then(|moov|find_box("mvhd", 8, moov));
 
     if let Some(mvhd_data) = mvhd_option {
-      Ok(MVHD::parse_mvhd(mvhd_data))
+      Ok(MVHD::parse_mvhd(mvhd_data)?)
     } else {
-      Err("unable to find the mvhd".to_string())
+       Err(construct_error(
+        MajorCode::ISOBMFF,
+        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        format!("{}: Unable to find box", CLASS),
+        file!(),
+        line!()))
     }
   }
 
-  fn parse_mvhd(mvhd_data: &[u8]) -> MVHD {
+  fn parse_mvhd(mvhd_data: &[u8]) -> Result<MVHD, CustomError> {
     let mut start = 0usize;
 
     // Parse size
-    let size = util::get_u32(mvhd_data, start)
-      .expect(format!("{}.parse_mvhd.size: cannot get u32 from start = {}", CLASS, start).as_ref());
+    let size = util::get_u32(mvhd_data, start)?;
 
     start = start + 4;
     let end = start + 4;
@@ -101,54 +105,46 @@ impl MVHD {
 
     // Parse version
     start = end;
-    let version = util::get_u8(mvhd_data, start)
-      .expect(format!("{}.parse_mvhd.version: cannot get u32 from start = {}",CLASS, start).as_ref());
+    let version = util::get_u8(mvhd_data, start)?;
 
     // Parse creation_time
     start = start + 3;
     let creation_time: u64;
     if version == 0 {
-      creation_time = u64::from(util::get_u32(mvhd_data, start)
-        .expect(format!("{}.parse_mvhd.creation_time: cannot get u32 from start = {}",CLASS, start).as_ref()));
+      creation_time = u64::from(util::get_u32(mvhd_data, start)?);
       start = start + 4;
 
     } else {
-      creation_time = util::get_u64(mvhd_data, start)
-        .expect(format!("{}.parse_mvhd.creation_time: cannot get u64 from start = {}",CLASS, start).as_ref());
+      creation_time = util::get_u64(mvhd_data, start)?;
       start = start + 8;
     }
 
     // Parse modification_time
     let modification_time: u64;
     if version == 0 {
-      modification_time = u64::from(util::get_u32(mvhd_data, start)
-        .expect(format!("{}.parse_mvhd.modification_time: cannot get u32 from start = {}",CLASS, start).as_ref()));
+      modification_time = u64::from(util::get_u32(mvhd_data, start)?);
       start = start + 4;
     } else {
-      modification_time = util::get_u64(mvhd_data, start)
-        .expect(format!("{}.parse_mvhd.modification_time: cannot get u64 from start = {}",CLASS, start).as_ref());
+      modification_time = util::get_u64(mvhd_data, start)?;
       start = start + 8;
     }
 
     // Parse timescale
-    let timescale = util::get_u32(mvhd_data, start)
-        .expect(format!("{}.parse_mvhd.timescale: cannot get u32 from start = {}",CLASS, start).as_ref());
+    let timescale = util::get_u32(mvhd_data, start)?;
 
     // Parse duration
     start = start + 4;
     let duration: u64;
     if version == 0 {
-      duration = u64::from(util::get_u32(mvhd_data, start)
-        .expect(format!("{}.parse_mvhd.duration: cannot get u32 from start = {}",CLASS, start).as_ref()));
+      duration = u64::from(util::get_u32(mvhd_data, start)?);
       start = start + 4;
 
     } else {
-      duration = util::get_u64(mvhd_data, start)
-        .expect(format!("{}.parse_mvhd.duration: cannot get u64 from start = {}",CLASS, start).as_ref());
+      duration = util::get_u64(mvhd_data, start)?;
       start = start + 8;
     }
     
-    MVHD{
+    Ok(MVHD{
       size: size,
       box_type: box_type,
       version: version,
@@ -156,7 +152,7 @@ impl MVHD {
       modification_time: modification_time,
       timescale: timescale,
       duration: duration
-    }
+    })
   }
 }
 

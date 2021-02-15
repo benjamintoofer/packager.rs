@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::cmp::Eq;
 use std::cmp::PartialEq;
 
-use crate::iso_box::IsoFullBox;
+use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::IsoFullBox};
 use crate::iso_box::IsoBox;
 use crate::iso_box::find_box;
 
@@ -114,22 +114,26 @@ impl SIDX {
 
 // Implement SIDX static methods
 impl SIDX {
-  pub fn parse(mp4: &[u8]) -> Result<SIDX, String> {
+  pub fn parse(mp4: &[u8]) -> Result<SIDX, CustomError> {
     let sidx_option = find_box("sidx", 0, mp4);
     
     if let Some(sidx_data) = sidx_option {
-      Ok(SIDX::parse_sidx(sidx_data))
+      Ok(SIDX::parse_sidx(sidx_data)?)
     } else {
-      Err("unable to find the sidx".to_string())
+      Err(construct_error(
+        MajorCode::ISOBMFF,
+        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        format!("{}: Unable to find box", CLASS),
+        file!(),
+        line!()))
     }
   }
 
-  fn parse_sidx(sidx_data: &[u8]) -> SIDX {
+  fn parse_sidx(sidx_data: &[u8]) -> Result<SIDX, CustomError> {
     let mut start = 0usize;
 
     // Parse size
-    let size = util::get_u32(sidx_data, start)
-      .expect(format!("{}.parse_sidx.size: cannot get u32 from start = {}",CLASS, start).as_ref());
+    let size = util::get_u32(sidx_data, start)?;
 
     start = start + 4;
     let end = start + 4;
@@ -142,66 +146,55 @@ impl SIDX {
 
     // Parse version
     start = start + 4;
-    let version = util::get_u8(sidx_data, start)
-      .expect(format!("{}.parse_sidx.reference_id: cannot get u32 from start = {}",CLASS, start).as_ref());
+    let version = util::get_u8(sidx_data, start)?;
 
     // Parse refernce ID
     start = start + 4;
-    let reference_id = util::get_u32(sidx_data, start)
-      .expect(format!("{}.parse_sidx.reference_id: cannot get u32 from start = {}", CLASS, start).as_ref());
+    let reference_id = util::get_u32(sidx_data, start)?;
 
     // Parse timescale
     start = start + 4;
-    let timescale = util::get_u32(sidx_data, start)
-      .expect(format!("{}.parse_sidx.timescale: cannot get u32 from start = {}", CLASS, start,).as_ref());
+    let timescale = util::get_u32(sidx_data, start)?;
 
     // Parse earliest presentation time
     start = start + 4;
     let earliest_presentation_time: u64;
     if version == 0 {
-      earliest_presentation_time = u64::from(util::get_u32(sidx_data, start)
-        .expect(format!("{}.parse_sidx.earliest_presentation_time: cannot get u32 from start = {}", CLASS, start).as_ref()));
+      earliest_presentation_time = u64::from(util::get_u32(sidx_data, start)?);
       start = start + 4;
     } else {
-      earliest_presentation_time = util::get_u64(sidx_data, start)
-        .expect(format!("{}.parse_sidx.earliest_presentation_time: cannot get u64 from start = {}", CLASS, start).as_ref());
+      earliest_presentation_time = util::get_u64(sidx_data, start)?;
       start = start + 8;
     }
     
     // Parse first offset
     let first_offset: u64;
     if version == 0 {
-      first_offset = u64::from(util::get_u32(sidx_data, start)
-        .expect(format!("{}.parse_sidx.first_offset: cannot get u32 from start = {}", CLASS, start).as_ref()));
+      first_offset = u64::from(util::get_u32(sidx_data, start)?);
         start = start + 4;
     } else {
-      first_offset = util::get_u64(sidx_data, start)
-        .expect(format!("{}.parse_sidx.first_offset: cannot get u64 from start = {}", CLASS, start).as_ref());
+      first_offset = util::get_u64(sidx_data, start)?;
       start = start + 8;
     }
     
 
     // Parse reference count
     start = start + 2;
-    let reference_count = util::get_u16(sidx_data, start)
-      .expect(format!("{}.parse_sidx.reference_count: cannot get u16 from start = {}", CLASS, start).as_ref());
+    let reference_count = util::get_u16(sidx_data, start)?;
     start = start + 2;
     let mut references:Vec<SIDXReference> = vec![];
     for _ in 0..reference_count {
-      let four_bytes = util::get_u32(sidx_data, start)
-        .expect(format!("{}.parse_sidx.reference_type: cannot get u32 from start = {}",CLASS, start).as_ref());
+      let four_bytes = util::get_u32(sidx_data, start)?;
       let reference_type = (four_bytes & 0x80000000) != 0;
       let referenced_size = four_bytes & !0x80000000;
       
       // Parse sub segment duration
       start = start + 4;
-      let subsegment_duration = util::get_u32(sidx_data, start)
-        .expect(format!("{}.parse_sidx.subsegment_duration: cannot get u32 from start = {}",CLASS, start).as_ref());
+      let subsegment_duration = util::get_u32(sidx_data, start)?;
 
       // Parse starts_with_sap, sap_type, sap_delta_time
       start = start + 4;
-      let four_bytes = util::get_u32(sidx_data, start)
-        .expect(format!("{}.parse_sidx.starts_with_sap: cannot get u32 from start = {}",CLASS, start).as_ref());
+      let four_bytes = util::get_u32(sidx_data, start)?;
       
       start = start + 4;
       let starts_with_sap = (four_bytes & 0x80000000) != 0;
@@ -218,7 +211,7 @@ impl SIDX {
       references.push(sidx_reference);
     }
     
-    SIDX{
+    Ok(SIDX{
       size: size,
       box_type: box_type,
       version: version,
@@ -228,7 +221,7 @@ impl SIDX {
       first_offset: first_offset,
       reference_count: reference_count,
       references: references,
-    }
+    })
   }
 }
 
