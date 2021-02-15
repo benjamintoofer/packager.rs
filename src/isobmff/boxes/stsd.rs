@@ -1,7 +1,7 @@
 use std::str;
 use std::convert::TryFrom;
 
-use crate::{iso_box::{IsoBox, IsoFullBox, find_box}};
+use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::util;
 
 static CLASS: &str = "STSD";
@@ -55,7 +55,7 @@ impl<'a> STSD<'a> {
 
 // Implement STSD static methods
 impl<'a> STSD<'a> {
-  pub fn parse(mp4: &[u8]) -> Result<STSD, String> {
+  pub fn parse(mp4: &[u8]) -> Result<STSD, CustomError> {
     let stsd_option = find_box("moov", 0, mp4)
       .and_then(|moov|find_box("trak", 8, moov))
       .and_then(|trak|find_box("mdia", 8, trak))
@@ -64,9 +64,14 @@ impl<'a> STSD<'a> {
       .and_then(|stbl|find_box("stsd", 8, stbl));
     
     if let Some(stsd_data) = stsd_option {
-      Ok(STSD::parse_stsd(stsd_data))
+      Ok(STSD::parse_stsd(stsd_data)?)
     } else {
-      Err("unable to find the stsd".to_string())
+      Err(construct_error(
+        MajorCode::ISOBMFF,
+        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        format!("{}: Unable to find box", CLASS),
+        file!(),
+        line!()))
     }
   }
 
@@ -75,12 +80,11 @@ impl<'a> STSD<'a> {
     find_box(box_type, 0, self.sample_entries)
   }
 
-  fn parse_stsd(stsd_data: &'a [u8]) -> STSD {
+  fn parse_stsd(stsd_data: &'a [u8]) -> Result<STSD, CustomError> {
     let mut start = 0usize;
 
     // Parse size
-    let size = util::get_u32(stsd_data, start)
-      .expect(format!("{}.parse_stsd.size: cannot get u32 from start = {}",CLASS, start).as_ref());
+    let size = util::get_u32(stsd_data, start)?;
 
     start = start + 4;
     let mut end = start + 4;
@@ -93,19 +97,18 @@ impl<'a> STSD<'a> {
 
     // Parse entry count
     start = start + 8;
-    let entry_count = util::get_u32(stsd_data, start)
-      .expect(format!("{}.parse_stsd.entry_count: cannot get u32 from start = {}",CLASS, start).as_ref());
+    let entry_count = util::get_u32(stsd_data, start)?;
     
     start = start + 4;
     end = usize::try_from(size).expect("cannot convert u32 (num) to usize");
     let entries: &[u8] = stsd_data[start..end].as_ref();
 
-    STSD {
+    Ok(STSD {
       box_type,
       size,
       entry_count,
       sample_entries: entries
-    }
+    })
   }
 }
 

@@ -1,6 +1,6 @@
 use std::str;
 
-use crate::iso_box::{IsoBox, IsoFullBox, find_box};
+use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::util;
 
 static CLASS: &str = "TFDT";
@@ -49,15 +49,14 @@ impl TFDT {
 
 // Implement TFDT static methods
 impl TFDT {
-  pub fn parse(moof: &[u8]) -> Result<TFDT, String> {
+  pub fn parse(moof: &[u8]) -> Result<TFDT, CustomError> {
     let tfdt_option = find_box("traf", 8, moof)
       .and_then(|traf|find_box("tfdt", 8, traf));
 
     if let Some(tfdt_data) = tfdt_option {
       let mut start = 0;
       // Parse size
-      let size = util::get_u32(tfdt_data, start)
-        .expect(format!("{}.parse.size: cannot get u32 from start = {}", CLASS, start).as_ref());
+      let size = util::get_u32(tfdt_data, start)?;
 
       start = start + 4;
       let end = start + 4;
@@ -70,27 +69,29 @@ impl TFDT {
 
       // Parse version
       start = start + 4;
-      let version = util::get_u8(tfdt_data, start)
-        .expect(format!("{}.parse.version: cannot get u8 from start = {}", CLASS, start).as_ref());
+      let version = util::get_u8(tfdt_data, start)?;
 
       // Parse base_media_decode_time
       start = start + 4;
       let base_media_decode_time: u64;
       if version == 0 {
-        base_media_decode_time = u64::from(util::get_u32(tfdt_data, start)
-          .expect(format!("{}.parse.base_media_decode_time: cannot get u32 from start = {}", CLASS, start).as_ref()));
+        base_media_decode_time = u64::from(util::get_u32(tfdt_data, start)?);
       } else {
-        base_media_decode_time = util::get_u64(tfdt_data, start)
-          .expect(format!("{}.parse.base_media_decode_time: cannot get u64 from start = {}", CLASS, start).as_ref());
+        base_media_decode_time = util::get_u64(tfdt_data, start)?;
       }
-      return Ok(TFDT {
+      Ok(TFDT {
         box_type: box_type,
         size: size,
         base_media_decode_time: base_media_decode_time,
         version: version
       })
     } else {
-      Err("unable to find the tfdt".to_string())
+      Err(construct_error(
+        MajorCode::ISOBMFF,
+        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        format!("{}: Unable to find box", CLASS),
+        file!(),
+        line!()))
     }
   }
 }
