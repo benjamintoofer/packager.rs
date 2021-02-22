@@ -5,9 +5,10 @@ pub trait MinorError {
 }
 
 pub enum MajorCode {
-  ISOBMFF     = 0,
-  MANIFEST    = 1,
-  UTIL        = 2,
+  ISOBMFF           = 0,
+  TRANSPORT_STREAM  = 1,
+  MANIFEST          = 2,
+  UTIL              = 3,
   
 }
 
@@ -15,7 +16,11 @@ pub enum MajorCode {
 pub enum ISOBMFFMinorCode {
   UNABLE_TO_FIND_BOX_ERROR  = 0,
   PARSE_BOX_ERROR           = 1,
+}
 
+#[allow(non_camel_case_types)]
+pub enum TransportStreamMinorCode {
+  PARSE_TS_ERROR  = 0,
 }
 
 #[allow(non_camel_case_types)]
