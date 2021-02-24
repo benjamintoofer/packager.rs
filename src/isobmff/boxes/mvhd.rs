@@ -137,11 +137,9 @@ impl MVHD {
     let duration: u64;
     if version == 0 {
       duration = u64::from(util::get_u32(mvhd_data, start)?);
-      start = start + 4;
 
     } else {
       duration = util::get_u64(mvhd_data, start)?;
-      start = start + 8;
     }
     
     Ok(MVHD{
