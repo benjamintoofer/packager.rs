@@ -10,6 +10,7 @@ pub struct StreamInfo {
   pub stream_type: ElementaryStreamType,
 }
 
+#[allow(non_snake_case)]
 #[derive(Debug)]
 pub struct ProgramMapTable {
   table_id: u8,
@@ -26,6 +27,7 @@ pub struct ProgramMapTable {
   pub video_stream_info: Option<StreamInfo>,
 }
 
+#[allow(non_snake_case)]
 impl ProgramMapTable {
   pub fn parse(data: &[u8], payload_unit_start_indicator: bool) -> Result<ProgramMapTable, CustomError> {
     let mut start = 0usize;

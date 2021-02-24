@@ -1,6 +1,5 @@
 use program_association_table::ProgramAssociationTable;
 use program_map_table:: ProgramMapTable;
-use ts_packet::TransportPacket;
 
 use crate::error::CustomError;
 
@@ -66,20 +65,3 @@ pub fn parse_transport_stream(ts_file: &[u8]) -> Result<Vec<ts_packet::Transport
   }
   Ok(vec![])
 }
-
-// struct Something {
-//   mapping: HashMap<u16, fn(&[u8]) -> dyn Any>
-// }
-
-// impl Something {
-//   pub fn register<T>(&mut self, id: u16, f: fn(&[u8]) -> T ) {
-//     self.mapping.insert(id, f);
-//   }
-// }
-
-// fn generate(ts_packet: TransportPacket) {
-//   match ts_packet.pid {
-//     1 => {}
-//     _ => {}
-//   }
-// }

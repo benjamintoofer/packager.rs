@@ -1,4 +1,4 @@
-use crate::error::{CustomError, construct_error};
+use crate::error::{CustomError};
 use crate::util;
 
 static TS_PACKET_SIZE: usize = 188;
