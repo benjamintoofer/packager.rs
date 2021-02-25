@@ -104,11 +104,12 @@ impl MVHD {
     };
 
     // Parse version
-    start = end;
+    start = start + 4;
     let version = util::get_u8(mvhd_data, start)?;
+    // Skip flags
 
     // Parse creation_time
-    start = start + 3;
+    start = start + 4;
     let creation_time: u64;
     if version == 0 {
       creation_time = u64::from(util::get_u32(mvhd_data, start)?);
@@ -170,8 +171,8 @@ mod tests {
       version: 0,
       creation_time: 0,
       modification_time: 0,
-      timescale: 3,
-      duration: 3892314229
+      timescale: 1000,
+      duration: 30033
     };
     let mp4_file = fs::read(file_path);
     if let Ok(mp4) = mp4_file {

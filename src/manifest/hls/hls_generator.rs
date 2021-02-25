@@ -35,7 +35,7 @@ impl ManifestGenerator for HLSGenerator {
           continue;
         }
 
-        let segment_duration: f64 = (decode_time as f64 - prev_decode_time as f64) / timescale as f64;
+        let segment_duration: f32 = (decode_time as f32 - prev_decode_time as f32) / timescale as f32;
         println!("PREV DECODE TIME = {}", prev_decode_time);
         println!("DECODE TIME = {}", decode_time);
         println!("SEG DURATION = {}", segment_duration);
@@ -46,5 +46,11 @@ impl ManifestGenerator for HLSGenerator {
     println!("ASSET DURATION = {}", asset_duration_sec);
     println!("LAST SEG  DURATION = {}", (asset_duration_sec - (prev_decode_time as f64/timescale as f64)));
     manifest_str  
+  }
+}
+
+impl HLSGenerator {
+  pub fn generate_master() {
+    
   }
 }

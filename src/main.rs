@@ -1,11 +1,8 @@
 use std::{ fs, process };
 
-use isobmff::sample_entry::mp4a_sample_entry;
-
 use crate::isobmff::boxes::{ iso_box, mvhd, sidx, stsd };
-use crate::manifest::hls::hls_generator;
+use crate::manifest::hls::hls_generator::HLSGenerator;
 use crate::manifest::manifest_generator::ManifestGenerator;
-use crate::transport_stream::parse_transport_stream;
 
 
 pub mod isobmff;
@@ -48,46 +45,26 @@ PARSE AAC(MP4A) codec string
 
 fn main() {
   println!("TP");
-  // let file_path = "./assets/a_frag.mp4";
+  let file_path = "./assets/v_frag.mp4";
   
-  // let mp4_file = fs::read(file_path);
-  // if let Ok(mp4) = mp4_file {
+  let mp4_file = fs::read(file_path);
+  if let Ok(mp4) = mp4_file {
 
-  //   let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
-  //   let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
-  //   let mvhd_timescale = mvhd_box.get_timescale() as f64;
-  //   let mvhd_duration = mvhd_box.get_duration() as f64;
-  //   let offset = iso_box::get_init_segment_end(&mp4);
-  //   hls_generator::HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
-  //   let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
-  //   print!("{:#?}", stsd.get_samples_length());
-  //   // let some = stsd.read_sample_entry("avc1");
-  //   let some = stsd.read_sample_entry("mp4a");
-  //   match some {
-  //     Some(byte_data) => {
-  //       // let avc_sample_entry = avc_sample_entry::AVCSampleEntry::parse(byte_data);
-  //       let mp4a_sample_entry = mp4a_sample_entry::MP4ASampleEntry::parse(byte_data);
-  //       print!("{:#?}", mp4a_sample_entry);
-  //     }
-  //     None => {print!("NOT FOUND :(")}
-  //   }
-  // } else {
-  //     let mut error_message = "main: Could not open file = ".to_owned();
-  //     error_message.push_str(file_path);
-  //     eprintln!("{}", error_message);
-  //     process::exit(1);
-  // }
-
-  let file_path = "./assets/hls/media-1/segment-0.ts";
-  let ts_file = fs::read(file_path);
-  if let Ok(ts) = ts_file {
-    parse_transport_stream(ts.as_ref());
+    let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
+    let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
+    let mvhd_timescale = mvhd_box.get_timescale() as f64;
+    let mvhd_duration = mvhd_box.get_duration() as f64;
+    let offset = iso_box::get_init_segment_end(&mp4);
+    println!("SIDX timescale: {}; MVHD DUR: {}; MVHD TIMESCALE: {}, ASSET DUR: {}",sidx_box.get_timescale(), mvhd_duration, mvhd_timescale, mvhd_duration / mvhd_timescale);
+    HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
+    HLSGenerator::generate_master();
+    let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
+    print!("{:#?}", stsd.get_samples_length());
   } else {
-    let mut error_message = "main: Could not open file = ".to_owned();
-    error_message.push_str(file_path);
-    eprintln!("{}", error_message);
-    process::exit(1);
+      let mut error_message = "main: Could not open file = ".to_owned();
+      error_message.push_str(file_path);
+      eprintln!("{}", error_message);
+      process::exit(1);
   }
     
 }
-
