@@ -9,3 +9,4 @@
 # Other
 /assets
 .vscode
+.DS_Store
