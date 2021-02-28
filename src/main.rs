@@ -1,11 +1,11 @@
 use std::{ fs, process };
 
-use isobmff::sample_entry::mp4a_sample_entry;
-
 use crate::isobmff::boxes::{ iso_box, mvhd, sidx, stsd };
-use crate::manifest::hls::hls_generator;
+use crate::manifest::hls::hls_generator::HLSGenerator;
 use crate::manifest::manifest_generator::ManifestGenerator;
-use crate::transport_stream::parse_transport_stream;
+use crate::transcoder::ffmpeg::FFMPEG;
+use crate::transcoder::bento::Bento;
+use crate::transcoder::VideoSize;
 
 
 pub mod isobmff;
@@ -13,6 +13,7 @@ pub mod transport_stream;
 pub mod manifest;
 pub mod util;
 pub mod error;
+pub mod transcoder;
 
 //  1. Given a path to the asset and it's transcoded mp4's (must be fragmented for now and seperated tracks (Need to add ability to parse single mp4 with both tracks))
 //  2. Iterate through each rendition, collect the correct metadata to generate master manifest
@@ -48,9 +49,30 @@ PARSE AAC(MP4A) codec string
 
 fn main() {
   println!("TP");
-  // let file_path = "./assets/a_frag.mp4";
+  let file_path = "./assets/v_frag.mp4";
+  let file_input = "./temp/recording.mp4";
+  let output_dir = "./output";
+  let output = format!("{}/recording",output_dir);
+
+  fs::create_dir_all(&output).unwrap();
   
-  // let mp4_file = fs::read(file_path);
+  let mp4_file = fs::read(file_path);
+  let sizes: Vec<VideoSize> = vec![VideoSize::_720, VideoSize::_480, VideoSize::_360];
+  FFMPEG::transcode(file_input, &output, sizes);
+
+  let mut mp4_files_path: Vec<String> = vec![];
+  let read_dir = fs::read_dir(&output).unwrap();
+  for entry in read_dir {
+    let file_entry = entry.unwrap();
+    println!("TYPE: {:?}", file_entry.path().extension().unwrap());
+    if file_entry.path().extension().unwrap() == "mp4" {
+      mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+    }
+  }
+  Bento::fragment(mp4_files_path);
+
+
+
   // if let Ok(mp4) = mp4_file {
 
   //   let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
@@ -58,36 +80,17 @@ fn main() {
   //   let mvhd_timescale = mvhd_box.get_timescale() as f64;
   //   let mvhd_duration = mvhd_box.get_duration() as f64;
   //   let offset = iso_box::get_init_segment_end(&mp4);
-  //   hls_generator::HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
+  //   println!("SIDX timescale: {}; MVHD DUR: {}; MVHD TIMESCALE: {}, ASSET DUR: {}",sidx_box.get_timescale(), mvhd_duration, mvhd_timescale, mvhd_duration / mvhd_timescale);
+  //   HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
+  //   // Need all bitrates
+  //   HLSGenerator::generate_master();
   //   let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
   //   print!("{:#?}", stsd.get_samples_length());
-  //   // let some = stsd.read_sample_entry("avc1");
-  //   let some = stsd.read_sample_entry("mp4a");
-  //   match some {
-  //     Some(byte_data) => {
-  //       // let avc_sample_entry = avc_sample_entry::AVCSampleEntry::parse(byte_data);
-  //       let mp4a_sample_entry = mp4a_sample_entry::MP4ASampleEntry::parse(byte_data);
-  //       print!("{:#?}", mp4a_sample_entry);
-  //     }
-  //     None => {print!("NOT FOUND :(")}
-  //   }
   // } else {
   //     let mut error_message = "main: Could not open file = ".to_owned();
   //     error_message.push_str(file_path);
   //     eprintln!("{}", error_message);
   //     process::exit(1);
   // }
-
-  let file_path = "./assets/hls/media-1/segment-0.ts";
-  let ts_file = fs::read(file_path);
-  if let Ok(ts) = ts_file {
-    parse_transport_stream(ts.as_ref());
-  } else {
-    let mut error_message = "main: Could not open file = ".to_owned();
-    error_message.push_str(file_path);
-    eprintln!("{}", error_message);
-    process::exit(1);
-  }
     
 }
-
