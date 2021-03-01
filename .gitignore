@@ -10,3 +10,7 @@
 /assets
 .vscode
 .DS_Store
+
+# Custom
+/output
+/temp

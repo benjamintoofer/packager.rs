@@ -48,28 +48,8 @@ PARSE AAC(MP4A) codec string
  */
 
 fn main() {
-  println!("TP");
   let file_path = "./assets/v_frag.mp4";
-  let file_input = "./temp/recording.mp4";
-  let output_dir = "./output";
-  let output = format!("{}/recording",output_dir);
-
-  fs::create_dir_all(&output).unwrap();
-  
-  let mp4_file = fs::read(file_path);
-  let sizes: Vec<VideoSize> = vec![VideoSize::_720, VideoSize::_480, VideoSize::_360];
-  FFMPEG::transcode(file_input, &output, sizes);
-
-  let mut mp4_files_path: Vec<String> = vec![];
-  let read_dir = fs::read_dir(&output).unwrap();
-  for entry in read_dir {
-    let file_entry = entry.unwrap();
-    println!("TYPE: {:?}", file_entry.path().extension().unwrap());
-    if file_entry.path().extension().unwrap() == "mp4" {
-      mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
-    }
-  }
-  Bento::fragment(mp4_files_path);
+  // generate_content();
 
 
 
@@ -93,4 +73,30 @@ fn main() {
   //     process::exit(1);
   // }
     
+}
+fn generate_content() {
+  let file_input = "./temp/recording.mp4";
+  let output_dir = "./output";
+  let output = format!("{}/recording",output_dir);
+
+  fs::create_dir_all(&output).unwrap();
+  
+  let sizes: Vec<VideoSize> = vec![VideoSize::_720, VideoSize::_480, VideoSize::_360];
+  FFMPEG::transcode(file_input, &output, sizes);
+
+  let mut mp4_files_path: Vec<String> = vec![];
+  let read_dir = fs::read_dir(&output).unwrap();
+  for entry in read_dir {
+    let file_entry = entry.unwrap();
+    if file_entry.path().extension().unwrap() == "mp4" {
+      mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+    }
+  }
+  Bento::fragment(mp4_files_path);
+}
+
+fn generate_manifest() {
+  let output_dir = "./output";
+  let output = format!("{}/recording",output_dir);
+  let read_dir = fs::read_dir(&output).unwrap();
 }
