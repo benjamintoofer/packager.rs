@@ -16,6 +16,19 @@ impl HLSVersion {
   }
 }
 
+pub enum HLSPlaylistType {
+  EVENT,
+  VOD
+}
+impl HLSPlaylistType {
+  pub fn value(&self) -> &str {
+    match self {
+        HLSPlaylistType::EVENT => {"EVENT"}
+        HLSPlaylistType::VOD => {"VOD"}
+    }
+  }
+}
+
 #[allow(non_camel_case_types)]
 pub enum HLSMediaType {
   AUDIO,
