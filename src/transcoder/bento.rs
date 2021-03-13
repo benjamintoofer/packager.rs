@@ -1,9 +1,7 @@
 use std::process::Command;
 use std::thread;
 
-pub struct Bento {
-
-}
+pub struct Bento;
 
 impl Bento {
   pub fn fragment(paths: Vec<String>) {

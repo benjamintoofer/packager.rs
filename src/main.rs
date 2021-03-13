@@ -5,7 +5,7 @@ use crate::manifest::hls::hls_generator::HLSGenerator;
 use crate::manifest::manifest_generator::ManifestGenerator;
 use crate::transcoder::ffmpeg::FFMPEG;
 use crate::transcoder::bento::Bento;
-use crate::transcoder::VideoSize;
+use crate::transcoder::VideoResolution;
 
 
 pub mod isobmff;
@@ -81,7 +81,7 @@ fn generate_content() {
 
   fs::create_dir_all(&output).unwrap();
   
-  let sizes: Vec<VideoSize> = vec![VideoSize::_720, VideoSize::_480, VideoSize::_360];
+  let sizes: Vec<VideoResolution> = vec![VideoResolution::_720, VideoResolution::_480, VideoResolution::_360];
   FFMPEG::transcode(file_input, &output, sizes);
 
   let mut mp4_files_path: Vec<String> = vec![];
@@ -99,4 +99,5 @@ fn generate_manifest() {
   let output_dir = "./output";
   let output = format!("{}/recording",output_dir);
   let read_dir = fs::read_dir(&output).unwrap();
+  HLSGenerator::generate_master(read_dir);
 }
