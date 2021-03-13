@@ -219,7 +219,7 @@ impl HLSWriter {
   }
 
   fn part_inf(&mut self, part_target: f32) -> &HLSWriter {
-     self.hls_manifest_str.push_str(format!("{}-X-PART-INF:PART-TARGET={}\n", EXT_TAG_PREFIX, part_target).as_str());
+    self.hls_manifest_str.push_str(format!("{}-X-PART-INF:PART-TARGET={}\n", EXT_TAG_PREFIX, part_target).as_str());
     self
   }
 
@@ -265,8 +265,24 @@ impl HLSWriter {
     self
   }
 
-  fn part(&mut self) -> &HLSWriter {
-    self.hls_manifest_str.push_str(format!("{}-X-GAP", EXT_TAG_PREFIX).as_str());
+  fn part(&mut self, duration: f32, uri: &str, independent: bool, byte: Option<u32>, offset: Option<u32>, gap: Option<HLSBool>) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-PART:DURATION={},URI=\"{}\"", EXT_TAG_PREFIX, duration, uri).as_str());
+    if independent {
+      self.hls_manifest_str.push_str(format!(",INDEPENDENT=YES").as_str());  
+    }
+
+    if let Some(byte) = byte {
+      self.hls_manifest_str.push_str(format!(",BYTERANGE={}", byte).as_str());  
+    }
+
+    if let Some(offset) = offset {
+      self.hls_manifest_str.push_str(format!("@{}", offset).as_str());  
+    }
+
+    if let Some(gap) = gap {
+      self.hls_manifest_str.push_str(format!(",GAP={}", gap.value()).as_str());  
+    }
+    self.hls_manifest_str.push('\n');
     self
   }
 
@@ -296,7 +312,7 @@ impl HLSWriter {
 #[cfg(test)]
 mod tests {
   use super::HLSWriter;
-  use super::{HLSVersion, HDCP_LEVEL, VIDEO_RANGE, VideoResolution, HLSMediaType, HLSBool, CCInstreamId};
+  use super::{HLSVersion, HDCP_LEVEL, VIDEO_RANGE, VideoResolution, HLSMediaType, HLSBool, CCInstreamId, HLSPlaylistType};
 
   /**
    * Master Manifest Tags.
@@ -499,9 +515,95 @@ mod tests {
    * Playlist Manifest Tags
    */
 
-   //Soemthing
+  // TARGETDURATION
+  #[test]
+  fn test_target_duration() {
+    let expected_manifest = "#EXT-X-TARGETDURATION:6\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.target_duration(6);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // MEDIA SEQUENCE
+  #[test]
+  fn test_media_sequence() {
+    let expected_manifest = "#EXT-X-MEDIA-SEQUENCE:0\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.media_sequence(0);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // DISCONTINUITY SEQUENCE
+  #[test]
+  fn test_discontinuity_sequence() {
+    let expected_manifest = "#EXT-X-DISCONTINUITY-SEQUENCE:0\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.discontinuity_sequence(0);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // ENDLIST
+  #[test]
+  fn test_endlist() {
+    let expected_manifest = "#EXT-X-ENDLIST\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.endlist();
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // PLAYLIST TYPE
+  #[test]
+  fn test_playlist_type() {
+    let expected_manifest = "#EXT-X-PLAYLIST-TYPE:VOD\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.playlist_type(HLSPlaylistType::VOD);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // I FRAME ONLY
+  #[test]
+  fn test_i_frame_only() {
+    let expected_manifest = "#EXT-X-I-FRAMES-ONLY\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.i_frames_only();
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // PART INF
+  #[test]
+  fn test_part_inf() {
+    let expected_manifest = "#EXT-X-PART-INF:PART-TARGET=0.33334\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.part_inf(0.33334);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+   /**
+   * Media Segment Tags
+   */
+
+   // INF
    #[test]
-   fn test_something() {
+   fn test_inf_with_minimum_options() {
+     
+   }
+
+   #[test]
+   fn test_inf_with_maximum_options() {
      
    }
 }
