@@ -1,6 +1,7 @@
 use crate::transcoder::VideoResolution;
 use crate::manifest::hls::{
   HLSVersion,
+  HLSPlaylistType,
   HLSMediaType,
   VIDEO_RANGE,
   HDCP_LEVEL,
@@ -21,10 +22,27 @@ impl HLSWriter {
     self
   }
 
+  /**
+   * Basic Manifest Tags.
+   */
+
   fn version(&mut self, version: HLSVersion) -> &HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-VERSION:{}\n", EXT_TAG_PREFIX, version.value()).as_str());
     self
   }
+
+  /**
+   * Master and Playlist Manifest Tags.
+   */
+
+  fn independent(&mut self) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-INDEPENDENT-SEGMENTS\n", EXT_TAG_PREFIX).as_str());  
+    self
+  }
+
+  /**
+   * Master Manifest Tags.
+   */
 
   fn stream_inf(
     &mut self,
@@ -136,10 +154,10 @@ impl HLSWriter {
     uri: &str,
     bandwidth: u32,
     average_bandwidth: Option<u32>,
-    hdcp_level: Option<HDCP_LEVEL>,              // TODO (benjamintoofer@gmail.com): Enumerated value (https://tools.ietf.org/html/draft-pantos-hls-rfc8216bis-07#section-4.4.6.2)
+    hdcp_level: Option<HDCP_LEVEL>,
     allowed_cpc: Option<&str>,
     resolution: Option<VideoResolution>,
-    video_range: Option<VIDEO_RANGE>,          // TODO (benjamintoofer@gmail.com): Enumerated value (https://tools.ietf.org/html/draft-pantos-hls-rfc8216bis-07#section-4.4.6.2)
+    video_range: Option<VIDEO_RANGE>,
     codecs: Option<&str>,
     // group-ids
     video: Option<&str>,
@@ -171,17 +189,120 @@ impl HLSWriter {
     self
   }
 
-  fn independent(&mut self) -> &HLSWriter {
-    self.hls_manifest_str.push_str(format!("{}-X-INDEPENDENT-SEGMENTS\n", EXT_TAG_PREFIX).as_str());  
+  /**
+   * Playlist Manifest Tags
+   */
+  
+  fn target_duration(&mut self, duration: u8) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-TARGETDURATION:{}\n", EXT_TAG_PREFIX, duration).as_str());
     self
   }
+
+  fn media_sequence(&mut self, sequence: u16) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-MEDIA-SEQUENCE:{}\n", EXT_TAG_PREFIX, sequence).as_str());
+    self
+  }
+
+  fn playlist_type(&mut self, playlist: HLSPlaylistType) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-PLAYLIST-TYPE:{}\n", EXT_TAG_PREFIX, playlist.value()).as_str());
+    self
+  }
+
+  fn discontinuity_sequence(&mut self, sequence: u16) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-DISCONTINUITY-SEQUENCE:{}\n", EXT_TAG_PREFIX, sequence).as_str());
+    self
+  }
+
+  fn i_frames_only(&mut self) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-I-FRAMES-ONLY\n", EXT_TAG_PREFIX).as_str());
+    self
+  }
+
+  fn part_inf(&mut self, part_target: f32) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-PART-INF:PART-TARGET={}\n", EXT_TAG_PREFIX, part_target).as_str());
+    self
+  }
+
+  fn endlist(&mut self) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-ENDLIST\n", EXT_TAG_PREFIX).as_str());  
+    self
+  }
+
+  /**
+   * Media Segment Tags
+   */
+
+  fn inf(&mut self, duration: f32, uri: Option<&str>) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}INF:{}\n", EXT_TAG_PREFIX, duration).as_str());  
+    if let Some(uri) = uri {
+      self.hls_manifest_str.push_str(format!("{}\n", uri).as_str());  
+    }
+    self
+  }
+
+  fn byte_range(&mut self, bytes: u32, offset: u32, uri: &str) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-BYTERANGE:{}@{}\n{}\n", EXT_TAG_PREFIX, bytes, offset, uri).as_str());
+    self
+  }
+
+  fn discontinuity(&mut self) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-DISCONTINUITY\n", EXT_TAG_PREFIX).as_str());
+    self
+  }
+
+  fn map(&mut self, uri: &str, bytes: Option<u32>, offset: Option<u32>) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-MAP:URI=\"{}\"", EXT_TAG_PREFIX, uri).as_str());
+    if let Some(bytes) = bytes {
+      self.hls_manifest_str.push_str(format!(",BYTERANGE=\"{}", bytes).as_str());  
+    }
+    if let Some(offset) = offset {
+      self.hls_manifest_str.push_str(format!("@{}\"", offset).as_str());  
+    }
+    self.hls_manifest_str.push('\n');
+    self
+  }
+
+  fn gap(&mut self) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-GAP\n", EXT_TAG_PREFIX).as_str());
+    self
+  }
+
+  fn program_date_time(&mut self, time: &str) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-PROGRAM-DATE-TIME:{}\n", EXT_TAG_PREFIX, time).as_str());
+    self
+  }
+
+  fn part(&mut self, duration: f32, uri: &str, independent: bool, byte: Option<u32>, offset: Option<u32>, gap: Option<HLSBool>) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-PART:DURATION={},URI=\"{}\"", EXT_TAG_PREFIX, duration, uri).as_str());
+    if independent {
+      self.hls_manifest_str.push_str(format!(",INDEPENDENT=YES").as_str());  
+    }
+
+    if let Some(byte) = byte {
+      self.hls_manifest_str.push_str(format!(",BYTERANGE={}", byte).as_str());  
+    }
+
+    if let Some(offset) = offset {
+      self.hls_manifest_str.push_str(format!("@{}", offset).as_str());  
+    }
+
+    if let Some(gap) = gap {
+      self.hls_manifest_str.push_str(format!(",GAP={}", gap.value()).as_str());  
+    }
+    self.hls_manifest_str.push('\n');
+    self
+  }
+
+  /**
+   * Operations
+   */
 
   fn new_line(&mut self) -> &HLSWriter {
     self.hls_manifest_str.push('\n'); 
     self
   }
 
-  fn end(&self) -> &str {
+  fn finish(&self) -> &str {
     self.hls_manifest_str.as_str()
   } 
 }
@@ -198,10 +319,10 @@ impl HLSWriter {
 #[cfg(test)]
 mod tests {
   use super::HLSWriter;
-  use super::{HLSVersion, HDCP_LEVEL, VIDEO_RANGE, VideoResolution, HLSMediaType, HLSBool, CCInstreamId};
+  use super::{HLSVersion, HDCP_LEVEL, VIDEO_RANGE, VideoResolution, HLSMediaType, HLSBool, CCInstreamId, HLSPlaylistType};
 
   /**
-   * Master Manifest Tags
+   * Master Manifest Tags.
    */
 
   // VERSION
@@ -212,7 +333,7 @@ mod tests {
     let mut writer = HLSWriter::createWriter();
     writer.version(HLSVersion::_7);
 
-    assert_eq!(writer.end(), expected_manifest);
+    assert_eq!(writer.finish(), expected_manifest);
   }
 
   // STREAM INF
@@ -237,7 +358,7 @@ mod tests {
       Option::None,
     );
 
-    assert_eq!(writer.end(), expected_manifest);
+    assert_eq!(writer.finish(), expected_manifest);
   }
 
   #[test]
@@ -274,7 +395,7 @@ mod tests {
       Option::Some("cc1"),
     );
 
-    assert_eq!(writer.end(), expected_manifest);
+    assert_eq!(writer.finish(), expected_manifest);
   }
 
   // MEDIA
@@ -298,7 +419,7 @@ mod tests {
       Option::None
     );
 
-    assert_eq!(writer.end(), expected_manifest);
+    assert_eq!(writer.finish(), expected_manifest);
   }
 
   #[test]
@@ -333,7 +454,7 @@ mod tests {
       Option::Some("2")
     );
 
-    assert_eq!(writer.end(), expected_manifest);
+    assert_eq!(writer.finish(), expected_manifest);
   }
 
   // I FRAME STREAM INF
@@ -354,7 +475,7 @@ mod tests {
       Option::None,
     );
 
-    assert_eq!(writer.end(), expected_manifest);
+    assert_eq!(writer.finish(), expected_manifest);
   }
 
   #[test]
@@ -383,7 +504,7 @@ mod tests {
       Option::Some("v1"),
     );
 
-    assert_eq!(writer.end(), expected_manifest);
+    assert_eq!(writer.finish(), expected_manifest);
   }
 
   // INDEPENDENT
@@ -394,16 +515,202 @@ mod tests {
     let mut writer = HLSWriter::createWriter();
     writer.independent();
 
-    assert_eq!(writer.end(), expected_manifest);
+    assert_eq!(writer.finish(), expected_manifest);
   }
 
   /**
    * Playlist Manifest Tags
    */
 
-   //Soemthing
-   #[test]
-   fn test_something() {
-     
-   }
+  // TARGETDURATION
+  #[test]
+  fn test_target_duration() {
+    let expected_manifest = "#EXT-X-TARGETDURATION:6\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.target_duration(6);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // MEDIA SEQUENCE
+  #[test]
+  fn test_media_sequence() {
+    let expected_manifest = "#EXT-X-MEDIA-SEQUENCE:0\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.media_sequence(0);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // DISCONTINUITY SEQUENCE
+  #[test]
+  fn test_discontinuity_sequence() {
+    let expected_manifest = "#EXT-X-DISCONTINUITY-SEQUENCE:0\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.discontinuity_sequence(0);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // ENDLIST
+  #[test]
+  fn test_endlist() {
+    let expected_manifest = "#EXT-X-ENDLIST\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.endlist();
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // PLAYLIST TYPE
+  #[test]
+  fn test_playlist_type() {
+    let expected_manifest = "#EXT-X-PLAYLIST-TYPE:VOD\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.playlist_type(HLSPlaylistType::VOD);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // I FRAME ONLY
+  #[test]
+  fn test_i_frame_only() {
+    let expected_manifest = "#EXT-X-I-FRAMES-ONLY\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.i_frames_only();
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // PART INF
+  #[test]
+  fn test_part_inf() {
+    let expected_manifest = "#EXT-X-PART-INF:PART-TARGET=0.33334\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.part_inf(0.33334);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+   /**
+   * Media Segment Tags
+   */
+
+  // INF
+  #[test]
+  fn test_inf_with_minimum_options() {
+    let expected_manifest = "#EXTINF:6.006\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.inf(6.006, Option::None);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  #[test]
+  fn test_inf_with_maximum_options() {
+    let expected_manifest = "#EXTINF:6.006\nsegment0.ts\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.inf(6.006, Option::Some("segment0.ts"));
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // BYTERANGE
+  #[test]
+  fn test_byterange() {
+    let expected_manifest = "#EXT-X-BYTERANGE:100@0\nsegment.ts\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.byte_range(100, 0, "segment.ts");
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // DISCONTINUITY
+  #[test]
+  fn test_discontinuity() {
+    let expected_manifest = "#EXT-X-DISCONTINUITY\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.discontinuity();
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // MAP
+  #[test]
+  fn test_map() {
+    let expected_manifest = "#EXT-X-MAP:URI=\"main.mp4\",BYTERANGE=\"560@0\"\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.map("main.mp4", Some(560), Some(0));
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // PROGRAM DATE TIME
+  #[test]
+  fn test_program_date_time() {
+    let expected_manifest = "#EXT-X-PROGRAM-DATE-TIME:2010-02-19T14:54:23.031+08:00\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.program_date_time("2010-02-19T14:54:23.031+08:00");
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // GAP
+  #[test]
+  fn test_gap() {
+    let expected_manifest = "#EXT-X-GAP\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.gap();
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // PART
+  #[test]
+  fn test_part_with_minimum_options() {
+    let expected_manifest = "#EXT-X-PART:DURATION=0.33334,URI=\"filePart271.0.mp4\"\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.part(
+      0.33334,
+      "filePart271.0.mp4",
+      false,
+      Option::None,
+      Option::None,
+      Option::None
+    );
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  #[test]
+  fn test_part_with_maximum_options() {
+    let expected_manifest = "#EXT-X-PART:DURATION=0.33334,URI=\"filePart271.0.mp4\",INDEPENDENT=YES,BYTERANGE=100@200,GAP=YES\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.part(
+      0.33334,
+      "filePart271.0.mp4",
+      true,
+      Option::Some(100),
+      Option::Some(200),
+      Option::Some(HLSBool::YES)
+    );
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
 }
