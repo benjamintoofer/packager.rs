@@ -1,18 +1,27 @@
 use std::process::Command;
 use std::thread;
 
-pub struct Bento {
-
-}
+pub struct Bento;
 
 impl Bento {
   pub fn fragment(paths: Vec<String>) {
     let mut children = vec![];
     for path in paths {
-      let mut bento_command = Command::new("mp4fragment");
-      let args = Bento::args(&path);
+      // let mut bento_command = Command::new("mp4fragment");
+
+      // Video
+      let args = Bento::args(&path, "video");
+      children.push(thread::spawn(|| {
+          Command::new("mp4fragment")
+            .args(args)
+            .spawn()
+            .expect("Failed to execute command");
+      }));
+
+      // Audio
+      let args = Bento::args(&path, "audio");
       children.push(thread::spawn(move || {
-          bento_command
+          Command::new("mp4fragment")
             .args(args)
             .spawn()
             .expect("Failed to execute command");
@@ -25,14 +34,15 @@ impl Bento {
     }
   }
 
-  fn args(path: &String) -> Vec<String> {
+  fn args(path: &String, track: &str) -> Vec<String> {
     println!("PATH: {}", path);
     vec![
       "--index".to_string(),
       "--fragment-duration".to_string(), "2000".to_string(),
       "--timescale".to_string(), "90000".to_string(),
+      "--track".to_string(), track.to_string(),
       path.to_string(),
-      path.replace(".mp4", "_frag.mp4")
+      path.replace(".mp4", format!("_frag_{}.mp4",track).as_str())
     ]
   }
 }

@@ -1,14 +1,14 @@
 use std::process::Command;
 use std::thread;
 
-use super::VideoSize;
+use super::VideoResolution;
 
 pub struct FFMPEG {
 
 }
 
 impl FFMPEG {
-  pub fn transcode(input:&str, output: &str, sizes: Vec<VideoSize>) {
+  pub fn transcode(input:&str, output: &str, sizes: Vec<VideoResolution>) {
     
     let mut ffmpeg_command = Command::new("ffmpeg");
     let mut args: Vec<String> = vec![
@@ -32,7 +32,7 @@ impl FFMPEG {
     handle.join().unwrap();
   }
 
-  fn args(size: VideoSize, output: &str) -> Vec<String> {
+  fn args(size: VideoResolution, output: &str) -> Vec<String> {
     println!("{}_{}.mp4", output, size.value());
     vec![
       "-y".to_string(), // Overrite existing files

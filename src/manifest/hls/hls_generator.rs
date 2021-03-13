@@ -1,7 +1,7 @@
 use crate::manifest::manifest_generator::ManifestGenerator;
 use crate::isobmff::boxes::tfdt::TFDT;
 
-use std::convert::TryInto;
+use std::{convert::TryInto, fs::ReadDir};
 use std::str;
 
 
@@ -46,5 +46,19 @@ impl ManifestGenerator for HLSGenerator {
     println!("ASSET DURATION = {}", asset_duration_sec);
     println!("LAST SEG  DURATION = {}", (asset_duration_sec - (prev_decode_time as f64/timescale as f64)));
     manifest_str  
+  }
+}
+
+impl HLSGenerator {
+  pub fn generate_master(read_dir: ReadDir) -> String {
+    let mut mp4_files_path: Vec<String> = vec![];
+    for entry in read_dir {
+      let file_entry = entry.unwrap();
+      if file_entry.path().extension().unwrap() == "mp4" {
+        mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+      }
+    }
+
+    "".to_string()
   }
 }
