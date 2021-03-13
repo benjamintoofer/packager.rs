@@ -241,27 +241,34 @@ impl HLSWriter {
   }
 
   fn byte_range(&mut self, bytes: u32, offset: u32, uri: &str) -> &HLSWriter {
-    self.hls_manifest_str.push_str(format!("{}-X-BYTERANGE:{}@{}\n{}", EXT_TAG_PREFIX, bytes, offset, uri).as_str());
+    self.hls_manifest_str.push_str(format!("{}-X-BYTERANGE:{}@{}\n{}\n", EXT_TAG_PREFIX, bytes, offset, uri).as_str());
     self
   }
 
   fn discontinuity(&mut self) -> &HLSWriter {
-    self.hls_manifest_str.push_str(format!("{}-X-DISCONTINUITY", EXT_TAG_PREFIX).as_str());
+    self.hls_manifest_str.push_str(format!("{}-X-DISCONTINUITY\n", EXT_TAG_PREFIX).as_str());
     self
   }
 
-  fn map(&mut self, uri: &str, bytes: u32, offset: u32) -> &HLSWriter {
-    self.hls_manifest_str.push_str(format!("{}-X-MAP:URI={},BYTERANGE={}@{}", EXT_TAG_PREFIX, uri, bytes, offset).as_str());
+  fn map(&mut self, uri: &str, bytes: Option<u32>, offset: Option<u32>) -> &HLSWriter {
+    self.hls_manifest_str.push_str(format!("{}-X-MAP:URI=\"{}\"", EXT_TAG_PREFIX, uri).as_str());
+    if let Some(bytes) = bytes {
+      self.hls_manifest_str.push_str(format!(",BYTERANGE=\"{}", bytes).as_str());  
+    }
+    if let Some(offset) = offset {
+      self.hls_manifest_str.push_str(format!("@{}\"", offset).as_str());  
+    }
+    self.hls_manifest_str.push('\n');
     self
   }
 
   fn gap(&mut self) -> &HLSWriter {
-    self.hls_manifest_str.push_str(format!("{}-X-GAP", EXT_TAG_PREFIX).as_str());
+    self.hls_manifest_str.push_str(format!("{}-X-GAP\n", EXT_TAG_PREFIX).as_str());
     self
   }
 
   fn program_date_time(&mut self, time: &str) -> &HLSWriter {
-    self.hls_manifest_str.push_str(format!("{}-X-PROGRAM-DATE-TIME: {}", EXT_TAG_PREFIX, time).as_str());
+    self.hls_manifest_str.push_str(format!("{}-X-PROGRAM-DATE-TIME:{}\n", EXT_TAG_PREFIX, time).as_str());
     self
   }
 
@@ -596,14 +603,114 @@ mod tests {
    * Media Segment Tags
    */
 
-   // INF
-   #[test]
-   fn test_inf_with_minimum_options() {
-     
-   }
+  // INF
+  #[test]
+  fn test_inf_with_minimum_options() {
+    let expected_manifest = "#EXTINF:6.006\n";
 
-   #[test]
-   fn test_inf_with_maximum_options() {
-     
-   }
+    let mut writer = HLSWriter::createWriter();
+    writer.inf(6.006, Option::None);
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  #[test]
+  fn test_inf_with_maximum_options() {
+    let expected_manifest = "#EXTINF:6.006\nsegment0.ts\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.inf(6.006, Option::Some("segment0.ts"));
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // BYTERANGE
+  #[test]
+  fn test_byterange() {
+    let expected_manifest = "#EXT-X-BYTERANGE:100@0\nsegment.ts\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.byte_range(100, 0, "segment.ts");
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // DISCONTINUITY
+  #[test]
+  fn test_discontinuity() {
+    let expected_manifest = "#EXT-X-DISCONTINUITY\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.discontinuity();
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // MAP
+  #[test]
+  fn test_map() {
+    let expected_manifest = "#EXT-X-MAP:URI=\"main.mp4\",BYTERANGE=\"560@0\"\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.map("main.mp4", Some(560), Some(0));
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // PROGRAM DATE TIME
+  #[test]
+  fn test_program_date_time() {
+    let expected_manifest = "#EXT-X-PROGRAM-DATE-TIME:2010-02-19T14:54:23.031+08:00\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.program_date_time("2010-02-19T14:54:23.031+08:00");
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // GAP
+  #[test]
+  fn test_gap() {
+    let expected_manifest = "#EXT-X-GAP\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.gap();
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  // PART
+  #[test]
+  fn test_part_with_minimum_options() {
+    let expected_manifest = "#EXT-X-PART:DURATION=0.33334,URI=\"filePart271.0.mp4\"\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.part(
+      0.33334,
+      "filePart271.0.mp4",
+      false,
+      Option::None,
+      Option::None,
+      Option::None
+    );
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
+
+  #[test]
+  fn test_part_with_maximum_options() {
+    let expected_manifest = "#EXT-X-PART:DURATION=0.33334,URI=\"filePart271.0.mp4\",INDEPENDENT=YES,BYTERANGE=100@200,GAP=YES\n";
+
+    let mut writer = HLSWriter::createWriter();
+    writer.part(
+      0.33334,
+      "filePart271.0.mp4",
+      true,
+      Option::Some(100),
+      Option::Some(200),
+      Option::Some(HLSBool::YES)
+    );
+
+    assert_eq!(writer.finish(), expected_manifest);
+  }
 }
