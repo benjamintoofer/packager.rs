@@ -34,3 +34,68 @@ impl HLSMediaType {
     }
   }
 }
+
+pub enum HLSBool {
+  YES,
+  NO
+}
+impl HLSBool {
+  pub fn value(&self) -> &str {
+    match self {
+        HLSBool::YES => {"YES"}
+        HLSBool::NO => {"NO"}
+    }
+  }
+}
+
+pub enum HDCP_LEVEL {
+  TYPE_0,
+  TYPE_1,
+  NONE
+}
+
+impl HDCP_LEVEL {
+  pub fn value(&self) -> &str {
+    match self {
+        HDCP_LEVEL::TYPE_0 => {"TYPE-0"}
+        HDCP_LEVEL::TYPE_1 => {"TYPE-1"}
+        HDCP_LEVEL::NONE => {"NONE"}
+    }
+  }
+}
+
+pub enum VIDEO_RANGE {
+  SDR,
+  HLG,
+  PQ
+}
+
+impl VIDEO_RANGE {
+  pub fn value(&self) -> &str {
+    match self {
+        VIDEO_RANGE::SDR => {"SDR"}
+        VIDEO_RANGE::HLG => {"HLG"}
+        VIDEO_RANGE::PQ => {"PQ"}
+    }
+  }
+}
+
+pub enum CCInstreamId {
+  CC1,
+  CC2,
+  CC3,
+  CC4,
+  NONE
+}
+
+impl CCInstreamId {
+  pub fn value(&self) -> &str {
+    match self {
+        CCInstreamId::CC1 => {"CC1"}
+        CCInstreamId::CC2 => {"CC2"}
+        CCInstreamId::CC3 => {"CC3"}
+        CCInstreamId::CC4 => {"CC4"}
+        CCInstreamId::NONE => {"NONE"}
+    }
+  }
+}
