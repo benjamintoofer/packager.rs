@@ -17,7 +17,7 @@ pub struct HLSWriter {
 
 
 impl HLSWriter {
-  pub fn start_hls(&mut self) -> &HLSWriter {
+  pub fn start_hls(&mut self) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}M3U\n", EXT_TAG_PREFIX).as_str());
     self
   }
@@ -26,7 +26,7 @@ impl HLSWriter {
    * Basic Manifest Tags.
    */
 
-  fn version(&mut self, version: HLSVersion) -> &HLSWriter {
+  pub fn version(&mut self, version: HLSVersion) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-VERSION:{}\n", EXT_TAG_PREFIX, version.value()).as_str());
     self
   }
@@ -35,7 +35,7 @@ impl HLSWriter {
    * Master and Playlist Manifest Tags.
    */
 
-  fn independent(&mut self) -> &HLSWriter {
+  pub fn independent(&mut self) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-INDEPENDENT-SEGMENTS\n", EXT_TAG_PREFIX).as_str());  
     self
   }
@@ -44,7 +44,7 @@ impl HLSWriter {
    * Master Manifest Tags.
    */
 
-  fn stream_inf(
+  pub fn stream_inf(
     &mut self,
     path: &str,
     bandwidth: u32,
@@ -60,7 +60,7 @@ impl HLSWriter {
     video: Option<&str>,
     subtitles: Option<&str>,
     closed_captions: Option<&str>,
-  ) -> &HLSWriter {
+  ) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-STREAM-INF:BANDWIDTH={}", EXT_TAG_PREFIX, bandwidth).as_str());  
     if let Some(average_bandwidth) = average_bandwidth {
       self.hls_manifest_str.push_str(format!(",AVERAGE-BANDWIDTH={}", average_bandwidth).as_str());  
@@ -102,7 +102,7 @@ impl HLSWriter {
     self
   }
 
-  fn media(
+  pub fn media(
     &mut self,
     media_type: HLSMediaType,
     group_id: &str,
@@ -116,7 +116,7 @@ impl HLSWriter {
     instream_id: Option<CCInstreamId>,          // ONLY CLOSED-CAPTIONS
     characteristics: Option<&str>,
     channels: Option<&str>,
-  ) -> &HLSWriter {
+  ) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-MEDIA:TYPE={},GROUP-ID=\"{}\",NAME=\"{}\"", EXT_TAG_PREFIX, media_type.value(), group_id, name).as_str());  
     if let Some(language) = language {
       self.hls_manifest_str.push_str(format!(",LANGUAGE=\"{}\"", language).as_str());  
@@ -149,7 +149,7 @@ impl HLSWriter {
     self
   }
 
-  fn i_frame_stream_inf(
+  pub fn i_frame_stream_inf(
     &mut self,
     uri: &str,
     bandwidth: u32,
@@ -161,7 +161,7 @@ impl HLSWriter {
     codecs: Option<&str>,
     // group-ids
     video: Option<&str>,
-  ) -> &HLSWriter {
+  ) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-I-FRAME-STREAM-INF:BANDWIDTH={}", EXT_TAG_PREFIX, bandwidth).as_str());  
     if let Some(average_bandwidth) = average_bandwidth {
       self.hls_manifest_str.push_str(format!(",AVERAGE-BANDWIDTH={}", average_bandwidth).as_str());  
@@ -193,37 +193,37 @@ impl HLSWriter {
    * Playlist Manifest Tags
    */
   
-  fn target_duration(&mut self, duration: u8) -> &HLSWriter {
+  pub fn target_duration(&mut self, duration: u8) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-TARGETDURATION:{}\n", EXT_TAG_PREFIX, duration).as_str());
     self
   }
 
-  fn media_sequence(&mut self, sequence: u16) -> &HLSWriter {
+  pub fn media_sequence(&mut self, sequence: u16) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-MEDIA-SEQUENCE:{}\n", EXT_TAG_PREFIX, sequence).as_str());
     self
   }
 
-  fn playlist_type(&mut self, playlist: HLSPlaylistType) -> &HLSWriter {
+  pub fn playlist_type(&mut self, playlist: HLSPlaylistType) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-PLAYLIST-TYPE:{}\n", EXT_TAG_PREFIX, playlist.value()).as_str());
     self
   }
 
-  fn discontinuity_sequence(&mut self, sequence: u16) -> &HLSWriter {
+  pub fn discontinuity_sequence(&mut self, sequence: u16) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-DISCONTINUITY-SEQUENCE:{}\n", EXT_TAG_PREFIX, sequence).as_str());
     self
   }
 
-  fn i_frames_only(&mut self) -> &HLSWriter {
+  pub fn i_frames_only(&mut self) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-I-FRAMES-ONLY\n", EXT_TAG_PREFIX).as_str());
     self
   }
 
-  fn part_inf(&mut self, part_target: f32) -> &HLSWriter {
+  pub fn part_inf(&mut self, part_target: f32) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-PART-INF:PART-TARGET={}\n", EXT_TAG_PREFIX, part_target).as_str());
     self
   }
 
-  fn endlist(&mut self) -> &HLSWriter {
+  pub fn endlist(&mut self) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-ENDLIST\n", EXT_TAG_PREFIX).as_str());  
     self
   }
@@ -232,7 +232,7 @@ impl HLSWriter {
    * Media Segment Tags
    */
 
-  fn inf(&mut self, duration: f32, uri: Option<&str>) -> &HLSWriter {
+  pub fn inf(&mut self, duration: f32, uri: Option<&str>) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}INF:{}\n", EXT_TAG_PREFIX, duration).as_str());  
     if let Some(uri) = uri {
       self.hls_manifest_str.push_str(format!("{}\n", uri).as_str());  
@@ -240,17 +240,17 @@ impl HLSWriter {
     self
   }
 
-  fn byte_range(&mut self, bytes: u32, offset: u32, uri: &str) -> &HLSWriter {
+  pub fn byte_range(&mut self, bytes: u32, offset: u32, uri: &str) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-BYTERANGE:{}@{}\n{}\n", EXT_TAG_PREFIX, bytes, offset, uri).as_str());
     self
   }
 
-  fn discontinuity(&mut self) -> &HLSWriter {
+  pub fn discontinuity(&mut self) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-DISCONTINUITY\n", EXT_TAG_PREFIX).as_str());
     self
   }
 
-  fn map(&mut self, uri: &str, bytes: Option<u32>, offset: Option<u32>) -> &HLSWriter {
+  pub fn map(&mut self, uri: &str, bytes: Option<u32>, offset: Option<u32>) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-MAP:URI=\"{}\"", EXT_TAG_PREFIX, uri).as_str());
     if let Some(bytes) = bytes {
       self.hls_manifest_str.push_str(format!(",BYTERANGE=\"{}", bytes).as_str());  
@@ -262,17 +262,17 @@ impl HLSWriter {
     self
   }
 
-  fn gap(&mut self) -> &HLSWriter {
+  pub fn gap(&mut self) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-GAP\n", EXT_TAG_PREFIX).as_str());
     self
   }
 
-  fn program_date_time(&mut self, time: &str) -> &HLSWriter {
+  pub fn program_date_time(&mut self, time: &str) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-PROGRAM-DATE-TIME:{}\n", EXT_TAG_PREFIX, time).as_str());
     self
   }
 
-  fn part(&mut self, duration: f32, uri: &str, independent: bool, byte: Option<u32>, offset: Option<u32>, gap: Option<HLSBool>) -> &HLSWriter {
+  pub fn part(&mut self, duration: f32, uri: &str, independent: bool, byte: Option<u32>, offset: Option<u32>, gap: Option<HLSBool>) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-PART:DURATION={},URI=\"{}\"", EXT_TAG_PREFIX, duration, uri).as_str());
     if independent {
       self.hls_manifest_str.push_str(format!(",INDEPENDENT=YES").as_str());  
@@ -297,12 +297,19 @@ impl HLSWriter {
    * Operations
    */
 
-  fn new_line(&mut self) -> &HLSWriter {
+  pub fn new_line(&mut self) -> &mut HLSWriter {
     self.hls_manifest_str.push('\n'); 
     self
   }
 
-  fn finish(&self) -> &str {
+  pub fn comment(&mut self, comment_str: &str) -> &mut HLSWriter {
+    self.hls_manifest_str.push_str("# ");
+    self.hls_manifest_str.push_str(comment_str); 
+    self.hls_manifest_str.push('\n');
+    self
+  }
+
+  pub fn finish(&self) -> &str {
     self.hls_manifest_str.as_str()
   } 
 }
