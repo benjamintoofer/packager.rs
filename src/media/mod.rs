@@ -1,3 +1,5 @@
+pub mod media_info_generator;
+
 pub struct MediaInfo<'a> {
   track_infos: Vec<TrackInfo<'a>> 
 }
