@@ -1,8 +1,8 @@
-use std::{ fs, process };
+use std::{ fs };
 
-use crate::isobmff::boxes::{ iso_box, mvhd, sidx, stsd };
+use crate::isobmff::boxes::{ iso_box };
 use crate::manifest::hls::hls_generator::HLSGenerator;
-use crate::manifest::manifest_generator::ManifestGenerator;
+
 use crate::transcoder::ffmpeg::FFMPEG;
 use crate::transcoder::bento::Bento;
 use crate::transcoder::VideoResolution;
@@ -14,6 +14,7 @@ pub mod manifest;
 pub mod util;
 pub mod error;
 pub mod transcoder;
+pub mod media;
 
 //  1. Given a path to the asset and it's transcoded mp4's (must be fragmented for now and seperated tracks (Need to add ability to parse single mp4 with both tracks))
 //  2. Iterate through each rendition, collect the correct metadata to generate master manifest
@@ -51,7 +52,7 @@ fn main() {
   let file_path = "./assets/v_frag.mp4";
   // generate_content();
 
-
+  HLSGenerator::generate_media_playlist("");
 
   // if let Ok(mp4) = mp4_file {
 

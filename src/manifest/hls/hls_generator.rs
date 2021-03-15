@@ -1,8 +1,11 @@
-use crate::manifest::manifest_generator::ManifestGenerator;
-use crate::isobmff::boxes::tfdt::TFDT;
-
 use std::{convert::TryInto, fs::ReadDir};
 use std::str;
+
+use crate::manifest::manifest_generator::ManifestGenerator;
+use crate::isobmff::boxes::tfdt::TFDT;
+use crate::manifest::hls::hls_writer::HLSWriter;
+
+use super::HLSVersion;
 
 
 pub struct HLSGenerator {
@@ -50,6 +53,10 @@ impl ManifestGenerator for HLSGenerator {
 }
 
 impl HLSGenerator {
+
+  // Need to know:
+  // - which veriosn of HLS
+  // - All avaialable tracks (audio+langiage, video+resolution/bitrate)
   pub fn generate_master(read_dir: ReadDir) -> String {
     let mut mp4_files_path: Vec<String> = vec![];
     for entry in read_dir {
@@ -60,5 +67,38 @@ impl HLSGenerator {
     }
 
     "".to_string()
+  }
+
+  // Need to know:
+  // - which veriosn of HLS
+  // - if each segment starts with an Iframe (independent segments tag)
+  // - if byterange
+  // - maximum segment duration
+  // - segment  info (path, duration)
+
+  pub fn generate_media_playlist(metadata: &str) {
+
+    let mut hls_writer = HLSWriter::createWriter();
+    let manifest_str = hls_writer.start_hls()
+      .new_line()
+      .comment("This manifest is created by Benjamin Toofer")
+      .new_line()
+      .target_duration(6)
+      .version(HLSVersion::_7)
+      .map("init.mp4", Option::None, Option::None)
+      .new_line()
+      .inf(6.006, Option::Some("segment_0.mp4"))
+      .inf(6.006, Option::Some("segment_1.mp4"))
+      .inf(6.006, Option::Some("segment_2.mp4"))
+      .inf(6.006, Option::Some("segment_3.mp4"))
+      .inf(6.006, Option::Some("segment_4.mp4"))
+      .endlist()
+      .finish();
+    
+    println!("{}", manifest_str);
+  }
+
+  pub fn generate_i_frame_playlist() {
+
   }
 }
