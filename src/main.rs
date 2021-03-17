@@ -48,11 +48,14 @@ PARSE AAC(MP4A) codec string
 4. parse ESDBox (14996-1 7.2.6.5)
  */
 
+ use std::{convert::TryInto};
+
 fn main() {
   let file_path = "./assets/v_frag.mp4";
   // generate_content();
-
-  HLSGenerator::generate_media_playlist("");
+  let t = [0xef];
+  println!("{}", i8::from_be_bytes(t));
+  // HLSGenerator::generate_media_playlist("");
 
   // if let Ok(mp4) = mp4_file {
 

@@ -14,6 +14,7 @@ pub struct TFHD {
   box_type: String,
   version: u8,                    // 0
   flags: u32,                     // u24
+  track_id: u32,
   base_data_offset: Option<u64>,
   sample_description_index: Option<u32>,
   default_sample_duration: Option<u32>,
@@ -45,8 +46,15 @@ impl IsoFullBox for TFHD {
 
 impl PartialEq for TFHD {
   fn eq(&self, other: &Self) -> bool {
-      self.size == other.size &&
-      self.flags == other.flags
+    self.size == other.size &&
+    self.flags == other.flags &&
+    self.base_data_offset == other.base_data_offset &&
+    self.sample_description_index == other.sample_description_index &&
+    self.default_sample_duration == other.default_sample_duration &&
+    self.default_sample_size == other.default_sample_size &&
+    self.default_sample_flags == other.default_sample_flags &&
+    self.default_base_is_moof == other.default_base_is_moof &&
+    self.duration_is_empty == other.duration_is_empty 
   }
 }
 
@@ -84,7 +92,10 @@ impl TFHD {
 
     // Parse flags
     start = start + 4;
-    let flags = util::get_u32(tfhd_data, start)? & 0xFFF;
+    let flags = util::get_u32(tfhd_data, start)? & 0xFFFFFF;
+
+    start = start + 4;
+    let track_id = util::get_u32(tfhd_data, start)?;
 
     start = start + 4;
     // base-data-offset-present
@@ -131,6 +142,7 @@ impl TFHD {
       box_type,
       version: 0,
       flags,
+      track_id,
       base_data_offset,
       sample_description_index,
       default_sample_duration,
@@ -157,8 +169,14 @@ mod tests {
       size: 28,
       version: 0,
       flags: 0x2002A,
+      track_id: 1,
       sample_description_index: Option::Some(1),
-      default_sample_flags: Option::Some(0x1010000)
+      default_sample_flags: Option::Some( 0x1010000),
+      base_data_offset: Option::None,
+      default_sample_duration: Option::Some(1),
+      default_sample_size: Option::None,
+      default_base_is_moof: true,
+      duration_is_empty: false
     };
     let mp4_file = fs::read(file_path);
     if let Ok(mp4) = mp4_file {
