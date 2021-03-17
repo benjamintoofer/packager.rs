@@ -3,6 +3,10 @@ use crate::error::{error_code:: {MajorCode, UtilMinorCode}, construct_error, Cus
 
 pub mod logger;
 
+/**
+ * Unsigned operations
+ */
+
 pub fn get_u64(data: &[u8], start: usize) -> Result<u64, CustomError> {
   if data.len() < 8 {
     return Err(
@@ -102,6 +106,37 @@ pub fn get_u8(data: &[u8], start: usize) -> Result<u8, CustomError> {
   Ok(slice_data)
 }
 
+/**
+ * Signed operations
+ */
+pub fn get_i32(data: &[u8], start: usize)-> Result<i32, CustomError> {
+   if data.len() < 4 {
+    return Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        "Invalid data length to parse i32".to_string(), 
+        file!(), 
+        line!())
+    );
+  }
+  let slice_data = data[start..(start + 4)]
+    .as_ref()
+    .try_into();
+  
+  match slice_data {
+    Ok(val) => Ok(i32::from_be_bytes(val)),
+    Err(err) => Err(
+      construct_error(
+        MajorCode::UTIL, 
+        Box::new(UtilMinorCode::PARSING_UNSIGNED_ERROR),
+        err.to_string(), 
+        file!(), 
+        line!())
+    )
+  }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -173,4 +208,19 @@ mod tests {
     assert_eq!(get_u8(&val, 0).is_err(), true)
   }
 
+  /* i32 tests */
+  #[test]
+  fn test_get_i32_ok() {
+    let val: [u8; 8] = [0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff];
+    match get_i32(&val, 0) {
+        Ok(val) => {assert_eq!(val, -1)}
+        Err(_) => {panic!("Error")}
+    }
+  }
+
+  #[test]
+  fn test_get_i32_error() {
+    let val: [u8; 3] = [1,0,0];
+    assert_eq!(get_i32(&val, 0).is_err(), true)
+  }
 }
