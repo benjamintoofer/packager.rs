@@ -35,7 +35,7 @@ pub struct TRUN {
   sample_count: u32,
   // Optional fields
   data_offset: Option<i32>,
-  first_sample_flags: Option<u32>,
+  pub first_sample_flags: Option<u32>,
   samples: Vec<Sample>
 }
 

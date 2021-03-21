@@ -42,7 +42,7 @@ impl<'a> PartialEq for STSD<'a> {
   }
 }
 
-// Implement STSD memeber methods
+// Implement STSD member methods
 impl<'a> STSD<'a> {
   pub fn get_entry_count(&self) -> u32 {
     self.entry_count

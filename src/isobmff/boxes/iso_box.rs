@@ -12,7 +12,7 @@ pub trait IsoFullBox {
   fn get_flags(&self) -> u32;
 }
 
-pub fn get_init_segment_end(mp4: &Vec<u8>) -> usize {
+pub fn get_init_segment_end(mp4: &[u8]) -> usize {
   let mut lower_bound: usize = 0;
   let mut offset = std::u32::MAX;
     
