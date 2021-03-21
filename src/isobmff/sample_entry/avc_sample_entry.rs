@@ -4,9 +4,9 @@ use crate::isobmff::boxes::iso_box::find_box;
 use crate::isobmff::configuration_records::avcC::AVCDecoderConfigurationRecord;
 #[derive(Debug)]
 pub struct AVCSampleEntry {
-  pub sample_entry: SampleEntry,
-  pub visual_sample_entry: VisualSampleEntry,
-  pub config: AVCDecoderConfigurationRecord
+  sample_entry: SampleEntry,
+  visual_sample_entry: VisualSampleEntry,
+  config: AVCDecoderConfigurationRecord
 }
 
 impl AVCSampleEntry {

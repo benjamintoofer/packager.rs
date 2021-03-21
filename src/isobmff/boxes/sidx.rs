@@ -12,13 +12,13 @@ use crate::util;
 static CLASS: &str = "SIDX";
 
 #[derive(Eq)]
-struct SIDXReference {
- reference_type: bool,      // u1
- referenced_size: u32,      // u31
- subsegment_duration: u32,
- starts_with_sap: bool,     // u1
- sap_type: u8,              // u3
- sap_delta_time: u32        // u28
+pub struct SIDXReference {
+ pub reference_type: bool,      // u1
+ pub referenced_size: u32,      // u31
+ pub subsegment_duration: u32,
+ pub starts_with_sap: bool,     // u1
+ pub sap_type: u8,              // u3
+ pub sap_delta_time: u32        // u28
 }
 
 impl Debug for SIDXReference {
@@ -97,7 +97,7 @@ impl PartialEq for SIDX {
   }
 }
 
-// Implement SIDX memeber methods
+// Implement SIDX member methods
 impl SIDX {
   pub fn get_first_offset(&self) -> u64 {
     self.first_offset
@@ -109,6 +109,10 @@ impl SIDX {
 
   pub fn get_timescale(&self) -> u32 {
     self.timescale
+  }
+
+  pub fn get_references(&self) -> &Vec<SIDXReference> {
+    &self.references
   }
 }
 
@@ -131,7 +135,6 @@ impl SIDX {
 
   fn parse_sidx(sidx_data: &[u8]) -> Result<SIDX, CustomError> {
     let mut start = 0usize;
-
     // Parse size
     let size = util::get_u32(sidx_data, start)?;
 
@@ -199,7 +202,12 @@ impl SIDX {
       start = start + 4;
       let starts_with_sap = (four_bytes & 0x80000000) != 0;
       let sap_type = ((four_bytes & 0x70000000) >> 28) as u8;
-      let sap_delta_time = four_bytes & 0xFFFFFFF ;
+      let sap_delta_time = four_bytes & 0xFFFFFFF;
+
+      if sap_delta_time != 0 {
+        println!("WARNING: sap_delta_time is {}. This is currently not handled",sap_delta_time);
+      }
+
       let sidx_reference: SIDXReference = SIDXReference{
         reference_type: reference_type,
         referenced_size: referenced_size,

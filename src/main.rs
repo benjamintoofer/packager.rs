@@ -1,5 +1,7 @@
 use std::{ fs };
 
+use media::media_info_generator::MediaInfoGenerator;
+
 use crate::isobmff::boxes::{ iso_box };
 use crate::manifest::hls::hls_generator::HLSGenerator;
 
@@ -53,29 +55,28 @@ PARSE AAC(MP4A) codec string
 fn main() {
   let file_path = "./assets/v_frag.mp4";
   // generate_content();
-  let t = [0xef];
-  println!("{}", i8::from_be_bytes(t));
+  
   // HLSGenerator::generate_media_playlist("");
-
-  // if let Ok(mp4) = mp4_file {
-
-  //   let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
-  //   let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
-  //   let mvhd_timescale = mvhd_box.get_timescale() as f64;
-  //   let mvhd_duration = mvhd_box.get_duration() as f64;
-  //   let offset = iso_box::get_init_segment_end(&mp4);
-  //   println!("SIDX timescale: {}; MVHD DUR: {}; MVHD TIMESCALE: {}, ASSET DUR: {}",sidx_box.get_timescale(), mvhd_duration, mvhd_timescale, mvhd_duration / mvhd_timescale);
-  //   HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
-  //   // Need all bitrates
-  //   HLSGenerator::generate_master();
-  //   let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
-  //   print!("{:#?}", stsd.get_samples_length());
-  // } else {
-  //     let mut error_message = "main: Could not open file = ".to_owned();
-  //     error_message.push_str(file_path);
-  //     eprintln!("{}", error_message);
-  //     process::exit(1);
-  // }
+  let mp4_file = fs::read(file_path);
+  if let Ok(mp4) = mp4_file {
+    MediaInfoGenerator::temp(&mp4);
+    // let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
+    // let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
+    // let mvhd_timescale = mvhd_box.get_timescale() as f64;
+    // let mvhd_duration = mvhd_box.get_duration() as f64;
+    // let offset = iso_box::get_init_segment_end(&mp4);
+    // println!("SIDX timescale: {}; MVHD DUR: {}; MVHD TIMESCALE: {}, ASSET DUR: {}",sidx_box.get_timescale(), mvhd_duration, mvhd_timescale, mvhd_duration / mvhd_timescale);
+    // HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
+    // // Need all bitrates
+    // HLSGenerator::generate_master();
+    // let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
+    // print!("{:#?}", stsd.get_samples_length());
+  } else {
+      // let mut error_message = "main: Could not open file = ".to_owned();
+      // error_message.push_str(file_path);
+      // eprintln!("{}", error_message);
+      // process::exit(1);
+  }
     
 }
 fn generate_content() {

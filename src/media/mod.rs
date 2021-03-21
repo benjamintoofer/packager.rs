@@ -1,10 +1,22 @@
 pub mod media_info_generator;
 
+#[derive(Debug)]
+#[allow(non_camel_case_types)]
+pub enum TrackType {
+  VIDEO,
+  AUDIO,
+  I_FRAME,
+  SUBTITLES,
+}
+#[derive(Debug)]
 pub struct MediaInfo<'a> {
+  duration: f32, // ms
   track_infos: Vec<TrackInfo<'a>> 
 }
 
+#[derive(Debug)]
 pub struct TrackInfo<'a> {
+  track_type: TrackType,
   group_id: &'a str,
   // Master manifest related
   codec: &'a str,
@@ -25,7 +37,9 @@ pub struct TrackInfo<'a> {
   segments_start_with_i_frame: bool
 }
 
+#[derive(Debug)]
 pub struct SegmentInfo<'a> {
+  pts: u64,
   duration: f32,
   url: &'a str,
   bytes: Option<u32>,
