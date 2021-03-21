@@ -75,9 +75,20 @@ impl<'a> STSD<'a> {
     }
   }
 
-  pub fn read_sample_entry(&self, box_type: &str) -> Option<&[u8]> {
+  pub fn read_sample_entry(&self, box_type: &str) -> Result<&[u8], CustomError> {
     // TODO (benjamintoofer@gmail.com): This needs to be redone. Need to iterate through all entries.
-    find_box(box_type, 0, self.sample_entries)
+    let sample_entry_data = find_box(box_type, 0, self.sample_entries);
+
+    if let Some(sample_entry_data) = sample_entry_data {
+      Ok(sample_entry_data)
+    } else {
+      Err(construct_error(
+        MajorCode::ISOBMFF,
+        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        format!("{}: Unable to sample entry", box_type),
+        file!(),
+        line!()))
+    }
   }
 
   fn parse_stsd(stsd_data: &'a [u8]) -> Result<STSD, CustomError> {

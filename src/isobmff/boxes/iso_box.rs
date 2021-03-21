@@ -2,6 +2,9 @@ use std::convert::TryInto;
 use std::convert::TryFrom;
 use std::str;
 
+use crate::error::{construct_error, CustomError};
+use crate::error::error_code::{MajorCode, ISOBMFFMinorCode};
+
 pub trait IsoBox {
   fn get_size(&self) -> u32;
   fn get_type(&self) -> &String;
@@ -53,6 +56,21 @@ pub fn find_box<'a>(search_box: &str, offset: usize, current_box_data: &'a [u8])
     lower_bound += size;
   }
   None
+}
+
+pub fn get_box<'a>(search_box: &str, offset: usize, current_box_data: &'a [u8]) -> Result<&'a [u8], CustomError> {
+  let box_data = find_box(search_box, offset, current_box_data);
+    
+    if let Some(box_data) = box_data {
+      Ok(box_data)
+    } else {
+      Err(construct_error(
+        MajorCode::ISOBMFF,
+        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        format!("{}: Unable to find box", search_box),
+        file!(),
+        line!()))
+    }
 }
 
 #[cfg(test)]

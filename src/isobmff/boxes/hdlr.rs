@@ -44,7 +44,9 @@ impl PartialEq for HDLR {
 
 // Implement HDLR memeber methods
 impl HDLR {
- 
+  pub fn get_handler_type(&self) -> u32 {
+    self.handler_type
+  }
 }
 
 // Implement HDLR static methods
@@ -126,7 +128,7 @@ mod tests {
   fn test_parse_hdlr() {
     let file_path = "./assets/v_frag.mp4";
   
-    let expected_mvhd: HDLR = HDLR{
+    let expected_hdlr: HDLR = HDLR{
       box_type: "hdlr".to_string(),
       size: 53,
       handler_type: 0x76696465,
@@ -134,7 +136,7 @@ mod tests {
     };
     let mp4_file = fs::read(file_path);
     if let Ok(mp4) = mp4_file {
-      assert_eq!(HDLR::parse(&mp4).unwrap(), expected_mvhd);
+      assert_eq!(HDLR::parse(&mp4).unwrap(), expected_hdlr);
     } else {
       panic!("mp4 file {:} cannot be opened", file_path);
     }
