@@ -1,6 +1,6 @@
 use super::{MediaInfo, TrackInfo, SegmentInfo};
 
-use crate::{error::CustomError, isobmff::{boxes::{SampleFlag, iso_box::{find_box, get_init_segment_end}, sidx::{self, SIDX, SIDXReference}, trun::TRUN}, configuration_records::avcC}};
+use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{self, SIDX, SIDXReference}, stsd::STSD, trun::TRUN}, configuration_records::avcC, sample_entry::avc_sample_entry::{self, AVCSampleEntry}}};
 
 
 pub struct MediaInfoGenerator;
@@ -42,8 +42,22 @@ impl MediaInfoGenerator {
     Ok(sidx_box)
   }
 
-  pub fn get_captions(mp4: &[u8]) {
-    avcC::AVCDecoderConfigurationRecord::parse(data)
+  pub fn get_captions(mp4: &[u8]) -> Result<STSD, CustomError> {
+    let stsd = STSD::parse(mp4)?;
+    let hdlr = HDLR::parse(mp4)?;
+    // NOTE (benjamintoofer@gmail.com): Grabbing first mdat. Hopefully that's all we need
+    let mdat = get_box("mdat", 0, mp4)?;
+    if HandlerType::VIDE.eq(&hdlr.get_handler_type()) {
+      let avc1_sample_entry = stsd.read_sample_entry("avc1")
+        .map(AVCSampleEntry::parse)?;
+      let nal_unit_size = avc1_sample_entry.config.length_size_minus_one + 1;
+      // AVCSampleEntry::parse(avc1_sample_entry_data)
+    } else if HandlerType::SOUN.eq(&hdlr.get_handler_type()) {
+      // Do some audio stuff here
+    }
+    
+
+    return Ok(stsd);
   }
   // pub fn extract_media_info_from_mp4(mp4: &[u8]) -> MediaInfo {
 
