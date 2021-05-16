@@ -6,16 +6,13 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions-rs/toolchain@v1
+
         with:
           toolchain: stable
       - name: build
         uses: actions-rs/cargo@v1
         with:
           command: build
-      - name: nstall test assets
-        run: mkdir assets
-        run: curl -O https://storage.cloud.google.com/media_test_assets/v_frag.mp4?_ga=2.206818707.-1605673804.1621129830&_gac=1.118881531.1621129857.Cj0KCQjw4v2EBhCtARIsACan3nxZM-XxWpaCsAgMFObAvPAML4IV3ryI-VaEYw7L3mqEUKLX86C7-joaApSuEALw_wcB
-        run: curl  -O https://storage.cloud.google.com/media_test_assets/a_frag.mp4
       - name: test
         uses: actions-rs/cargo@v1
         with:

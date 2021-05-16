@@ -69,7 +69,7 @@ impl HDLR {
     }
   }
 
-  fn parse_hdlr(hdlr_data: &[u8]) -> Result<HDLR, CustomError> {
+  pub fn parse_hdlr(hdlr_data: &[u8]) -> Result<HDLR, CustomError> {
     let mut start = 0usize;
     // Parse size
     let size = util::get_u32(hdlr_data, start).unwrap();
@@ -120,13 +120,22 @@ impl HDLR {
 #[cfg(test)]
 mod tests {
 
-  use std::fs;
-
     use super::*;
 
   #[test]
   fn test_parse_hdlr() {
-    let file_path = "./assets/v_frag.mp4";
+    let hdlr: [u8; 53] = [
+      // Size
+      0x00, 0x00, 0x00, 0x35,
+      // hdlr
+      0x68, 0x64, 0x6C, 0x72,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x76, 0x69, 0x64, 0x65, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x42, 0x65, 0x6E, 0x74, 0x6F, 0x34, 0x20, 0x56,
+      0x69, 0x64, 0x65, 0x6F, 0x20, 0x48, 0x61, 0x6E, 
+      0x64, 0x6C, 0x65, 0x72, 0x00
+    ];
   
     let expected_hdlr: HDLR = HDLR{
       box_type: "hdlr".to_string(),
@@ -134,12 +143,7 @@ mod tests {
       handler_type: 0x76696465,
       name: "Bento4 Video Handler".to_string(),
     };
-    let mp4_file = fs::read(file_path);
-    if let Ok(mp4) = mp4_file {
-      assert_eq!(HDLR::parse(&mp4).unwrap(), expected_hdlr);
-    } else {
-      panic!("mp4 file {:} cannot be opened", file_path);
-    }
+    assert_eq!(HDLR::parse_hdlr(&hdlr).unwrap(), expected_hdlr);
   }
 
 }
