@@ -13,7 +13,14 @@ impl MediaInfoGenerator {
     let references = sidx_box.get_references();
     let mut pts = sidx_box.get_earliest_presentation_time();
 
+    /**
+      Getting Track info
+    */
+    
 
+    /**
+      Getting Segment info
+    */
     for sr in references {
       if sr.reference_type == false { // Skip reference types that are segment indexes (1)
           let duration: f32 = sr.subsegment_duration as f32 / timescale as f32;
@@ -31,7 +38,7 @@ impl MediaInfoGenerator {
             url: "",
             bytes: Option::Some(sr.referenced_size),
             offset: Option::Some(offset as u32),
-            start_with_i_frame: true,
+            start_with_i_frame,
           };
           println!("INFO = {:?}", info);
           offset += sr.referenced_size as usize;

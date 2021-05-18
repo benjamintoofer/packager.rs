@@ -17,6 +17,7 @@ pub struct MediaInfo<'a> {
 #[derive(Debug)]
 pub struct TrackInfo<'a> {
   track_type: TrackType,
+  track_id: u8,
   group_id: &'a str,
   // Master manifest related
   codec: &'a str,

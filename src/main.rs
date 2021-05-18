@@ -56,7 +56,7 @@ PARSE AAC(MP4A) codec string
  struct MyStruct;
 
 fn main() {
-  let file_path = "./assets/v_frag.mp4";
+  let file_path = "./assets/a_frag.mp4";
   // generate_content();
 
   let my_str: MyStruct = MyStruct{};
