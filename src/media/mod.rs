@@ -1,12 +1,22 @@
 pub mod media_info_generator;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum TrackType {
   VIDEO,
   AUDIO,
   I_FRAME,
   SUBTITLES,
+}
+
+impl TrackType {
+  pub fn handler_to_track_type(val: u32) -> TrackType {
+    match val {
+      0x76696465 =>{ TrackType::VIDEO }
+      0x736f756e => { TrackType::AUDIO }
+      _ => { TrackType::VIDEO }
+    }
+  }
 }
 #[derive(Debug)]
 pub struct MediaInfo<'a> {

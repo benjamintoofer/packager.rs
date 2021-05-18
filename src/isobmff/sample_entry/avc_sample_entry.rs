@@ -11,8 +11,11 @@ pub struct AVCSampleEntry {
 
 impl AVCSampleEntry {
   pub fn parse(data: &[u8]) -> AVCSampleEntry {
+    // println!("---------------------------------");
+    // println!("{:?}", data);
     let sample_entry = SampleEntry::parse(data);
     let (visual_sample_entry, offset) = VisualSampleEntry::parse(data);
+    println!("Sample Entry {:?} === OFSET {}", visual_sample_entry, offset);
     #[allow(non_snake_case)]
     let avcC: AVCDecoderConfigurationRecord = find_box("avcC", offset, data)
       .map(|avcc_data| AVCDecoderConfigurationRecord::parse(avcc_data))

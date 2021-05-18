@@ -1,6 +1,6 @@
-use super::{MediaInfo, TrackInfo, SegmentInfo};
+use super::{MediaInfo, SegmentInfo, TrackInfo, TrackType};
 
-use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{self, SIDX, SIDXReference}, stsd::STSD, trun::TRUN}, configuration_records::avcC, sample_entry::avc_sample_entry::{self, AVCSampleEntry}}};
+use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{self, SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN}, configuration_records::avcC, get_codec, sample_entry::avc_sample_entry::{self, AVCSampleEntry}}};
 
 
 pub struct MediaInfoGenerator;
@@ -9,6 +9,8 @@ impl MediaInfoGenerator {
   pub fn temp(mp4: &[u8]) -> Result<SIDX, CustomError> {
     let mut offset = get_init_segment_end(&mp4);
     let sidx_box = SIDX::parse(&mp4)?;
+    let mut tkhd_reader = TKHDReader::parse(&mp4)?;
+    let hdlr = HDLR::parse(&mp4)?;
     let timescale = sidx_box.get_timescale();
     let references = sidx_box.get_references();
     let mut pts = sidx_box.get_earliest_presentation_time();
@@ -16,7 +18,11 @@ impl MediaInfoGenerator {
     /**
       Getting Track info
     */
-    
+    let track_id = tkhd_reader.get_track_id()?;
+    let track_type = TrackType::handler_to_track_type(hdlr.get_handler_type());
+    let group_id ="something";
+    let temp = get_codec(track_type, &mp4).unwrap();
+    let codec = "";
 
     /**
       Getting Segment info
