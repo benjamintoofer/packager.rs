@@ -52,9 +52,17 @@ PARSE AAC(MP4A) codec string
 
  use std::{convert::TryInto};
 
+ #[derive(Debug)]
+ struct MyStruct;
+
 fn main() {
   let file_path = "./assets/v_frag.mp4";
   // generate_content();
+
+  let my_str: MyStruct = MyStruct{};
+
+
+  println!("{:?}", my_str);
   
   // HLSGenerator::generate_media_playlist("");
   let mp4_file = fs::read(file_path);

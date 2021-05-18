@@ -73,46 +73,48 @@ pub fn get_box<'a>(search_box: &str, offset: usize, current_box_data: &'a [u8]) 
     }
 }
 
-#[cfg(test)]
-mod tests {
+// TODO (benjamintoofer@gmail.com): Figure out how to change these tests. We want to remove the use of reading in a file but the 
+// init segment is too large to write the bytes here
+// #[cfg(test)]
+// mod tests {
 
-  use super::*;
-  use std::fs;
+//   use super::*;
+//   use std::fs;
 
-  #[test]
-  fn test_get_init_segment_end() {
-    let file_path = "./assets/v_frag.mp4";
+//   #[test]
+//   fn test_get_init_segment_end() {
+//     let file_path = "./assets/v_frag.mp4";
   
-    let expected_value: usize = 907;
-    let mp4_file = fs::read(file_path);
-    if let Ok(mp4) = mp4_file {
-      assert_eq!(get_init_segment_end(&mp4), expected_value);
-    } else {
-      panic!("mp4 file {:} cannot be opened", file_path);
-    }
-  }
+//     let expected_value: usize = 907;
+//     let mp4_file = fs::read(file_path);
+//     if let Ok(mp4) = mp4_file {
+//       assert_eq!(get_init_segment_end(&mp4), expected_value);
+//     } else {
+//       panic!("mp4 file {:} cannot be opened", file_path);
+//     }
+//   }
 
-  #[test]
-  fn should_find_box() {
-    let file_path = "./assets/v_frag.mp4";
+//   #[test]
+//   fn should_find_box() {
+//     let file_path = "./assets/v_frag.mp4";
   
-    let mp4_file = fs::read(file_path);
-    if let Ok(mp4) = mp4_file {
-      assert!(find_box("sidx", 0, &mp4).is_some());
-    } else {
-      panic!("mp4 file {:} cannot be opened", file_path);
-    }
-  }
+//     let mp4_file = fs::read(file_path);
+//     if let Ok(mp4) = mp4_file {
+//       assert!(find_box("sidx", 0, &mp4).is_some());
+//     } else {
+//       panic!("mp4 file {:} cannot be opened", file_path);
+//     }
+//   }
 
-  #[test]
-  fn should_not_find_box() {
-    let file_path = "./assets/v_frag.mp4";
+//   #[test]
+//   fn should_not_find_box() {
+//     let file_path = "./assets/v_frag.mp4";
   
-    let mp4_file = fs::read(file_path);
-    if let Ok(mp4) = mp4_file {
-      assert!(find_box("fake", 0, &mp4).is_none());
-    } else {
-      panic!("mp4 file {:} cannot be opened", file_path);
-    }
-  }
-}
+//     let mp4_file = fs::read(file_path);
+//     if let Ok(mp4) = mp4_file {
+//       assert!(find_box("fake", 0, &mp4).is_none());
+//     } else {
+//       panic!("mp4 file {:} cannot be opened", file_path);
+//     }
+//   }
+// }

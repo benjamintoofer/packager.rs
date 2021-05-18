@@ -4,8 +4,6 @@ use crate::iso_box::{IsoBox, IsoFullBox, find_box};
 use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}};
 use crate::util;
 
-
-
 static CLASS: &str = "TFHD";
 
 #[derive(Debug, Eq)]
@@ -75,7 +73,7 @@ impl TFHD {
     }
   }
 
-  fn parse_tfhd(tfhd_data: &[u8]) -> Result<TFHD, CustomError> {
+  pub fn parse_tfhd(tfhd_data: &[u8]) -> Result<TFHD, CustomError> {
     let mut start = 0usize;
 
     // Parse size
@@ -156,14 +154,18 @@ impl TFHD {
 
 #[cfg(test)]
 mod tests {
-
   use super::*;
-  use std::fs;
 
   #[test]
   fn test_parse_tfhd() {
-    let file_path = "./assets/v_frag.mp4";
-    
+    let tfhd: [u8; 28] = [
+      // Size
+      0x00, 0x00, 0x00, 0x1C,
+      // tfhd
+      0x74, 0x66, 0x68, 0x64,
+      0x00, 0x02, 0x00, 0x2A, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+      0x01, 0x01, 0x00, 0x00
+    ];
     let expected_tfhd: TFHD = TFHD{
       box_type: "tfhd".to_string(),
       size: 28,
@@ -178,12 +180,6 @@ mod tests {
       default_base_is_moof: true,
       duration_is_empty: false
     };
-    let mp4_file = fs::read(file_path);
-    if let Ok(mp4) = mp4_file {
-      let moof_data = find_box("moof", 0, mp4.as_ref()).unwrap();
-      assert_eq!(TFHD::parse(&moof_data).unwrap(), expected_tfhd);
-    } else {
-      panic!("mp4 file {:} cannot be opened", file_path);
-    }
+    assert_eq!(TFHD::parse_tfhd(&tfhd).unwrap(), expected_tfhd);
   }
 }
