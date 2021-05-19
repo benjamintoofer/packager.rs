@@ -48,7 +48,7 @@ impl VisualSampleEntry {
     // Parse compressor name size
     let compressor_name_size = util::get_u8(data, start)
       .expect(format!("{}.parse.compressor_name_size: cannot get u8 from start = {}",CLASS, start).as_ref());
-    println!("COMPRESOR SIZE = {:?}", compressor_name_size);
+
     start = start + 1;
     let mut compressor_name = String::from("");
     for i in 0..compressor_name_size {
