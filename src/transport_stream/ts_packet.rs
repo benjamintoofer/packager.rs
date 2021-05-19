@@ -17,7 +17,7 @@ pub struct TransportPacket<'a> {
 }
 
 impl<'a> PartialEq for TransportPacket<'a> {
-    fn eq(&self, other: &Self) -> bool {
+    fn eq(&self, _other: &Self) -> bool {
         todo!()
     }
 }

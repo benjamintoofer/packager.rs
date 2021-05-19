@@ -61,6 +61,7 @@ impl HLSBool {
   }
 }
 
+#[allow(non_camel_case_types)]
 pub enum HDCP_LEVEL {
   TYPE_0,
   TYPE_1,

@@ -1,5 +1,3 @@
-use std::borrow::Borrow;
-
 use crate::{error::CustomError, media::TrackType};
 
 use self::{boxes::stsd::STSD, sample_entry::{avc_sample_entry::AVCSampleEntry, mp4a_sample_entry::MP4ASampleEntry}};
@@ -60,8 +58,4 @@ pub fn get_codec(track_type: TrackType, mp4: &[u8]) -> Result<String, CustomErro
   } else {
     Ok("".to_string())
   }
-}
-
-pub fn get_mime_type() -> String {
-  
 }

@@ -28,7 +28,7 @@ impl ManifestGenerator for HLSGenerator {
       if box_type.expect("no box type").eq("moof") {
          let tfdt = match TFDT::parse(mp4[lower_bound..(lower_bound + size)].as_ref()) {
           Ok(tfdt_box) => tfdt_box,
-          Err(err) => panic!(err)
+          Err(err) => panic!("{}", err)
         };
 
         let decode_time = tfdt.get_base_media_decode_time();
@@ -70,15 +70,15 @@ impl HLSGenerator {
   }
 
   // Need to know:
-  // - which veriosn of HLS
+  // - which version of HLS
   // - if each segment starts with an Iframe (independent segments tag)
   // - if byterange
   // - maximum segment duration
   // - segment  info (path, duration)
-
+  // TODO (benjamintoofer@gmail.com): Come back to this and finish
   pub fn generate_media_playlist(metadata: &str) {
 
-    let mut hls_writer = HLSWriter::createWriter();
+    let mut hls_writer = HLSWriter::create_writer();
     let manifest_str = hls_writer.start_hls()
       .new_line()
       .comment("This manifest is created by Benjamin Toofer")
@@ -96,6 +96,7 @@ impl HLSGenerator {
       .finish();
     
     println!("{}", manifest_str);
+    println!("{}", metadata);
   }
 
   pub fn generate_i_frame_playlist() {
