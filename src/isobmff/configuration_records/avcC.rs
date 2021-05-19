@@ -5,10 +5,10 @@ static CLASS: &str = "AVCDecoderConfigurationRecord";
 
 #[derive(Debug)]
 pub struct AVCDecoderConfigurationRecord {
-  configuration_version: u8,
-  avc_profile_indication: u8,
-  profile_compatability: u8,
-  avc_level_indication: u8,
+  pub configuration_version: u8,
+  pub avc_profile_indication: u8,
+  pub profile_compatability: u8,
+  pub avc_level_indication: u8,
   pub length_size_minus_one: u8,            // 2 bits
   num_of_sequence_parameter_sets: u8,   // 5 bits
   num_of_picture_parameter_sets: u8,    // 8 bits

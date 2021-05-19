@@ -47,7 +47,7 @@ impl VisualSampleEntry {
     start = start + 2;
     // Parse compressor name size
     let compressor_name_size = util::get_u8(data, start)
-      .expect(format!("{}.parse.compressor_name_size: cannot get u32 from start = {}",CLASS, start).as_ref());
+      .expect(format!("{}.parse.compressor_name_size: cannot get u8 from start = {}",CLASS, start).as_ref());
 
     start = start + 1;
     let mut compressor_name = String::from("");
@@ -60,12 +60,13 @@ impl VisualSampleEntry {
       let character = data[index] as char;
       compressor_name.push(character);
     }
-
-    start = start + 32;
+    // Compressorname is formatted in a fixed 32-byte field. We already offset it by 1 for the name length
+    start = start + 31;
     // Parse depth
     let depth = util::get_u16(data, start)
       .expect(format!("{}.parse.depth: cannot get u16 from start = {}",CLASS, start).as_ref());
 
+    start = start + 2;
     // Skip predefined value
     start = start + 2;
     // Parse CleanApertureBox

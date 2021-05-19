@@ -10,7 +10,7 @@ pub struct ESDescriptor {
   url_flag: bool,
   ocr_stream_flag: bool,
   stream_priority: u8,      // 5 bit
-  dec_config_descr: DecoderConfigDescriptor,
+  pub dec_config_descr: DecoderConfigDescriptor,
   depends_on_es_id: Option<u16>,
   url_length: Option<u8>,
   url_string: Option<String> // ??

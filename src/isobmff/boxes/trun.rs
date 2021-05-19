@@ -96,7 +96,7 @@ impl TRUN {
     
     let box_type= match box_type {
       Ok(box_type_str) => String::from(box_type_str),
-      Err(err) => panic!(err),
+      Err(err) => panic!("{}", err),
     };
 
     // Parse flags
@@ -122,7 +122,7 @@ impl TRUN {
     }
 
     let mut samples: Vec<Sample> = vec![];
-    for i in 0..sample_count {
+    for _ in 0..sample_count {
       // sample-duration-present
       let mut sample_duration:Option<u32> = Option::None;
       if (flags & 0x000100) != 0 {

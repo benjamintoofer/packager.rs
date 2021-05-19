@@ -315,7 +315,7 @@ impl HLSWriter {
 }
 
 impl HLSWriter {
-  pub fn createWriter() -> HLSWriter {
+  pub fn create_writer() -> HLSWriter {
     HLSWriter{
       hls_manifest_str: String::from("")
     }
@@ -337,7 +337,7 @@ mod tests {
   fn test_hls_version() {
     let expected_manifest = "#EXT-X-VERSION:7\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.version(HLSVersion::_7);
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -348,7 +348,7 @@ mod tests {
   fn test_stream_inf_with_minumum_options() {
     let expected_manifest = "#EXT-X-STREAM-INF:BANDWIDTH=100000\nhttps://domain.com/some/foo/bar/path.m3u8\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.stream_inf(
       "https://domain.com/some/foo/bar/path.m3u8",
       100000,
@@ -385,7 +385,7 @@ mod tests {
                                   CLOSED-CAPTIONS=\"cc1\"\
                                   \nhttps://domain.com/some/foo/bar/path.m3u8\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.stream_inf(
       "https://domain.com/some/foo/bar/path.m3u8",
       100000,
@@ -410,7 +410,7 @@ mod tests {
   fn test_media_with_minumum_options() {
     let expected_manifest = "#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID=\"a1\",NAME=\"English\"\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.media(
       HLSMediaType::AUDIO,
       "a1",
@@ -445,7 +445,7 @@ mod tests {
                                   CHANNELS=\"2\",\
                                   URI=\"a1/prog_index.m3u8\"\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.media(
       HLSMediaType::AUDIO,
       "a1",
@@ -469,7 +469,7 @@ mod tests {
   fn test_i_frame_stream_inf_with_minumum_options() {
     let expected_manifest = "#EXT-X-I-FRAME-STREAM-INF:BANDWIDTH=100000,URI=\"https://domain.com/some/foo/bar/path.m3u8\"\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.i_frame_stream_inf(
       "https://domain.com/some/foo/bar/path.m3u8",
       100000,
@@ -498,7 +498,7 @@ mod tests {
                                   VIDEO=\"v1\",\
                                   URI=\"https://domain.com/some/foo/bar/path.m3u8\"\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.i_frame_stream_inf(
       "https://domain.com/some/foo/bar/path.m3u8",
       100000,
@@ -519,7 +519,7 @@ mod tests {
   fn test_hls_independent() {
     let expected_manifest = "#EXT-X-INDEPENDENT-SEGMENTS\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.independent();
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -534,7 +534,7 @@ mod tests {
   fn test_target_duration() {
     let expected_manifest = "#EXT-X-TARGETDURATION:6\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.target_duration(6);
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -545,7 +545,7 @@ mod tests {
   fn test_media_sequence() {
     let expected_manifest = "#EXT-X-MEDIA-SEQUENCE:0\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.media_sequence(0);
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -556,7 +556,7 @@ mod tests {
   fn test_discontinuity_sequence() {
     let expected_manifest = "#EXT-X-DISCONTINUITY-SEQUENCE:0\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.discontinuity_sequence(0);
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -567,7 +567,7 @@ mod tests {
   fn test_endlist() {
     let expected_manifest = "#EXT-X-ENDLIST\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.endlist();
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -578,7 +578,7 @@ mod tests {
   fn test_playlist_type() {
     let expected_manifest = "#EXT-X-PLAYLIST-TYPE:VOD\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.playlist_type(HLSPlaylistType::VOD);
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -589,7 +589,7 @@ mod tests {
   fn test_i_frame_only() {
     let expected_manifest = "#EXT-X-I-FRAMES-ONLY\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.i_frames_only();
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -600,7 +600,7 @@ mod tests {
   fn test_part_inf() {
     let expected_manifest = "#EXT-X-PART-INF:PART-TARGET=0.33334\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.part_inf(0.33334);
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -615,7 +615,7 @@ mod tests {
   fn test_inf_with_minimum_options() {
     let expected_manifest = "#EXTINF:6.006\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.inf(6.006, Option::None);
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -625,7 +625,7 @@ mod tests {
   fn test_inf_with_maximum_options() {
     let expected_manifest = "#EXTINF:6.006\nsegment0.ts\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.inf(6.006, Option::Some("segment0.ts"));
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -636,7 +636,7 @@ mod tests {
   fn test_byterange() {
     let expected_manifest = "#EXT-X-BYTERANGE:100@0\nsegment.ts\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.byte_range(100, 0, "segment.ts");
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -647,7 +647,7 @@ mod tests {
   fn test_discontinuity() {
     let expected_manifest = "#EXT-X-DISCONTINUITY\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.discontinuity();
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -658,7 +658,7 @@ mod tests {
   fn test_map() {
     let expected_manifest = "#EXT-X-MAP:URI=\"main.mp4\",BYTERANGE=\"560@0\"\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.map("main.mp4", Some(560), Some(0));
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -669,7 +669,7 @@ mod tests {
   fn test_program_date_time() {
     let expected_manifest = "#EXT-X-PROGRAM-DATE-TIME:2010-02-19T14:54:23.031+08:00\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.program_date_time("2010-02-19T14:54:23.031+08:00");
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -680,7 +680,7 @@ mod tests {
   fn test_gap() {
     let expected_manifest = "#EXT-X-GAP\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.gap();
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -691,7 +691,7 @@ mod tests {
   fn test_part_with_minimum_options() {
     let expected_manifest = "#EXT-X-PART:DURATION=0.33334,URI=\"filePart271.0.mp4\"\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.part(
       0.33334,
       "filePart271.0.mp4",
@@ -708,7 +708,7 @@ mod tests {
   fn test_part_with_maximum_options() {
     let expected_manifest = "#EXT-X-PART:DURATION=0.33334,URI=\"filePart271.0.mp4\",INDEPENDENT=YES,BYTERANGE=100@200,GAP=YES\n";
 
-    let mut writer = HLSWriter::createWriter();
+    let mut writer = HLSWriter::create_writer();
     writer.part(
       0.33334,
       "filePart271.0.mp4",

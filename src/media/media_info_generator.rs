@@ -1,6 +1,6 @@
-use super::{MediaInfo, TrackInfo, SegmentInfo};
-
-use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{self, SIDX, SIDXReference}, stsd::STSD, trun::TRUN}, configuration_records::avcC, sample_entry::avc_sample_entry::{self, AVCSampleEntry}}};
+use super::{SegmentInfo, TrackType};
+// TODO (benjamintoofer@gmail.com): Clean these imports
+use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN}, get_codec, sample_entry::avc_sample_entry::{self, AVCSampleEntry}}};
 
 
 pub struct MediaInfoGenerator;
@@ -9,11 +9,23 @@ impl MediaInfoGenerator {
   pub fn temp(mp4: &[u8]) -> Result<SIDX, CustomError> {
     let mut offset = get_init_segment_end(&mp4);
     let sidx_box = SIDX::parse(&mp4)?;
+    let mut tkhd_reader = TKHDReader::parse(&mp4)?;
+    let hdlr = HDLR::parse(&mp4)?;
     let timescale = sidx_box.get_timescale();
     let references = sidx_box.get_references();
     let mut pts = sidx_box.get_earliest_presentation_time();
 
+    /**
+      Getting Track info
+    */
+    let track_id = tkhd_reader.get_track_id()?;
+    let track_type = TrackType::handler_to_track_type(hdlr.get_handler_type());
+    let group_id ="something";
+    let codec = get_codec(track_type, &mp4)?;
 
+    /**
+      Getting Segment info
+    */
     for sr in references {
       if sr.reference_type == false { // Skip reference types that are segment indexes (1)
           let duration: f32 = sr.subsegment_duration as f32 / timescale as f32;
@@ -31,7 +43,7 @@ impl MediaInfoGenerator {
             url: "",
             bytes: Option::Some(sr.referenced_size),
             offset: Option::Some(offset as u32),
-            start_with_i_frame: true,
+            start_with_i_frame,
           };
           println!("INFO = {:?}", info);
           offset += sr.referenced_size as usize;

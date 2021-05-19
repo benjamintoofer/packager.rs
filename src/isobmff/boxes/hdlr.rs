@@ -81,7 +81,7 @@ impl HDLR {
     
     let box_type= match box_type {
       Ok(box_type_str) => String::from(box_type_str),
-      Err(err) => panic!(err),
+      Err(err) => panic!("{}", err),
     };
 
 

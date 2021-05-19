@@ -85,7 +85,7 @@ impl TFHD {
     
     let box_type= match box_type {
       Ok(box_type_str) => String::from(box_type_str),
-      Err(err) => panic!(err),
+      Err(err) => panic!("{}", err),
     };
 
     // Parse flags
@@ -128,7 +128,6 @@ impl TFHD {
     let mut default_sample_flags: Option<u32> = Option::None;
     if (flags & 0x0000020) != 0 {
       default_sample_flags = Option::Some(util::get_u32(tfhd_data, start)?);
-      start = start + 4;
     }
 
     // duration-is-empty

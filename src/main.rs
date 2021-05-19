@@ -50,13 +50,11 @@ PARSE AAC(MP4A) codec string
 4. parse ESDBox (14996-1 7.2.6.5)
  */
 
- use std::{convert::TryInto};
-
  #[derive(Debug)]
  struct MyStruct;
 
 fn main() {
-  let file_path = "./assets/v_frag.mp4";
+  let file_path = "./assets/a_frag.mp4";
   // generate_content();
 
   let my_str: MyStruct = MyStruct{};
