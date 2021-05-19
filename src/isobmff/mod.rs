@@ -1,6 +1,7 @@
 use crate::{error::CustomError, media::TrackType};
-
-use self::{boxes::stsd::STSD, sample_entry::{avc_sample_entry::AVCSampleEntry, mp4a_sample_entry::MP4ASampleEntry}};
+use crate::isobmff::boxes::{stts::STTSReader, stsd::STSD, sidx::SIDX, trun::TRUN, mvhd::MVHD};
+use crate::iso_box::{find_box, get_init_segment_end};
+use self::{sample_entry::{avc_sample_entry::AVCSampleEntry, mp4a_sample_entry::MP4ASampleEntry}};
 
 pub mod boxes;
 pub mod sample_entry;
@@ -58,4 +59,28 @@ pub fn get_codec(track_type: TrackType, mp4: &[u8]) -> Result<String, CustomErro
   } else {
     Ok("".to_string())
   }
+}
+
+pub fn get_frame_rate(mp4: &[u8]) -> Result<f32, CustomError> {
+  let mut offset = get_init_segment_end(&mp4);
+  let mut sample_count = STTSReader::parse(&mp4)?.get_entry_count()?;
+  let mvhd = MVHD::parse(&mp4)?;
+  let asset_duration = mvhd.get_duration() as f32/ mvhd.get_timescale() as f32;
+  let sidx_box = SIDX::parse(&mp4)?;
+  let references = sidx_box.get_references();
+  // If we can't get the number of samples from the stts box, we need to calculate the total number of
+  // samples from each trun
+  if sample_count == 0 {
+    for sr in references {
+      if sr.reference_type == true { // Skip reference types that are segment indexes (1)
+        continue;
+      }
+      let trun = find_box("moof", offset, mp4)
+          .map(TRUN::parse).unwrap()?;
+      sample_count += trun.sample_count;
+      offset += sr.referenced_size as usize;
+    }
+  }
+  
+  Ok(sample_count as f32 / asset_duration as f32)
 }

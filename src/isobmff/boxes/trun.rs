@@ -32,7 +32,7 @@ pub struct TRUN {
   box_type: String,
   version: u8,                    
   flags: u32,                     // u24
-  sample_count: u32,
+  pub sample_count: u32,
   // Optional fields
   data_offset: Option<i32>,
   pub first_sample_flags: Option<u32>,
