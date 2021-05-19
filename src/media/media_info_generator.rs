@@ -1,6 +1,6 @@
 use super::{SegmentInfo, TrackType};
 // TODO (benjamintoofer@gmail.com): Clean these imports
-use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN}, get_codec, sample_entry::avc_sample_entry::{self, AVCSampleEntry}}};
+use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN}, get_codec, get_frame_rate, sample_entry::avc_sample_entry::{self, AVCSampleEntry}}};
 
 
 pub struct MediaInfoGenerator;
@@ -22,6 +22,7 @@ impl MediaInfoGenerator {
     let track_type = TrackType::handler_to_track_type(hdlr.get_handler_type());
     let group_id ="something";
     let codec = get_codec(track_type, &mp4)?;
+    let frame_rate = get_frame_rate(&mp4);
 
     /**
       Getting Segment info
