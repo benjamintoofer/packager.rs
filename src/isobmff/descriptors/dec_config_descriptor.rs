@@ -7,13 +7,13 @@ use super::aac_audio_specific_config::AACAudioSpecificConfig;
 static CLASS: &str = "DecoderConfigDescriptor";
 #[derive(Debug)]
 pub struct DecoderConfigDescriptor {
-  object_type_indication: u8,
+  pub object_type_indication: u8,
   stream_type: u8,            // 6 bit
   upstream: bool,             // 1 bit
   buffer_size_db: u32,         // 24 bit
   max_bitrate: u32,
   avg_bitrate: u32,
-  audio_sepcific_info: AACAudioSpecificConfig
+  pub audio_sepcific_info: AACAudioSpecificConfig
 }
 
 impl  DecoderConfigDescriptor {

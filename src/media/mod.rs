@@ -9,6 +9,12 @@ pub enum TrackType {
   SUBTITLES,
 }
 
+pub enum ContainerFormat {
+  MP4,
+  MP2TS,
+  WEBM
+}
+
 impl TrackType {
   pub fn handler_to_track_type(val: u32) -> TrackType {
     match val {
@@ -31,7 +37,6 @@ pub struct TrackInfo<'a> {
   group_id: &'a str,
   // Master manifest related
   codec: &'a str,
-  mime_type: &'a str,
   frame_rate: f32,
   average_bandwidth: u32,
   bandwidth: u32,

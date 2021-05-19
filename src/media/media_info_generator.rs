@@ -21,8 +21,7 @@ impl MediaInfoGenerator {
     let track_id = tkhd_reader.get_track_id()?;
     let track_type = TrackType::handler_to_track_type(hdlr.get_handler_type());
     let group_id ="something";
-    let temp = get_codec(track_type, &mp4).unwrap();
-    let codec = "";
+    let codec = get_codec(track_type, &mp4)?;
 
     /**
       Getting Segment info
