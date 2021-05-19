@@ -97,7 +97,7 @@ impl TKHDReader {
     }
     self.creation_time.ok_or(construct_error(
         MajorCode::ISOBMFF,
-        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        Box::new(ISOBMFFMinorCode::PARSE_BOX_ERROR),
         format!("{}: Unable to get creation time", CLASS),
         file!(),
         line!()))
@@ -113,7 +113,7 @@ impl TKHDReader {
     }
     self.modification_time.ok_or(construct_error(
         MajorCode::ISOBMFF,
-        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        Box::new(ISOBMFFMinorCode::PARSE_BOX_ERROR),
         format!("{}: Unable to get modification time", CLASS),
         file!(),
         line!()))
@@ -129,7 +129,7 @@ impl TKHDReader {
     }
     self.track_id.ok_or(construct_error(
         MajorCode::ISOBMFF,
-        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        Box::new(ISOBMFFMinorCode::PARSE_BOX_ERROR),
         format!("{}: Unable to get track id", CLASS),
         file!(),
         line!()))
@@ -145,7 +145,7 @@ impl TKHDReader {
     }
     self.duration.ok_or(construct_error(
         MajorCode::ISOBMFF,
-        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        Box::new(ISOBMFFMinorCode::PARSE_BOX_ERROR),
         format!("{}: Unable to get duration", CLASS),
         file!(),
         line!()))
@@ -161,7 +161,7 @@ impl TKHDReader {
     }
     self.width.ok_or(construct_error(
         MajorCode::ISOBMFF,
-        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        Box::new(ISOBMFFMinorCode::PARSE_BOX_ERROR),
         format!("{}: Unable to get width", CLASS),
         file!(),
         line!()))
@@ -177,7 +177,7 @@ impl TKHDReader {
     }
     self.height.ok_or(construct_error(
         MajorCode::ISOBMFF,
-        Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
+        Box::new(ISOBMFFMinorCode::PARSE_BOX_ERROR),
         format!("{}: Unable to get height", CLASS),
         file!(),
         line!()))
