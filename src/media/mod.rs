@@ -46,7 +46,7 @@ pub struct TrackInfo<'a> {
   instream_id: &'a str, // ENUM
   uri: &'a str,
   // Playlist manifest related
-  maximum_duration: u8,
+  maximum_segment_duration: f32,
   offset: u16, // Default to 0 if VOD
   stream_type: &'a str, // VOD | LIVE
   segments: Vec<SegmentInfo<'a>>,

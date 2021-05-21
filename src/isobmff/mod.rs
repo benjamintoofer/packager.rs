@@ -50,11 +50,11 @@ pub fn get_codec(track_type: TrackType, mp4: &[u8]) -> Result<String, CustomErro
       .and_then(|stsd| stsd.read_sample_entry("mp4a").map(|x|x.to_vec()))
       .map(|mp4a_data|MP4ASampleEntry::parse(&mp4a_data))
       .map(|mp4a_sample|mp4a_sample.es_descriptor)?;
-    
-      let codec = format!("{}.{:X}.{}",
-        codec_type, 
-        aac_data.dec_config_descr.object_type_indication, 
-        aac_data.dec_config_descr.audio_sepcific_info.audio_object_type);
+    println!("----- {:?}", aac_data);
+    let codec = format!("{}.{:X}.{}",
+      codec_type, 
+      aac_data.dec_config_descr.object_type_indication, 
+      aac_data.dec_config_descr.audio_sepcific_info.audio_object_type);
     return Ok(codec);
   } else {
     Ok("".to_string())
@@ -83,4 +83,16 @@ pub fn get_frame_rate(mp4: &[u8]) -> Result<f32, CustomError> {
   }
   
   Ok(sample_count as f32 / asset_duration as f32)
+}
+
+pub fn get_bandwidth_and_average() {
+  // 62,886
+
+  // 41,844.33
+
+  // 14,222.07
+
+  // 448,834.66
+
+  // (((104621 + 42780) + (120973 + 42477) + (119315 + 42780) + (125533 + 42478) + (118733 + 42780) + (109095 + 42780) + (105545 + 42477) + (110456 + 42780) + (111973 + 42780) + (105008 + 42477) + (4344 + 7671))*8) / 30.03
 }

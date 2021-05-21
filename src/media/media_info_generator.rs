@@ -1,57 +1,70 @@
 use super::{SegmentInfo, TrackType};
 // TODO (benjamintoofer@gmail.com): Clean these imports
-use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN}, get_codec, get_frame_rate, sample_entry::avc_sample_entry::{self, AVCSampleEntry}}};
+use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD}, get_codec, get_frame_rate, sample_entry::avc_sample_entry::{AVCSampleEntry}}};
 
 
 pub struct MediaInfoGenerator;
 
 impl MediaInfoGenerator {
   pub fn temp(mp4: &[u8]) -> Result<SIDX, CustomError> {
-    let mut offset = get_init_segment_end(&mp4);
+
+    // General information
+    // Boxes
     let sidx_box = SIDX::parse(&mp4)?;
-    let mut tkhd_reader = TKHDReader::parse(&mp4)?;
     let hdlr = HDLR::parse(&mp4)?;
+    let mvhd = MVHD::parse(&mp4)?;
+    let mut tkhd_reader = TKHDReader::parse(&mp4)?;
+    // Properties
+    let mut offset = get_init_segment_end(&mp4);
+    let asset_duration = mvhd.get_duration() as f32/ mvhd.get_timescale() as f32;
     let timescale = sidx_box.get_timescale();
     let references = sidx_box.get_references();
     let mut pts = sidx_box.get_earliest_presentation_time();
-
-    /**
-      Getting Track info
-    */
+    let maximum_segment_duration = get_largest_segment_duration(&sidx_box);
+    println!("MAX DURATION -> {}", maximum_segment_duration);
+    
+    // Track information
     let track_id = tkhd_reader.get_track_id()?;
     let track_type = TrackType::handler_to_track_type(hdlr.get_handler_type());
     let group_id ="something";
     let codec = get_codec(track_type, &mp4)?;
-    let frame_rate = get_frame_rate(&mp4);
+    let mut frame_rate = 0f32;
+    let mut sample_count = 0u32;
 
-    /**
-      Getting Segment info
-    */
     for sr in references {
-      if sr.reference_type == false { // Skip reference types that are segment indexes (1)
-          let duration: f32 = sr.subsegment_duration as f32 / timescale as f32;
-          let mut start_with_i_frame = MediaInfoGenerator::determine_start_with_i_frame_with_sap(sr);
-          if !start_with_i_frame {
-            // If we cannot determine that the fragment starts with an iframe we will need to look into the fragment's
-            // trun to determine the first_sample_flags (if available)
-            let trun = find_box("moof", offset, mp4)
-              .map(TRUN::parse).unwrap()?;
-            start_with_i_frame = MediaInfoGenerator::determine_start_with_i_frame_with_trun(&trun)
-          }
-          let info = SegmentInfo{
-            pts,
-            duration,
-            url: "",
-            bytes: Option::Some(sr.referenced_size),
-            offset: Option::Some(offset as u32),
-            start_with_i_frame,
-          };
-          println!("INFO = {:?}", info);
-          offset += sr.referenced_size as usize;
-          pts += sr.subsegment_duration as u64;
-        }
+       if sr.reference_type == true { // Skip reference types that are segment indexes (1)
+        continue;
+      }
+      // Segment information
+      let duration: f32 = sr.subsegment_duration as f32 / timescale as f32;
+      let mut start_with_i_frame = MediaInfoGenerator::determine_start_with_i_frame_with_sap(sr);
+      let trun = find_box("moof", offset, mp4)
+          .map(TRUN::parse).unwrap()?;
+      if !start_with_i_frame {
+        // If we cannot determine that the fragment starts with an iframe we will need to look into the fragment's
+        // trun to determine the first_sample_flags (if available)
+        start_with_i_frame = MediaInfoGenerator::determine_start_with_i_frame_with_trun(&trun)
+      }
+
+      let info = SegmentInfo{
+        pts,
+        duration,
+        url: "",
+        bytes: Option::Some(sr.referenced_size),
+        offset: Option::Some(offset as u32),
+        start_with_i_frame,
+      };
+      // println!("INFO = {:?}", info);
+
+      sample_count += trun.sample_count;
+
+      // Update
+      offset += sr.referenced_size as usize;
+      pts += sr.subsegment_duration as u64;
+        
     }
-      
+    
+    frame_rate = sample_count as f32 / asset_duration as f32;
     Ok(sidx_box)
   }
 
@@ -101,4 +114,29 @@ impl MediaInfoGenerator {
   fn determine_captions_id() {
 
   }
+}
+
+fn get_largest_segment_duration(sidx: &SIDX) -> f32 {
+  let timescale = sidx.get_timescale();
+  let mut max_segment_duration = 0f32;
+  for sr in sidx.get_references() {
+    if sr.reference_type == true { // Skip reference types that are segment indexes (1)
+      continue;
+    }
+    let segment_duration = sr.subsegment_duration as f32 / timescale as f32;
+    max_segment_duration = f32::max(segment_duration, max_segment_duration);
+  }
+  max_segment_duration
+}
+
+fn get_segment_bandwidth(sr: &SIDXReference, timescale: u32) -> u32 {
+  let segment_duration = sr.subsegment_duration as f32 / timescale as f32;
+  sr.referenced_size / segment_duration as u32
+}
+
+fn determine_segment_within_target_duration(sr: &SIDXReference, timescale: u32, max_duration: f32) -> bool {
+  let segment_duration = sr.subsegment_duration as f32 / timescale as f32;
+  let lower_bound = max_duration * 0.5;
+  let upper_bound = (max_duration * 1.5) + 0.5;
+  segment_duration <= upper_bound && segment_duration >= lower_bound
 }
