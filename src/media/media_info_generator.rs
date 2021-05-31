@@ -1,6 +1,10 @@
-use super::{SegmentInfo, TrackType};
+use super::{SegmentInfo, TrackInfo, TrackType};
 // TODO (benjamintoofer@gmail.com): Clean these imports
-use crate::{error::CustomError, isobmff::{HandlerType, boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD}, get_codec, get_frame_rate, sample_entry::avc_sample_entry::{AVCSampleEntry}}};
+use crate::error::CustomError;
+use crate::isobmff::HandlerType;
+use crate::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD};
+use crate::isobmff::{get_codec, get_frame_rate};
+use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 
 
 pub struct MediaInfoGenerator;
@@ -21,6 +25,18 @@ impl MediaInfoGenerator {
     let references = sidx_box.get_references();
     let mut pts = sidx_box.get_earliest_presentation_time();
     let maximum_segment_duration = get_largest_segment_duration(&sidx_box);
+    let mut max_bandwidth = 0u32;
+    let mut total_bits = 0u32;
+    let mut average_bandwidth = 0u32;
+    let temp_seg = SegmentInfo{
+      pts: 0,
+      duration: 0f32,
+      bandwidth: 0,
+      bytes: None,
+      offset: None,
+      start_with_i_frame: false,
+    };
+    let mut segments: Vec<SegmentInfo> = vec![temp_seg; sidx_box.get_references().len()];
     println!("MAX DURATION -> {}", maximum_segment_duration);
     
     // Track information
@@ -31,7 +47,7 @@ impl MediaInfoGenerator {
     let mut frame_rate = 0f32;
     let mut sample_count = 0u32;
 
-    for sr in references {
+    for (index,sr) in references.iter().enumerate() {
        if sr.reference_type == true { // Skip reference types that are segment indexes (1)
         continue;
       }
@@ -46,15 +62,20 @@ impl MediaInfoGenerator {
         start_with_i_frame = MediaInfoGenerator::determine_start_with_i_frame_with_trun(&trun)
       }
 
+      let seg_bandwidth = get_segment_bandwidth(&sr, timescale);
       let info = SegmentInfo{
         pts,
         duration,
-        url: "",
+        bandwidth: seg_bandwidth,
         bytes: Option::Some(sr.referenced_size),
         offset: Option::Some(offset as u32),
         start_with_i_frame,
       };
-      // println!("INFO = {:?}", info);
+      segments[index] = info;
+      total_bits += sr.referenced_size * 8;
+      if determine_segment_within_target_duration(&sr, timescale, maximum_segment_duration) {
+       max_bandwidth = u32::max(seg_bandwidth,max_bandwidth);
+      }
 
       sample_count += trun.sample_count;
 
@@ -64,7 +85,22 @@ impl MediaInfoGenerator {
         
     }
     
-    frame_rate = sample_count as f32 / asset_duration as f32;
+    // let track_info = TrackInfo{
+    //   track_id,
+    //   track_type,
+    //   group_id,
+    //   codec: codec.as_ref(),
+    //   frame_rate,
+    //   average_bandwidth,
+    //   max_bandwidth,
+    //   maximum_segment_duration,
+    //   segments,
+    // };
+    average_bandwidth = (total_bits as f32/ asset_duration) as u32;
+    frame_rate = sample_count as f32 / asset_duration;
+    println!("FRAME RATE {}", frame_rate);
+    println!("MAX BADNWIDTH {}", max_bandwidth);
+    println!("AVERAGE BADNWIDTH {}", average_bandwidth);
     Ok(sidx_box)
   }
 
@@ -131,7 +167,7 @@ fn get_largest_segment_duration(sidx: &SIDX) -> f32 {
 
 fn get_segment_bandwidth(sr: &SIDXReference, timescale: u32) -> u32 {
   let segment_duration = sr.subsegment_duration as f32 / timescale as f32;
-  sr.referenced_size / segment_duration as u32
+  (sr.referenced_size as f32/ segment_duration) as u32 * 8
 }
 
 fn determine_segment_within_target_duration(sr: &SIDXReference, timescale: u32, max_duration: f32) -> bool {
