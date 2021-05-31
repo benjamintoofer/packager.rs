@@ -3,6 +3,7 @@ use std::convert::TryInto;
 pub mod iso_box;
 pub mod sidx;
 pub mod mvhd;
+pub mod mdhd;
 pub mod hdlr;
 pub mod stsd;
 pub mod stts;
