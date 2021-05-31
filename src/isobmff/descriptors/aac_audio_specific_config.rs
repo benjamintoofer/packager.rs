@@ -3,7 +3,9 @@ use crate::util;
 static CLASS: &str = "AACAudioSpecificConfig";
 #[derive(Debug)]
 pub struct AACAudioSpecificConfig {
-  pub audio_object_type: u8,      // 5 bit
+  pub audio_object_type: u8,        // 5 bit
+  pub sampling_frequency_index: u8, // 4 bit
+  pub sampling_frequency: Option<u32>,      // 24 bit
 }
 
 impl AACAudioSpecificConfig {

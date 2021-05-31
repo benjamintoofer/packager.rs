@@ -2,8 +2,8 @@ use super::{SegmentInfo, TrackInfo, TrackType};
 // TODO (benjamintoofer@gmail.com): Clean these imports
 use crate::error::CustomError;
 use crate::isobmff::HandlerType;
-use crate::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD};
-use crate::isobmff::{get_codec, get_frame_rate};
+use crate::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD, mdhd::MDHDReader};
+use crate::isobmff::get_codec;
 use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 
 
@@ -18,6 +18,7 @@ impl MediaInfoGenerator {
     let hdlr = HDLR::parse(&mp4)?;
     let mvhd = MVHD::parse(&mp4)?;
     let mut tkhd_reader = TKHDReader::parse(&mp4)?;
+    let mut mdhd_reader = MDHDReader::parse(&mp4)?;
     // Properties
     let mut offset = get_init_segment_end(&mp4);
     let asset_duration = mvhd.get_duration() as f32/ mvhd.get_timescale() as f32;
@@ -43,9 +44,12 @@ impl MediaInfoGenerator {
     let track_id = tkhd_reader.get_track_id()?;
     let track_type = TrackType::handler_to_track_type(hdlr.get_handler_type());
     let group_id ="something";
-    let codec = get_codec(track_type, &mp4)?;
+    let codec = get_codec(&track_type, &mp4)?;
     let mut frame_rate = 0f32;
     let mut sample_count = 0u32;
+    let width = tkhd_reader.get_width()?;
+    let height = tkhd_reader.get_height()?;
+    let language = mdhd_reader.get_language()?;
 
     for (index,sr) in references.iter().enumerate() {
        if sr.reference_type == true { // Skip reference types that are segment indexes (1)
@@ -85,22 +89,27 @@ impl MediaInfoGenerator {
         
     }
     
-    // let track_info = TrackInfo{
-    //   track_id,
-    //   track_type,
-    //   group_id,
-    //   codec: codec.as_ref(),
-    //   frame_rate,
-    //   average_bandwidth,
-    //   max_bandwidth,
-    //   maximum_segment_duration,
-    //   segments,
-    // };
+    let track_info = TrackInfo{
+      track_id,
+      track_type,
+      group_id,
+      codec: codec.as_ref(),
+      frame_rate,
+      width,
+      height,
+      language,
+      average_bandwidth,
+      max_bandwidth,
+      maximum_segment_duration,
+      segments,
+    };
     average_bandwidth = (total_bits as f32/ asset_duration) as u32;
     frame_rate = sample_count as f32 / asset_duration;
-    println!("FRAME RATE {}", frame_rate);
-    println!("MAX BADNWIDTH {}", max_bandwidth);
-    println!("AVERAGE BADNWIDTH {}", average_bandwidth);
+    // println!("FRAME RATE {}", frame_rate);
+    // println!("MAX BADNWIDTH {}", max_bandwidth);
+    // println!("AVERAGE BADNWIDTH {}", average_bandwidth);
+
+    println!("STATUS {:?}", track_info);
     Ok(sidx_box)
   }
 
