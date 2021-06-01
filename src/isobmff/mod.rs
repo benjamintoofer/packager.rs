@@ -61,6 +61,15 @@ pub fn get_codec(track_type: &TrackType, mp4: &[u8]) -> Result<String, CustomErr
   }
 }
 
+pub fn get_channel_count(mp4: &[u8]) -> Result<u8, CustomError> {
+  let aac_data = STSD::parse(&mp4)
+    .and_then(|stsd| stsd.read_sample_entry("mp4a").map(|x|x.to_vec()))
+    .map(|mp4a_data|MP4ASampleEntry::parse(&mp4a_data))
+    .map(|mp4a_sample|mp4a_sample.es_descriptor)?;
+  
+  Ok(aac_data.dec_config_descr.audio_sepcific_info.channel_configuration)
+}
+
 pub fn get_frame_rate(mp4: &[u8]) -> Result<f32, CustomError> {
   let mut offset = get_init_segment_end(&mp4);
   let mut sample_count = STTSReader::parse(&mp4)?.get_entry_count()?;

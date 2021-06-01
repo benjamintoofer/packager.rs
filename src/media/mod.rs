@@ -40,10 +40,10 @@ pub struct TrackInfo<'a> {
   frame_rate: f32,
   average_bandwidth: u32,
   max_bandwidth: u32,
-  width: u32,
-  height: u32,
+  width: f32,
+  height: f32,
   language: String,
-  // audio_channels: u8,
+  audio_channels: u8,
   // instream_id: &'a str,
   // Playlist manifest related
   maximum_segment_duration: f32,

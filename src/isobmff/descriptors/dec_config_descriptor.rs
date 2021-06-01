@@ -4,6 +4,7 @@ use super::find_descriptor;
 use super::DescriptorTags;
 use super::aac_audio_specific_config::AACAudioSpecificConfig;
 
+// 14496-1; 7.2.6.6
 static CLASS: &str = "DecoderConfigDescriptor";
 #[derive(Debug)]
 pub struct DecoderConfigDescriptor {
@@ -47,7 +48,8 @@ impl  DecoderConfigDescriptor {
 
     let audio_sepcific_info = find_descriptor(DescriptorTags::DEC_SPECIFIC_INFO, start + 4, data)
       .and_then(|dec_info|Some(AACAudioSpecificConfig::parse(dec_info)))
-      .expect("No DecoderConfigDescriptor");
+      .expect("No DecoderConfigDescriptor")
+      .unwrap();
     DecoderConfigDescriptor {
       object_type_indication,
       stream_type,

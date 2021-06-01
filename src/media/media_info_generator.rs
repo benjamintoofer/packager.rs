@@ -3,7 +3,7 @@ use super::{SegmentInfo, TrackInfo, TrackType};
 use crate::error::CustomError;
 use crate::isobmff::HandlerType;
 use crate::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD, mdhd::MDHDReader};
-use crate::isobmff::get_codec;
+use crate::isobmff::{get_codec, get_channel_count};
 use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 
 
@@ -47,9 +47,10 @@ impl MediaInfoGenerator {
     let codec = get_codec(&track_type, &mp4)?;
     let mut frame_rate = 0f32;
     let mut sample_count = 0u32;
-    let width = tkhd_reader.get_width()?;
-    let height = tkhd_reader.get_height()?;
+    let width = tkhd_reader.get_width()? as f32 / 65536.0;
+    let height = tkhd_reader.get_height()? as f32 / 65536.0;
     let language = mdhd_reader.get_language()?;
+    let audio_channels = if track_type == TrackType::AUDIO { get_channel_count(&mp4)? } else { 0u8 };
 
     for (index,sr) in references.iter().enumerate() {
        if sr.reference_type == true { // Skip reference types that are segment indexes (1)
@@ -88,6 +89,9 @@ impl MediaInfoGenerator {
       pts += sr.subsegment_duration as u64;
         
     }
+
+    average_bandwidth = (total_bits as f32/ asset_duration) as u32;
+    frame_rate = sample_count as f32 / asset_duration;
     
     let track_info = TrackInfo{
       track_id,
@@ -101,13 +105,9 @@ impl MediaInfoGenerator {
       average_bandwidth,
       max_bandwidth,
       maximum_segment_duration,
+      audio_channels,
       segments,
     };
-    average_bandwidth = (total_bits as f32/ asset_duration) as u32;
-    frame_rate = sample_count as f32 / asset_duration;
-    // println!("FRAME RATE {}", frame_rate);
-    // println!("MAX BADNWIDTH {}", max_bandwidth);
-    // println!("AVERAGE BADNWIDTH {}", average_bandwidth);
 
     println!("STATUS {:?}", track_info);
     Ok(sidx_box)
