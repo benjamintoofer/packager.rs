@@ -50,22 +50,16 @@ PARSE AAC(MP4A) codec string
 4. parse ESDBox (14996-1 7.2.6.5)
  */
 
- #[derive(Debug)]
- struct MyStruct;
-
 fn main() {
   let file_path = "./assets/v_frag.mp4";
   // generate_content();
 
-  let my_str: MyStruct = MyStruct{};
-
-
-  println!("{:?}", my_str);
   
   // HLSGenerator::generate_media_playlist("");
   let mp4_file = fs::read(file_path);
   if let Ok(mp4) = mp4_file {
-    MediaInfoGenerator::temp(&mp4);
+    let track_info = MediaInfoGenerator::temp(&mp4).unwrap();
+    track_info
     // let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
     // let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
     // let mvhd_timescale = mvhd_box.get_timescale() as f64;

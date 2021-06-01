@@ -1,7 +1,7 @@
 use std::{convert::TryInto, fs::ReadDir};
 use std::str;
 
-use crate::manifest::manifest_generator::ManifestGenerator;
+use crate::{manifest::manifest_generator::ManifestGenerator, media::TrackInfo};
 use crate::isobmff::boxes::tfdt::TFDT;
 use crate::manifest::hls::hls_writer::HLSWriter;
 
@@ -76,7 +76,7 @@ impl HLSGenerator {
   // - maximum segment duration
   // - segment  info (path, duration)
   // TODO (benjamintoofer@gmail.com): Come back to this and finish
-  pub fn generate_media_playlist(metadata: &str) {
+  pub fn generate_media_playlist(metadata: &TrackInfo) {
 
     let mut hls_writer = HLSWriter::create_writer();
     let manifest_str = hls_writer.start_hls()
@@ -96,7 +96,7 @@ impl HLSGenerator {
       .finish();
     
     println!("{}", manifest_str);
-    println!("{}", metadata);
+    println!("{:?}", metadata);
   }
 
   pub fn generate_i_frame_playlist() {

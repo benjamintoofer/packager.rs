@@ -10,7 +10,7 @@ use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 pub struct MediaInfoGenerator;
 
 impl MediaInfoGenerator {
-  pub fn temp(mp4: &[u8]) -> Result<SIDX, CustomError> {
+  pub fn temp(mp4: &[u8]) -> Result<TrackInfo, CustomError> {
 
     // General information
     // Boxes
@@ -97,7 +97,7 @@ impl MediaInfoGenerator {
       track_id,
       track_type,
       group_id,
-      codec: codec.as_ref(),
+      codec,
       frame_rate,
       width,
       height,
@@ -110,7 +110,7 @@ impl MediaInfoGenerator {
     };
 
     println!("STATUS {:?}", track_info);
-    Ok(sidx_box)
+    Ok(track_info)
   }
 
   pub fn get_captions(mp4: &[u8]) -> Result<STSD, CustomError> {

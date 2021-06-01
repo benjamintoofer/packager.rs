@@ -36,7 +36,7 @@ pub struct TrackInfo<'a> {
   track_id: u32,
   group_id: &'a str,
   // Master manifest related
-  codec: &'a str,
+  codec: String,
   frame_rate: f32,
   average_bandwidth: u32,
   max_bandwidth: u32,
