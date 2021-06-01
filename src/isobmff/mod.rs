@@ -31,8 +31,8 @@ impl PartialEq<u32> for HandlerType {
 }
 
 // NOTE (benjamintoofer@gmail.com): May want to use the handler rather than the TrackType
-pub fn get_codec(track_type: TrackType, mp4: &[u8]) -> Result<String, CustomError> {
-  if track_type == TrackType::VIDEO {
+pub fn get_codec(track_type: &TrackType, mp4: &[u8]) -> Result<String, CustomError> {
+  if *track_type == TrackType::VIDEO {
     let codec_type = "avc1";
     let avc_config = STSD::parse(&mp4)
       .and_then(|stsd| stsd.read_sample_entry(codec_type).map(|x|x.to_vec()))
@@ -44,7 +44,7 @@ pub fn get_codec(track_type: TrackType, mp4: &[u8]) -> Result<String, CustomErro
       avc_config.profile_compatability,
       avc_config.avc_level_indication);
     return Ok(codec);
-  } else if track_type == TrackType::AUDIO {
+  } else if *track_type == TrackType::AUDIO {
     let codec_type = "mp4a";
     let aac_data = STSD::parse(&mp4)
       .and_then(|stsd| stsd.read_sample_entry("mp4a").map(|x|x.to_vec()))
@@ -59,6 +59,15 @@ pub fn get_codec(track_type: TrackType, mp4: &[u8]) -> Result<String, CustomErro
   } else {
     Ok("".to_string())
   }
+}
+
+pub fn get_channel_count(mp4: &[u8]) -> Result<u8, CustomError> {
+  let aac_data = STSD::parse(&mp4)
+    .and_then(|stsd| stsd.read_sample_entry("mp4a").map(|x|x.to_vec()))
+    .map(|mp4a_data|MP4ASampleEntry::parse(&mp4a_data))
+    .map(|mp4a_sample|mp4a_sample.es_descriptor)?;
+  
+  Ok(aac_data.dec_config_descr.audio_sepcific_info.channel_configuration)
 }
 
 pub fn get_frame_rate(mp4: &[u8]) -> Result<f32, CustomError> {

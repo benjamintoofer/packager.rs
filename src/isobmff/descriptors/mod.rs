@@ -27,17 +27,29 @@ impl DescriptorTags {
 
 pub fn find_descriptor<'a>(search_tag: DescriptorTags, offset: usize, current_box_data: &'a [u8]) -> Option<&'a [u8]> {
   let mut tag_index: usize = offset;
-    
   while tag_index < current_box_data.len() {
-    let length_index = tag_index + 1;
+    let mut length_index = tag_index + 1;
     let tag = current_box_data[tag_index];
-    let length = current_box_data[length_index] as usize;
-
+    let length = get_expandable_size(&current_box_data, &mut length_index) as usize;
     
     if tag == search_tag.value() {
-      return Some(current_box_data[tag_index..(length_index + length)].as_ref())
+      return Some(current_box_data[tag_index..(length_index + 1 + length)].as_ref())
     }
     tag_index += length;
   }
   None
+}
+
+// 14496-1; 8.3.3
+pub fn get_expandable_size(data: &[u8], offset: &mut usize) -> u32 {
+  let mut next_byte = data[*offset] & 0x80;
+  let mut size_of_instance = data[*offset] as u32 & 0x7F as u32;
+  while next_byte != 0 {
+    *offset += 1;
+    next_byte = data[*offset] & 0x80;
+    let size_byte = data[*offset] as u32 & 0x7F as u32;
+    size_of_instance = size_of_instance << 7 | size_byte;
+  }
+
+  size_of_instance
 }
