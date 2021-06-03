@@ -10,7 +10,7 @@ use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 pub struct MediaInfoGenerator;
 
 impl MediaInfoGenerator {
-  pub fn temp(mp4: &[u8]) -> Result<TrackInfo, CustomError> {
+  pub fn get_track_info(mp4: &[u8]) -> Result<TrackInfo, CustomError> {
 
     // General information
     // Boxes
@@ -29,6 +29,7 @@ impl MediaInfoGenerator {
     let mut max_bandwidth = 0u32;
     let mut total_bits = 0u32;
     let mut average_bandwidth = 0u32;
+    let mut segments_start_with_i_frame = true;
     let temp_seg = SegmentInfo{
       pts: 0,
       duration: 0f32,
@@ -38,12 +39,10 @@ impl MediaInfoGenerator {
       start_with_i_frame: false,
     };
     let mut segments: Vec<SegmentInfo> = vec![temp_seg; sidx_box.get_references().len()];
-    println!("MAX DURATION -> {}", maximum_segment_duration);
     
     // Track information
     let track_id = tkhd_reader.get_track_id()?;
     let track_type = TrackType::handler_to_track_type(hdlr.get_handler_type());
-    let group_id ="something";
     let codec = get_codec(&track_type, &mp4)?;
     let mut frame_rate = 0f32;
     let mut sample_count = 0u32;
@@ -65,6 +64,11 @@ impl MediaInfoGenerator {
         // If we cannot determine that the fragment starts with an iframe we will need to look into the fragment's
         // trun to determine the first_sample_flags (if available)
         start_with_i_frame = MediaInfoGenerator::determine_start_with_i_frame_with_trun(&trun)
+      }
+      // Check if this a segment doesnt start with an iframe. This will update the track to know that
+      // the track doesn't have segments that start with iframes 
+      if !start_with_i_frame {
+        segments_start_with_i_frame = false;
       }
 
       let seg_bandwidth = get_segment_bandwidth(&sr, timescale);
@@ -96,7 +100,9 @@ impl MediaInfoGenerator {
     let track_info = TrackInfo{
       track_id,
       track_type,
-      group_id,
+      audio_group_id: None,
+      cc_group_id: None,
+      subtitle_group_id: None,
       codec,
       frame_rate,
       width,
@@ -107,40 +113,10 @@ impl MediaInfoGenerator {
       maximum_segment_duration,
       audio_channels,
       segments,
+      segments_start_with_i_frame
     };
-
-    println!("STATUS {:?}", track_info);
     Ok(track_info)
   }
-
-  pub fn get_captions(mp4: &[u8]) -> Result<STSD, CustomError> {
-    let stsd = STSD::parse(mp4)?;
-    let hdlr = HDLR::parse(mp4)?;
-    // NOTE (benjamintoofer@gmail.com): Grabbing first mdat. Hopefully that's all we need
-    let mdat = get_box("mdat", 0, mp4)?;
-    if HandlerType::VIDE.eq(&hdlr.get_handler_type()) {
-      let avc1_sample_entry = stsd.read_sample_entry("avc1")
-        .map(AVCSampleEntry::parse)?;
-      let nal_unit_size = avc1_sample_entry.config.length_size_minus_one + 1;
-      // AVCSampleEntry::parse(avc1_sample_entry_data)
-    } else if HandlerType::SOUN.eq(&hdlr.get_handler_type()) {
-      // Do some audio stuff here
-    }
-    
-
-    return Ok(stsd);
-  }
-  // pub fn extract_media_info_from_mp4(mp4: &[u8]) -> MediaInfo {
-
-  // }
-
-  // fn track_info(mp4: &[u8]) -> TrackInfo {
-
-  // }
-
-  // fn segment_info(mp4: &[u8]) -> SegmentInfo {
-
-  // }
 
   fn determine_start_with_i_frame_with_sap(sidx_ref: &SIDXReference) -> bool {
     // Determine if this reference starts with SAP and has a SAP type of 1 or 2. Type 1 or 2
@@ -161,6 +137,24 @@ impl MediaInfoGenerator {
   }
 }
 
+fn get_captions(mp4: &[u8]) -> Result<STSD, CustomError> {
+  let stsd = STSD::parse(mp4)?;
+  let hdlr = HDLR::parse(mp4)?;
+  // NOTE (benjamintoofer@gmail.com): Grabbing first mdat. Hopefully that's all we need
+  let mdat = get_box("mdat", 0, mp4)?;
+  if HandlerType::VIDE.eq(&hdlr.get_handler_type()) {
+    let avc1_sample_entry = stsd.read_sample_entry("avc1")
+      .map(AVCSampleEntry::parse)?;
+    let nal_unit_size = avc1_sample_entry.config.length_size_minus_one + 1;
+    // AVCSampleEntry::parse(avc1_sample_entry_data)
+  } else if HandlerType::SOUN.eq(&hdlr.get_handler_type()) {
+    // Do some audio stuff here
+  }
+  
+
+  return Ok(stsd);
+  }
+
 fn get_largest_segment_duration(sidx: &SIDX) -> f32 {
   let timescale = sidx.get_timescale();
   let mut max_segment_duration = 0f32;
@@ -176,7 +170,7 @@ fn get_largest_segment_duration(sidx: &SIDX) -> f32 {
 
 fn get_segment_bandwidth(sr: &SIDXReference, timescale: u32) -> u32 {
   let segment_duration = sr.subsegment_duration as f32 / timescale as f32;
-  (sr.referenced_size as f32/ segment_duration) as u32 * 8
+  ((sr.referenced_size as f32/ segment_duration) * 8f32) as u32
 }
 
 fn determine_segment_within_target_duration(sr: &SIDXReference, timescale: u32, max_duration: f32) -> bool {
@@ -184,4 +178,64 @@ fn determine_segment_within_target_duration(sr: &SIDXReference, timescale: u32, 
   let lower_bound = max_duration * 0.5;
   let upper_bound = (max_duration * 1.5) + 0.5;
   segment_duration <= upper_bound && segment_duration >= lower_bound
+}
+
+#[cfg(test)]
+mod tests {
+
+  use crate::isobmff::boxes::sidx;
+
+    use super::*;
+
+  #[test]
+  fn test_get_segment_bandwidth() {
+    let timescale = 30u32;
+    let sidx_reference = SIDXReference {
+      reference_type: false,
+      referenced_size: 104621,
+      subsegment_duration: 90,
+      starts_with_sap: true,
+      sap_type: 1,
+      sap_delta_time: 0,
+    };
+    assert_eq!(get_segment_bandwidth(&sidx_reference, timescale), 278989);
+  }
+
+  #[test]
+  fn test_segment_within_target_duration() {
+    let max_duration = 6f32;
+    let timescale = 30u32;
+    let sidx_reference = SIDXReference {
+      reference_type: false,
+      referenced_size: 104621,
+      subsegment_duration: 90,
+      starts_with_sap: true,
+      sap_type: 1,
+      sap_delta_time: 0,
+    };
+
+    assert_eq!(determine_segment_within_target_duration(&sidx_reference, timescale, max_duration), true)
+  }
+
+  #[test]
+  fn test_segment_not_within_target_duration() {
+    let max_duration = 9f32;
+    let timescale = 30u32;
+    let sidx_reference = SIDXReference {
+      reference_type: false,
+      referenced_size: 104621,
+      subsegment_duration: 90,
+      starts_with_sap: true,
+      sap_type: 1,
+      sap_delta_time: 0,
+    };
+
+    assert_eq!(determine_segment_within_target_duration(&sidx_reference, timescale, max_duration), false)
+  } 
+
+  #[test]
+  fn test_get_largest_segment_duration() {
+    let sidx: SIDX = sidx::get_test_sidx();
+    assert_eq!(get_largest_segment_duration(&sidx), 3f32);
+  }
 }

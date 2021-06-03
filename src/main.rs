@@ -1,5 +1,6 @@
 use std::{ fs };
 
+use manifest::hls::hls_writer;
 use media::media_info_generator::MediaInfoGenerator;
 
 use crate::isobmff::boxes::{ iso_box };
@@ -58,8 +59,8 @@ fn main() {
   // HLSGenerator::generate_media_playlist("");
   let mp4_file = fs::read(file_path);
   if let Ok(mp4) = mp4_file {
-    let track_info = MediaInfoGenerator::temp(&mp4).unwrap();
-    track_info
+    let track_info = MediaInfoGenerator::get_track_info(&mp4).unwrap();
+
     // let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
     // let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
     // let mvhd_timescale = mvhd_box.get_timescale() as f64;
@@ -104,5 +105,5 @@ fn generate_manifest() {
   let output_dir = "./output";
   let output = format!("{}/recording",output_dir);
   let read_dir = fs::read_dir(&output).unwrap();
-  HLSGenerator::generate_master(read_dir);
+  // HLSGenerator::generate_master(read_dir);
 }

@@ -26,31 +26,34 @@ impl TrackType {
 }
 #[derive(Debug)]
 pub struct MediaInfo<'a> {
-  duration: f32, // ms
-  track_infos: Vec<TrackInfo<'a>>,
+  pub duration: f32, // ms
+  pub track_infos: Vec<TrackInfo<'a>>,
 }
 
 #[derive(Debug)]
 pub struct TrackInfo<'a> {
-  track_type: TrackType,
-  track_id: u32,
-  group_id: &'a str,
+  pub track_type: TrackType,
+  pub track_id: u32,
   // Master manifest related
-  codec: String,
-  frame_rate: f32,
-  average_bandwidth: u32,
-  max_bandwidth: u32,
-  width: f32,
-  height: f32,
-  language: String,
-  audio_channels: u8,
+  pub audio_group_id: Option<&'a str>,
+  pub cc_group_id: Option<&'a str>,
+  pub subtitle_group_id: Option<&'a str>,
+
+  pub codec: String,
+  pub frame_rate: f32,
+  pub average_bandwidth: u32,
+  pub max_bandwidth: u32,
+  pub width: f32,
+  pub height: f32,
+  pub language: String,
+  pub audio_channels: u8,
   // instream_id: &'a str,
   // Playlist manifest related
-  maximum_segment_duration: f32,
+  pub maximum_segment_duration: f32,
   // offset: u16, // Default to 0 if VOD
   // stream_type: &'a str, // VOD | LIVE
-  segments: Vec<SegmentInfo>,
-  // segments_start_with_i_frame: bool
+  pub segments: Vec<SegmentInfo>,
+  pub segments_start_with_i_frame: bool
 }
 
 #[derive(Debug, Clone)]
