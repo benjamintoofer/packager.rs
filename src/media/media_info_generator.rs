@@ -91,7 +91,6 @@ impl MediaInfoGenerator {
       // Update
       offset += sr.referenced_size as usize;
       pts += sr.subsegment_duration as u64;
-        
     }
 
     average_bandwidth = (total_bits as f32/ asset_duration) as u32;
@@ -115,6 +114,7 @@ impl MediaInfoGenerator {
       segments,
       segments_start_with_i_frame
     };
+    println!("TRACK - {:?}", track_info);
     Ok(track_info)
   }
 
@@ -182,10 +182,8 @@ fn determine_segment_within_target_duration(sr: &SIDXReference, timescale: u32, 
 
 #[cfg(test)]
 mod tests {
-
   use crate::isobmff::boxes::sidx;
-
-    use super::*;
+  use super::*;
 
   #[test]
   fn test_get_segment_bandwidth() {

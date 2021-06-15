@@ -52,14 +52,15 @@ PARSE AAC(MP4A) codec string
  */
 
 fn main() {
-  let file_path = "./assets/v_frag.mp4";
+  // let file_path = "./assets/v_frag.mp4";
+  // let file_path = "./output/recording/1280x720_frag_audio.mp4";
   // generate_content();
 
-  
+  FFMPEG::test_method_1("");
   // HLSGenerator::generate_media_playlist("");
-  let mp4_file = fs::read(file_path);
-  if let Ok(mp4) = mp4_file {
-    let track_info = MediaInfoGenerator::get_track_info(&mp4).unwrap();
+  // let mp4_file = fs::read(file_path);
+  // if let Ok(mp4) = mp4_file {
+  //   let track_info = MediaInfoGenerator::get_track_info(&mp4).unwrap();
 
     // let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
     // let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
@@ -72,12 +73,12 @@ fn main() {
     // HLSGenerator::generate_master();
     // let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
     // print!("{:#?}", stsd.get_samples_length());
-  } else {
+  // } else {
       // let mut error_message = "main: Could not open file = ".to_owned();
       // error_message.push_str(file_path);
       // eprintln!("{}", error_message);
       // process::exit(1);
-  }
+  // }
     
 }
 fn generate_content() {
@@ -87,7 +88,7 @@ fn generate_content() {
 
   fs::create_dir_all(&output).unwrap();
   
-  let sizes: Vec<VideoResolution> = vec![VideoResolution::_720, VideoResolution::_480, VideoResolution::_360];
+  let sizes: Vec<VideoResolution> = vec![VideoResolution::_720_30, VideoResolution::_480_30, VideoResolution::_360_30];
   FFMPEG::transcode(file_input, &output, sizes);
 
   let mut mp4_files_path: Vec<String> = vec![];
