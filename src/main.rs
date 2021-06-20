@@ -8,7 +8,7 @@ use crate::manifest::hls::hls_generator::HLSGenerator;
 
 use crate::transcoder::ffmpeg::FFMPEG;
 use crate::transcoder::bento::Bento;
-use crate::transcoder::VideoResolution;
+use crate::transcoder::{VideoResolution,AudioSampleRates};
 
 
 pub mod isobmff;
@@ -54,9 +54,8 @@ PARSE AAC(MP4A) codec string
 fn main() {
   // let file_path = "./assets/v_frag.mp4";
   // let file_path = "./output/recording/1280x720_frag_audio.mp4";
-  // generate_content();
+  generate_content();
 
-  FFMPEG::test_method_1("");
   // HLSGenerator::generate_media_playlist("");
   // let mp4_file = fs::read(file_path);
   // if let Ok(mp4) = mp4_file {
@@ -82,14 +81,15 @@ fn main() {
     
 }
 fn generate_content() {
-  let file_input = "./temp/recording.mp4";
+  let file_input = "./temp/ToS-4k_30sec.mp4";
   let output_dir = "./output";
   let output = format!("{}/recording",output_dir);
 
   fs::create_dir_all(&output).unwrap();
   
   let sizes: Vec<VideoResolution> = vec![VideoResolution::_720_30, VideoResolution::_480_30, VideoResolution::_360_30];
-  FFMPEG::transcode(file_input, &output, sizes);
+  let rates: Vec<AudioSampleRates> = vec![AudioSampleRates::_96k, AudioSampleRates::_48k];
+  FFMPEG::transcode(file_input, &output, sizes,rates);
 
   let mut mp4_files_path: Vec<String> = vec![];
   let read_dir = fs::read_dir(&output).unwrap();

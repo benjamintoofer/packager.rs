@@ -10,7 +10,7 @@ impl Bento {
       // let mut bento_command = Command::new("mp4fragment");
 
       // Video
-      let args = Bento::args(&path, "video");
+      let args = Bento::args(&path);
       children.push(thread::spawn(|| {
           Command::new("mp4fragment")
             .args(args)
@@ -19,7 +19,7 @@ impl Bento {
       }));
 
       // Audio
-      let args = Bento::args(&path, "audio");
+      let args = Bento::args(&path);
       children.push(thread::spawn(move || {
           Command::new("mp4fragment")
             .args(args)
@@ -34,15 +34,14 @@ impl Bento {
     }
   }
 
-  fn args(path: &String, track: &str) -> Vec<String> {
+  fn args(path: &String) -> Vec<String> {
     println!("PATH: {}", path);
     vec![
       "--index".to_string(),
       "--fragment-duration".to_string(), "2000".to_string(),
       "--timescale".to_string(), "90000".to_string(),
-      "--track".to_string(), track.to_string(),
       path.to_string(),
-      path.replace(".mp4", format!("_frag_{}.mp4",track).as_str())
+      path.replace(".mp4", format!("_frag.mp4").as_str())
     ]
   }
 }
