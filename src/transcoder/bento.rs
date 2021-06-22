@@ -19,13 +19,13 @@ impl Bento {
       }));
 
       // Audio
-      let args = Bento::args(&path);
-      children.push(thread::spawn(move || {
-          Command::new("mp4fragment")
-            .args(args)
-            .spawn()
-            .expect("Failed to execute command");
-      }));
+      // let args = Bento::args(&path);
+      // children.push(thread::spawn(move || {
+      //     Command::new("mp4fragment")
+      //       .args(args)
+      //       .spawn()
+      //       .expect("Failed to execute command");
+      // }));
     }
     
     for child in children {

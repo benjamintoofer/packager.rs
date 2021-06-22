@@ -10,3 +10,4 @@ edition = "2018"
 regex = "1"
 log = { version = "0.4", features = ["std", "serde"] }
 env_logger = { version = "0.8.2" }
+uuid = { version = "0.8", features = ["serde", "v4"] }

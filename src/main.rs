@@ -1,4 +1,6 @@
 use std::{ fs };
+use std::collections::hash_map::DefaultHasher;
+use uuid::Uuid;
 
 use manifest::hls::hls_writer;
 use media::media_info_generator::MediaInfoGenerator;
@@ -54,7 +56,8 @@ PARSE AAC(MP4A) codec string
 fn main() {
   // let file_path = "./assets/v_frag.mp4";
   // let file_path = "./output/recording/1280x720_frag_audio.mp4";
-  generate_content();
+  let file_name = "ToS-4k_30sec.mp4";
+  generate_content(file_name);
 
   // HLSGenerator::generate_media_playlist("");
   // let mp4_file = fs::read(file_path);
@@ -80,16 +83,18 @@ fn main() {
   // }
     
 }
-fn generate_content() {
-  let file_input = "./temp/ToS-4k_30sec.mp4";
+fn generate_content(file_name: &str) {
+  let input_dir = "./temp";
+  let file_input = format!("{}/{}", input_dir, file_name);
   let output_dir = "./output";
   let output = format!("{}/recording",output_dir);
 
   fs::create_dir_all(&output).unwrap();
-  
+  let uuid = Uuid::new_v4();
+  println!("{}", uuid.to_string());
   let sizes: Vec<VideoResolution> = vec![VideoResolution::_720_30, VideoResolution::_480_30, VideoResolution::_360_30];
   let rates: Vec<AudioSampleRates> = vec![AudioSampleRates::_96k, AudioSampleRates::_48k];
-  FFMPEG::transcode(file_input, &output, sizes,rates);
+  FFMPEG::transcode(&file_input, &output, sizes,rates);
 
   let mut mp4_files_path: Vec<String> = vec![];
   let read_dir = fs::read_dir(&output).unwrap();
