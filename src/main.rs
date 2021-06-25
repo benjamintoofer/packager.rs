@@ -57,7 +57,8 @@ fn main() {
   // let file_path = "./assets/v_frag.mp4";
   // let file_path = "./output/recording/1280x720_frag_audio.mp4";
   let file_name = "ToS-4k_30sec.mp4";
-  generate_content(file_name);
+  let uuid = Uuid::new_v4();
+  generate_content(file_name, &uuid);
 
   // HLSGenerator::generate_media_playlist("");
   // let mp4_file = fs::read(file_path);
@@ -83,25 +84,26 @@ fn main() {
   // }
     
 }
-fn generate_content(file_name: &str) {
+fn generate_content(file_name: &str, uuid: &Uuid) {
   let input_dir = "./temp";
   let file_input = format!("{}/{}", input_dir, file_name);
   let output_dir = "./output";
-  let output = format!("{}/recording",output_dir);
+  let transcode_output = format!("{}/{}",output_dir,uuid.to_string());
 
-  fs::create_dir_all(&output).unwrap();
-  let uuid = Uuid::new_v4();
-  println!("{}", uuid.to_string());
+  fs::create_dir_all(&transcode_output).unwrap();
   let sizes: Vec<VideoResolution> = vec![VideoResolution::_720_30, VideoResolution::_480_30, VideoResolution::_360_30];
   let rates: Vec<AudioSampleRates> = vec![AudioSampleRates::_96k, AudioSampleRates::_48k];
-  FFMPEG::transcode(&file_input, &output, sizes,rates);
+  FFMPEG::transcode(&file_input, &transcode_output, sizes,rates);
 
   let mut mp4_files_path: Vec<String> = vec![];
-  let read_dir = fs::read_dir(&output).unwrap();
-  for entry in read_dir {
-    let file_entry = entry.unwrap();
-    if file_entry.path().extension().unwrap() == "mp4" {
-      mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+  let track_directories: Vec<&str> = vec!["video", "audio"];
+  for track in track_directories {
+    let read_dir = fs::read_dir(format!("{}/{}",&transcode_output, track)).unwrap();
+    for entry in read_dir {
+      let file_entry = entry.unwrap();
+      if file_entry.path().extension().unwrap() == "mp4" {
+        mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+      }
     }
   }
   Bento::fragment(mp4_files_path);

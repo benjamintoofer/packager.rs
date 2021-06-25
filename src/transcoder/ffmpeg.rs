@@ -1,4 +1,4 @@
-use std::process::Command;
+use std::{fs, process::Command};
 use std::thread;
 
 use super::{VideoResolution, AudioSampleRates};
@@ -11,6 +11,12 @@ impl FFMPEG {
   }
   pub fn transcode(input:&str, output: &str, video_res: Vec<VideoResolution>, audio_rates: Vec<AudioSampleRates>) {
     
+    // Create directories for video and audio
+    fs::create_dir_all(format!("{}/{}",output, "video")).unwrap();
+    if audio_rates.len() > 0 {
+      fs::create_dir_all(format!("{}/{}",output, "audio")).unwrap();
+    }
+
     let mut ffmpeg_command = Command::new("ffmpeg");
     let mut args: Vec<String> = vec![
       "-y".to_string(),
@@ -22,7 +28,7 @@ impl FFMPEG {
       FFMPEG::generate_filter_complex(&video_res, &audio_rates),
     ];
     args.append(&mut filter_arg);
-    let mut mappings = FFMPEG::generate_mappings(&video_res, &audio_rates);
+    let mut mappings = FFMPEG::generate_mappings(&video_res, &audio_rates, output);
     args.append(&mut mappings);
 
     let handle  = thread::spawn(move || {
@@ -67,7 +73,7 @@ impl FFMPEG {
     regex.replace(filter_complex_str.as_ref(), "").to_string()
   }
 
-  fn generate_mappings(video_resolutions: &Vec<VideoResolution>, audio_rates: &Vec<AudioSampleRates>) -> Vec<String> {
+  fn generate_mappings(video_resolutions: &Vec<VideoResolution>, audio_rates: &Vec<AudioSampleRates>, output: &str) -> Vec<String> {
     let mut str_vec: Vec<String> = vec![];
     let mut temp_vec: Vec<String>;
     for (i, vid_res) in video_resolutions.iter().enumerate() {
@@ -77,7 +83,7 @@ impl FFMPEG {
         "-x264opts".to_string(), format!("keyint={}",(vid_res.get_fps() * 2)),
         "-r".to_string(), format!("{}", vid_res.get_fps()),
         "-map_metadata:s:v".to_string(), "0:s:v".to_string(),
-        format!("./output/test/{}_{}.mp4",vid_res.value(),vid_res.get_fps())
+        format!("./{}/video/{}_{}.mp4",output,vid_res.value(),vid_res.get_fps())
       ];
       str_vec.append(&mut temp_vec);
     }
@@ -87,7 +93,7 @@ impl FFMPEG {
         temp_vec = vec![
           "-map".to_string(),format!("[aout{}]",i),
           "-map_metadata:s:a".to_string(), "0:s:a".to_string(),
-          format!("./output/test/{}.mp4",aud.value())
+          format!("./{}/audio/{}.mp4",output, aud.value())
         ];
         str_vec.append(&mut temp_vec);
       }
