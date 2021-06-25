@@ -142,21 +142,22 @@ impl HLSGenerator {
 
     println!("{:?}", metadata);
     let mut hls_writer = HLSWriter::create_writer();
-    let manifest_str = hls_writer.start_hls()
+
+    let writer  = hls_writer.start_hls()
       .new_line()
       .comment("This manifest is created by Benjamin Toofer")
       .new_line()
-      .target_duration(6)
+      .target_duration(metadata.maximum_segment_duration as u8)
       .version(HLSVersion::_7)
-      .map("init.mp4", Option::None, Option::None)
-      .new_line()
-      .inf(6.006, Option::Some("segment_0.mp4"))
-      .inf(6.006, Option::Some("segment_1.mp4"))
-      .inf(6.006, Option::Some("segment_2.mp4"))
-      .inf(6.006, Option::Some("segment_3.mp4"))
-      .inf(6.006, Option::Some("segment_4.mp4"))
-      .endlist()
-      .finish();
+      .map("init.mp4", Option::Some(metadata.init_segment.bytes), Option::Some(metadata.init_segment.offset))
+      .new_line();
+
+    for media_seg in &metadata.segments {
+      writer.inf(media_seg.duration, Option::None);
+      writer.byte_range(media_seg.bytes, media_seg.offset, "seg.mp4");
+    }
+
+    let manifest_str = writer.endlist().finish();
     
     println!("{}", manifest_str);
     println!("{:?}", metadata);

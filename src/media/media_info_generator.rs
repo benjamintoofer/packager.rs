@@ -1,4 +1,4 @@
-use super::{SegmentInfo, TrackInfo, TrackType};
+use super::{MediaSegmentInfo, InitSegmentInfo, TrackInfo, TrackType};
 // TODO (benjamintoofer@gmail.com): Clean these imports
 use crate::error::CustomError;
 use crate::isobmff::HandlerType;
@@ -30,15 +30,15 @@ impl MediaInfoGenerator {
     let mut total_bits = 0u32;
     let mut average_bandwidth = 0u32;
     let mut segments_start_with_i_frame = true;
-    let temp_seg = SegmentInfo{
+    let temp_seg = MediaSegmentInfo{
       pts: 0,
       duration: 0f32,
       bandwidth: 0,
-      bytes: None,
-      offset: None,
+      bytes: 0,
+      offset: 0,
       start_with_i_frame: false,
     };
-    let mut segments: Vec<SegmentInfo> = vec![temp_seg; sidx.get_references().len()];
+    let mut segments: Vec<MediaSegmentInfo> = vec![temp_seg; sidx.get_references().len()];
     
     // Track information
     let track_id = tkhd_reader.get_track_id()?;
@@ -52,6 +52,10 @@ impl MediaInfoGenerator {
     let audio_channels = if track_type == TrackType::AUDIO { get_channel_count(&mp4)? } else { 0u8 };
 
     // Init segment information
+    let init_segment = InitSegmentInfo {
+      bytes:offset as u32,
+      offset: 0,
+    };
 
     for (index,sr) in references.iter().enumerate() {
        if sr.reference_type == true { // Skip reference types that are segment indexes (1)
@@ -74,12 +78,12 @@ impl MediaInfoGenerator {
       }
 
       let seg_bandwidth = get_segment_bandwidth(&sr, timescale);
-      let info = SegmentInfo{
+      let info = MediaSegmentInfo{
         pts,
         duration,
         bandwidth: seg_bandwidth,
-        bytes: Option::Some(sr.referenced_size),
-        offset: Option::Some(offset as u32),
+        bytes: sr.referenced_size,
+        offset: offset as u32,
         start_with_i_frame,
       };
       segments[index] = info;
@@ -113,6 +117,7 @@ impl MediaInfoGenerator {
       max_bandwidth,
       maximum_segment_duration,
       audio_channels,
+      init_segment,
       segments,
       segments_start_with_i_frame
     };
@@ -180,12 +185,6 @@ fn determine_segment_within_target_duration(sr: &SIDXReference, timescale: u32, 
   let lower_bound = max_duration * 0.5;
   let upper_bound = (max_duration * 1.5) + 0.5;
   segment_duration <= upper_bound && segment_duration >= lower_bound
-}
-
-pub fn find_init_segment<'a>(mp4: &'a [u8]) -> Option<&'a [u8]> {
-  // let ftyp = 
-  // let moov = 
-  Some(mp4)
 }
 
 #[cfg(test)]
