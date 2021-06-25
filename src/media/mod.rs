@@ -52,18 +52,24 @@ pub struct TrackInfo<'a> {
   pub maximum_segment_duration: f32,
   // offset: u16, // Default to 0 if VOD
   // stream_type: &'a str, // VOD | LIVE
-  pub segments: Vec<SegmentInfo>,
+  pub init_segment: Option<InitSegmentInfo>,
+  pub segments: Vec<MediaSegmentInfo>,
   pub segments_start_with_i_frame: bool
 }
 
 #[derive(Debug, Clone)]
-pub struct SegmentInfo {
+pub struct MediaSegmentInfo {
   pts: u64,
   duration: f32,
   bandwidth: u32,
   bytes: Option<u32>,
   offset: Option<u32>,
-  start_with_i_frame: bool
+  start_with_i_frame: bool,
 }
 
+#[derive(Debug, Clone)]
+pub struct InitSegmentInfo {
+  bytes: u32,
+  offset: u32,
+}
 // TODO (benjamintoofer@gmail.com): Add PartInfo when supporting LL-HLS

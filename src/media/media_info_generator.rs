@@ -14,7 +14,7 @@ impl MediaInfoGenerator {
 
     // General information
     // Boxes
-    let sidx_box = SIDX::parse(&mp4)?;
+    let sidx = SIDX::parse(&mp4)?;
     let hdlr = HDLR::parse(&mp4)?;
     let mvhd = MVHD::parse(&mp4)?;
     let mut tkhd_reader = TKHDReader::parse(&mp4)?;
@@ -22,10 +22,10 @@ impl MediaInfoGenerator {
     // Properties
     let mut offset = get_init_segment_end(&mp4);
     let asset_duration = mvhd.get_duration() as f32/ mvhd.get_timescale() as f32;
-    let timescale = sidx_box.get_timescale();
-    let references = sidx_box.get_references();
-    let mut pts = sidx_box.get_earliest_presentation_time();
-    let maximum_segment_duration = get_largest_segment_duration(&sidx_box);
+    let timescale = sidx.get_timescale();
+    let references = sidx.get_references();
+    let mut pts = sidx.get_earliest_presentation_time();
+    let maximum_segment_duration = get_largest_segment_duration(&sidx);
     let mut max_bandwidth = 0u32;
     let mut total_bits = 0u32;
     let mut average_bandwidth = 0u32;
@@ -38,7 +38,7 @@ impl MediaInfoGenerator {
       offset: None,
       start_with_i_frame: false,
     };
-    let mut segments: Vec<SegmentInfo> = vec![temp_seg; sidx_box.get_references().len()];
+    let mut segments: Vec<SegmentInfo> = vec![temp_seg; sidx.get_references().len()];
     
     // Track information
     let track_id = tkhd_reader.get_track_id()?;
@@ -50,6 +50,8 @@ impl MediaInfoGenerator {
     let height = tkhd_reader.get_height()? as f32 / 65536.0;
     let language = mdhd_reader.get_language()?;
     let audio_channels = if track_type == TrackType::AUDIO { get_channel_count(&mp4)? } else { 0u8 };
+
+    // Init segment information
 
     for (index,sr) in references.iter().enumerate() {
        if sr.reference_type == true { // Skip reference types that are segment indexes (1)
@@ -178,6 +180,12 @@ fn determine_segment_within_target_duration(sr: &SIDXReference, timescale: u32, 
   let lower_bound = max_duration * 0.5;
   let upper_bound = (max_duration * 1.5) + 0.5;
   segment_duration <= upper_bound && segment_duration >= lower_bound
+}
+
+pub fn find_init_segment<'a>(mp4: &'a [u8]) -> Option<&'a [u8]> {
+  // let ftyp = 
+  // let moov = 
+  Some(mp4)
 }
 
 #[cfg(test)]

@@ -50,7 +50,7 @@ pub fn get_codec(track_type: &TrackType, mp4: &[u8]) -> Result<String, CustomErr
       .and_then(|stsd| stsd.read_sample_entry("mp4a").map(|x|x.to_vec()))
       .map(|mp4a_data|MP4ASampleEntry::parse(&mp4a_data))
       .map(|mp4a_sample|mp4a_sample.es_descriptor)?;
-    println!("----- {:?}", aac_data);
+
     let codec = format!("{}.{:X}.{}",
       codec_type, 
       aac_data.dec_config_descr.object_type_indication, 

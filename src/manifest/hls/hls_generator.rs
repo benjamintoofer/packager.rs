@@ -54,14 +54,6 @@ impl ManifestGenerator for HLSGenerator {
 }
 
 impl HLSGenerator {
-
-  /// Will generate demuxed master and playlist manifests.
-  /// 
-  /// # Arguments
-  /// * `version` - A specified HLS version that is required to be 
-  pub fn generate_demuxed(version: HLSVersion) {
-
-  }
   // Need to know:
   // - which veriosn of HLS
   // - All avaialable tracks (audio+langiage, video+resolution/bitrate)
@@ -148,6 +140,7 @@ impl HLSGenerator {
   // TODO (benjamintoofer@gmail.com): Come back to this and finish
   pub fn generate_media_playlist(metadata: &TrackInfo) {
 
+    println!("{:?}", metadata);
     let mut hls_writer = HLSWriter::create_writer();
     let manifest_str = hls_writer.start_hls()
       .new_line()

@@ -1,4 +1,4 @@
-use std::{ fs };
+use std::{fs, str::FromStr};
 use std::collections::hash_map::DefaultHasher;
 use uuid::Uuid;
 
@@ -57,8 +57,11 @@ fn main() {
   // let file_path = "./assets/v_frag.mp4";
   // let file_path = "./output/recording/1280x720_frag_audio.mp4";
   let file_name = "ToS-4k_30sec.mp4";
-  let uuid = Uuid::new_v4();
-  generate_content(file_name, &uuid);
+  // let uuid = Uuid::new_v4();
+  let uuid = Uuid::from_str("cd01c82a-a292-462f-8be1-616913d4288a").unwrap();
+  // generate_content(file_name, &uuid);
+
+  generate_manifest(&uuid);
 
   // HLSGenerator::generate_media_playlist("");
   // let mp4_file = fs::read(file_path);
@@ -109,9 +112,26 @@ fn generate_content(file_name: &str, uuid: &Uuid) {
   Bento::fragment(mp4_files_path);
 }
 
-fn generate_manifest() {
+fn generate_manifest(uuid: &Uuid) {
   let output_dir = "./output";
-  let output = format!("{}/recording",output_dir);
-  let read_dir = fs::read_dir(&output).unwrap();
-  // HLSGenerator::generate_master(read_dir);
+  let media_dir = format!("{}/{}",output_dir,uuid.to_string());
+  println!("UUID - {}", uuid.to_string());
+  let mut mp4_files_path: Vec<String> = vec![];
+  let track_directories: Vec<&str> = vec!["video", "audio"];
+  for track in track_directories {
+    let read_dir = fs::read_dir(format!("{}/{}",&media_dir, track)).unwrap();
+    for entry in read_dir {
+      let file_entry = entry.unwrap();
+      if file_entry.path().extension().unwrap() == "mp4" {
+        mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+      }
+    }
+  }
+  for mp4_path in mp4_files_path {
+    let mp4_file = fs::read(mp4_path);
+    if let Ok(mp4) = mp4_file {
+      let track_info = MediaInfoGenerator::get_track_info(&mp4).unwrap();
+      HLSGenerator::generate_media_playlist(&track_info)
+    }
+  }
 }
