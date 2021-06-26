@@ -140,7 +140,7 @@ impl HLSGenerator {
   // TODO (benjamintoofer@gmail.com): Come back to this and finish
   pub fn generate_media_playlist(metadata: &TrackInfo) {
 
-    println!("{:?}", metadata);
+    // println!("{:?}", metadata);
     let mut hls_writer = HLSWriter::create_writer();
 
     let writer  = hls_writer.start_hls()
@@ -149,12 +149,12 @@ impl HLSGenerator {
       .new_line()
       .target_duration(metadata.maximum_segment_duration as u8)
       .version(HLSVersion::_7)
-      .map("init.mp4", Option::Some(metadata.init_segment.bytes), Option::Some(metadata.init_segment.offset))
+      .map(metadata.path, Option::Some(metadata.init_segment.bytes), Option::Some(metadata.init_segment.offset))
       .new_line();
 
     for media_seg in &metadata.segments {
       writer.inf(media_seg.duration, Option::None);
-      writer.byte_range(media_seg.bytes, media_seg.offset, "seg.mp4");
+      writer.byte_range(media_seg.bytes, media_seg.offset, metadata.path);
     }
 
     let manifest_str = writer.endlist().finish();

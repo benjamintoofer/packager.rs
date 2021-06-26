@@ -52,6 +52,7 @@ pub struct TrackInfo<'a> {
   pub maximum_segment_duration: f32,
   // offset: u16, // Default to 0 if VOD
   // stream_type: &'a str, // VOD | LIVE
+  pub path: &'a str,
   pub init_segment: InitSegmentInfo,
   pub segments: Vec<MediaSegmentInfo>,
   pub segments_start_with_i_frame: bool

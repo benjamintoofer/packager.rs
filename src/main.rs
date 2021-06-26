@@ -57,9 +57,9 @@ fn main() {
   // let file_path = "./assets/v_frag.mp4";
   // let file_path = "./output/recording/1280x720_frag_audio.mp4";
   let file_name = "ToS-4k_30sec.mp4";
-  // let uuid = Uuid::new_v4();
-  let uuid = Uuid::from_str("cd01c82a-a292-462f-8be1-616913d4288a").unwrap();
-  // generate_content(file_name, &uuid);
+  let uuid = Uuid::new_v4();
+  // let uuid = Uuid::from_str("25fe6395-a1bb-4821-8462-eca8c45d19b0").unwrap();
+  transcode_segment_content(file_name, &uuid);
 
   generate_manifest(&uuid);
 
@@ -72,7 +72,7 @@ fn main() {
     // let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
     // let mvhd_timescale = mvhd_box.get_timescale() as f64;
     // let mvhd_duration = mvhd_box.get_duration() as f64;
-    // let offset = iso_box::get_init_segment_end(&mp4);
+    // let offset = iso_box::get_media_start(&mp4);
     // println!("SIDX timescale: {}; MVHD DUR: {}; MVHD TIMESCALE: {}, ASSET DUR: {}",sidx_box.get_timescale(), mvhd_duration, mvhd_timescale, mvhd_duration / mvhd_timescale);
     // HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
     // // Need all bitrates
@@ -87,7 +87,7 @@ fn main() {
   // }
     
 }
-fn generate_content(file_name: &str, uuid: &Uuid) {
+fn transcode_segment_content(file_name: &str, uuid: &Uuid) {
   let input_dir = "./temp";
   let file_input = format!("{}/{}", input_dir, file_name);
   let output_dir = "./output";
@@ -128,9 +128,9 @@ fn generate_manifest(uuid: &Uuid) {
     }
   }
   for mp4_path in mp4_files_path {
-    let mp4_file = fs::read(mp4_path);
+    let mp4_file = fs::read(&mp4_path);
     if let Ok(mp4) = mp4_file {
-      let track_info = MediaInfoGenerator::get_track_info(&mp4).unwrap();
+      let track_info = MediaInfoGenerator::get_track_info(&mp4_path, &mp4).unwrap();
       HLSGenerator::generate_media_playlist(&track_info)
     }
   }

@@ -2,7 +2,7 @@ use super::{MediaSegmentInfo, InitSegmentInfo, TrackInfo, TrackType};
 // TODO (benjamintoofer@gmail.com): Clean these imports
 use crate::error::CustomError;
 use crate::isobmff::HandlerType;
-use crate::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD, mdhd::MDHDReader};
+use crate::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_media_start, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD, mdhd::MDHDReader};
 use crate::isobmff::{get_codec, get_channel_count};
 use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 
@@ -10,7 +10,7 @@ use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 pub struct MediaInfoGenerator;
 
 impl MediaInfoGenerator {
-  pub fn get_track_info(mp4: &[u8]) -> Result<TrackInfo, CustomError> {
+  pub fn get_track_info<'a>(path: &'a str, mp4: &[u8]) -> Result<TrackInfo<'a>, CustomError> {
 
     // General information
     // Boxes
@@ -20,7 +20,8 @@ impl MediaInfoGenerator {
     let mut tkhd_reader = TKHDReader::parse(&mp4)?;
     let mut mdhd_reader = MDHDReader::parse(&mp4)?;
     // Properties
-    let mut offset = get_init_segment_end(&mp4);
+    let mut offset = get_media_start(&mp4);
+    let init_size = get_init_segment_end(&mp4);
     let asset_duration = mvhd.get_duration() as f32/ mvhd.get_timescale() as f32;
     let timescale = sidx.get_timescale();
     let references = sidx.get_references();
@@ -53,7 +54,7 @@ impl MediaInfoGenerator {
 
     // Init segment information
     let init_segment = InitSegmentInfo {
-      bytes:offset as u32,
+      bytes:init_size as u32,
       offset: 0,
     };
 
@@ -117,11 +118,12 @@ impl MediaInfoGenerator {
       max_bandwidth,
       maximum_segment_duration,
       audio_channels,
+      path,
       init_segment,
       segments,
       segments_start_with_i_frame
     };
-    println!("TRACK - {:?}", track_info);
+
     Ok(track_info)
   }
 
