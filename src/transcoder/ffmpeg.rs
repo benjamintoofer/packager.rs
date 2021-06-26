@@ -9,13 +9,16 @@ impl FFMPEG {
   pub fn determine_sizes_to_transcode() {
 
   }
-  pub fn transcode(input:&str, output: &str, video_res: Vec<VideoResolution>, audio_rates: Vec<AudioSampleRates>) {
+  pub fn transcode(input:&str, output: &str, video_res: &Vec<VideoResolution>, audio_rates: &Vec<AudioSampleRates>) {
     
     // Create directories for video and audio
-    fs::create_dir_all(format!("{}/{}",output, "video")).unwrap();
-    if audio_rates.len() > 0 {
-      fs::create_dir_all(format!("{}/{}",output, "audio")).unwrap();
-    }
+    video_res
+      .iter()
+      .for_each(|res| fs::create_dir_all(format!("{}/{}/{}_{}",output, "video", res.value(), res.get_fps())).unwrap());
+
+    audio_rates
+      .iter()
+      .for_each(|res|fs::create_dir_all(format!("{}/{}/{}",output, "audio", res.value())).unwrap());
 
     let mut ffmpeg_command = Command::new("ffmpeg");
     let mut args: Vec<String> = vec![
@@ -83,7 +86,7 @@ impl FFMPEG {
         "-x264opts".to_string(), format!("keyint={}:no-scenecut",(vid_res.get_fps() * 2)),
         "-r".to_string(), format!("{}", vid_res.get_fps()),
         "-map_metadata:s:v".to_string(), "0:s:v".to_string(),
-        format!("./{}/video/{}_{}.mp4",output,vid_res.value(),vid_res.get_fps())
+        format!("./{}/video/{}_{}/media.mp4",output,vid_res.value(),vid_res.get_fps())
       ];
       str_vec.append(&mut temp_vec);
     }
@@ -93,7 +96,7 @@ impl FFMPEG {
         temp_vec = vec![
           "-map".to_string(),format!("[aout{}]",i),
           "-map_metadata:s:a".to_string(), "0:s:a".to_string(),
-          format!("./{}/audio/{}.mp4",output, aud.value())
+          format!("./{}/audio/{}/media.mp4",output, aud.value())
         ];
         str_vec.append(&mut temp_vec);
       }
