@@ -1,5 +1,8 @@
-use std::{ fs };
+use std::{fs, str::FromStr};
+use std::collections::hash_map::DefaultHasher;
+use uuid::Uuid;
 
+use manifest::hls::hls_writer;
 use media::media_info_generator::MediaInfoGenerator;
 
 use crate::isobmff::boxes::{ iso_box };
@@ -7,7 +10,7 @@ use crate::manifest::hls::hls_generator::HLSGenerator;
 
 use crate::transcoder::ffmpeg::FFMPEG;
 use crate::transcoder::bento::Bento;
-use crate::transcoder::VideoResolution;
+use crate::transcoder::{VideoResolution,AudioSampleRates};
 
 
 pub mod isobmff;
@@ -50,65 +53,85 @@ PARSE AAC(MP4A) codec string
 4. parse ESDBox (14996-1 7.2.6.5)
  */
 
- #[derive(Debug)]
- struct MyStruct;
-
 fn main() {
-  let file_path = "./assets/v_frag.mp4";
-  // generate_content();
+  // let file_path = "./assets/v_frag.mp4";
+  // let file_path = "./output/recording/1280x720_frag_audio.mp4";
+  let file_name = "ToS-4k_30sec.mp4";
+  let uuid = Uuid::new_v4();
+  // let uuid = Uuid::from_str("25fe6395-a1bb-4821-8462-eca8c45d19b0").unwrap();
+  transcode_segment_content(file_name, &uuid);
 
-  let my_str: MyStruct = MyStruct{};
+  generate_manifest(&uuid);
 
-
-  println!("{:?}", my_str);
-  
   // HLSGenerator::generate_media_playlist("");
-  let mp4_file = fs::read(file_path);
-  if let Ok(mp4) = mp4_file {
-    MediaInfoGenerator::temp(&mp4);
+  // let mp4_file = fs::read(file_path);
+  // if let Ok(mp4) = mp4_file {
+  //   let track_info = MediaInfoGenerator::get_track_info(&mp4).unwrap();
+
     // let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
     // let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
     // let mvhd_timescale = mvhd_box.get_timescale() as f64;
     // let mvhd_duration = mvhd_box.get_duration() as f64;
-    // let offset = iso_box::get_init_segment_end(&mp4);
+    // let offset = iso_box::get_media_start(&mp4);
     // println!("SIDX timescale: {}; MVHD DUR: {}; MVHD TIMESCALE: {}, ASSET DUR: {}",sidx_box.get_timescale(), mvhd_duration, mvhd_timescale, mvhd_duration / mvhd_timescale);
     // HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
     // // Need all bitrates
     // HLSGenerator::generate_master();
     // let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
     // print!("{:#?}", stsd.get_samples_length());
-  } else {
+  // } else {
       // let mut error_message = "main: Could not open file = ".to_owned();
       // error_message.push_str(file_path);
       // eprintln!("{}", error_message);
       // process::exit(1);
-  }
+  // }
     
 }
-fn generate_content() {
-  let file_input = "./temp/recording.mp4";
+fn transcode_segment_content(file_name: &str, uuid: &Uuid) {
+  let input_dir = "./temp";
+  let file_input = format!("{}/{}", input_dir, file_name);
   let output_dir = "./output";
-  let output = format!("{}/recording",output_dir);
+  let transcode_output = format!("{}/{}",output_dir,uuid.to_string());
 
-  fs::create_dir_all(&output).unwrap();
-  
-  let sizes: Vec<VideoResolution> = vec![VideoResolution::_720, VideoResolution::_480, VideoResolution::_360];
-  FFMPEG::transcode(file_input, &output, sizes);
+  fs::create_dir_all(&transcode_output).unwrap();
+  let sizes: Vec<VideoResolution> = vec![VideoResolution::_720_30, VideoResolution::_480_30, VideoResolution::_360_30];
+  let rates: Vec<AudioSampleRates> = vec![AudioSampleRates::_96k, AudioSampleRates::_48k];
+  FFMPEG::transcode(&file_input, &transcode_output, sizes,rates);
 
   let mut mp4_files_path: Vec<String> = vec![];
-  let read_dir = fs::read_dir(&output).unwrap();
-  for entry in read_dir {
-    let file_entry = entry.unwrap();
-    if file_entry.path().extension().unwrap() == "mp4" {
-      mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+  let track_directories: Vec<&str> = vec!["video", "audio"];
+  for track in track_directories {
+    let read_dir = fs::read_dir(format!("{}/{}",&transcode_output, track)).unwrap();
+    for entry in read_dir {
+      let file_entry = entry.unwrap();
+      if file_entry.path().extension().unwrap() == "mp4" {
+        mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+      }
     }
   }
   Bento::fragment(mp4_files_path);
 }
 
-fn generate_manifest() {
+fn generate_manifest(uuid: &Uuid) {
   let output_dir = "./output";
-  let output = format!("{}/recording",output_dir);
-  let read_dir = fs::read_dir(&output).unwrap();
-  HLSGenerator::generate_master(read_dir);
+  let media_dir = format!("{}/{}",output_dir,uuid.to_string());
+  println!("UUID - {}", uuid.to_string());
+  let mut mp4_files_path: Vec<String> = vec![];
+  let track_directories: Vec<&str> = vec!["video", "audio"];
+  for track in track_directories {
+    let read_dir = fs::read_dir(format!("{}/{}",&media_dir, track)).unwrap();
+    for entry in read_dir {
+      let file_entry = entry.unwrap();
+      if file_entry.path().extension().unwrap() == "mp4" {
+        mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
+      }
+    }
+  }
+  for mp4_path in mp4_files_path {
+    let mp4_file = fs::read(&mp4_path);
+    if let Ok(mp4) = mp4_file {
+      let track_info = MediaInfoGenerator::get_track_info(&mp4_path, &mp4).unwrap();
+      let playlist = HLSGenerator::generate_media_playlist(&track_info);
+    }
+  }
 }

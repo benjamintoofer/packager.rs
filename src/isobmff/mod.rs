@@ -1,6 +1,6 @@
 use crate::{error::CustomError, media::TrackType};
 use crate::isobmff::boxes::{stts::STTSReader, stsd::STSD, sidx::SIDX, trun::TRUN, mvhd::MVHD};
-use crate::iso_box::{find_box, get_init_segment_end};
+use crate::iso_box::{find_box, get_media_start};
 use self::{sample_entry::{avc_sample_entry::AVCSampleEntry, mp4a_sample_entry::MP4ASampleEntry}};
 
 pub mod boxes;
@@ -50,7 +50,7 @@ pub fn get_codec(track_type: &TrackType, mp4: &[u8]) -> Result<String, CustomErr
       .and_then(|stsd| stsd.read_sample_entry("mp4a").map(|x|x.to_vec()))
       .map(|mp4a_data|MP4ASampleEntry::parse(&mp4a_data))
       .map(|mp4a_sample|mp4a_sample.es_descriptor)?;
-    println!("----- {:?}", aac_data);
+
     let codec = format!("{}.{:X}.{}",
       codec_type, 
       aac_data.dec_config_descr.object_type_indication, 
@@ -71,7 +71,7 @@ pub fn get_channel_count(mp4: &[u8]) -> Result<u8, CustomError> {
 }
 
 pub fn get_frame_rate(mp4: &[u8]) -> Result<f32, CustomError> {
-  let mut offset = get_init_segment_end(&mp4);
+  let mut offset = get_media_start(&mp4);
   let mut sample_count = STTSReader::parse(&mp4)?.get_entry_count()?;
   let mvhd = MVHD::parse(&mp4)?;
   let asset_duration = mvhd.get_duration() as f32/ mvhd.get_timescale() as f32;

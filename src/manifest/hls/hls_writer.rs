@@ -115,7 +115,7 @@ impl HLSWriter {
     forced: Option<HLSBool>,
     instream_id: Option<CCInstreamId>,          // ONLY CLOSED-CAPTIONS
     characteristics: Option<&str>,
-    channels: Option<&str>,
+    channels: Option<u8>,
   ) -> &mut HLSWriter {
     self.hls_manifest_str.push_str(format!("{}-X-MEDIA:TYPE={},GROUP-ID=\"{}\",NAME=\"{}\"", EXT_TAG_PREFIX, media_type.value(), group_id, name).as_str());  
     if let Some(language) = language {
@@ -393,7 +393,7 @@ mod tests {
       Option::Some(29.97),
       Option::Some(HDCP_LEVEL::TYPE_0),
       Option::Some("com.example.drm1:SMART-TV/PC"),
-      Option::Some(VideoResolution::_1080),
+      Option::Some(VideoResolution::_1080_60),
       Option::Some(VIDEO_RANGE::SDR),
       Option::Some("avc1.42e00a,mp4a.40.2"),
       Option::Some("a1"),
@@ -458,7 +458,7 @@ mod tests {
       Option::Some(HLSBool::NO),
       Option::Some(CCInstreamId::CC1),
       Option::Some("some,value"),
-      Option::Some("2")
+      Option::Some(2)
     );
 
     assert_eq!(writer.finish(), expected_manifest);
@@ -505,7 +505,7 @@ mod tests {
       Option::Some(50000),
       Option::Some(HDCP_LEVEL::TYPE_0),
       Option::Some("com.example.drm1:SMART-TV/PC"),
-      Option::Some(VideoResolution::_1080),
+      Option::Some(VideoResolution::_1080_60),
       Option::Some(VIDEO_RANGE::SDR),
       Option::Some("avc1.42e00a"),
       Option::Some("v1"),

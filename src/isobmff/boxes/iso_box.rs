@@ -15,7 +15,7 @@ pub trait IsoFullBox {
   fn get_flags(&self) -> u32;
 }
 
-pub fn get_init_segment_end(mp4: &[u8]) -> usize {
+pub fn get_media_start(mp4: &[u8]) -> usize {
   let mut lower_bound: usize = 0;
   let mut offset = std::u32::MAX;
     
@@ -36,7 +36,32 @@ pub fn get_init_segment_end(mp4: &[u8]) -> usize {
     lower_bound += converted_val;
   }
     
-    offset as usize
+  offset as usize
+}
+
+pub fn get_init_segment_end(mp4: &[u8]) -> usize {
+  // We are making the assumption that the moov is the last box in the init segment. There are encoders out there (adobe) 
+  // that will place the ftyp after the moov and will break this. Deal with that later
+  let mut lower_bound: usize = 0;
+  let mut offset = std::u32::MIN;
+    
+  while lower_bound < mp4.len() {
+    let bound_plus_four = lower_bound + 4;
+    let size = mp4[lower_bound..bound_plus_four].as_ref();
+    let box_type = str::from_utf8(mp4[bound_plus_four..(bound_plus_four + 4)].as_ref());
+    let num = u32::from_be_bytes(size.try_into().expect("slice with incorrect length"));
+
+    if let Ok(box_type_str) = box_type {
+      if box_type_str.eq("moov") {
+        offset = u32::try_from(lower_bound).expect("cannot convert usize (lower_bound) to u32") + num;
+        break;
+      }
+    }
+    let converted_val = usize::try_from(num).expect("cannot convert u32 (num) to usize");
+    lower_bound += converted_val;
+  }
+
+  offset as usize
 }
 
 pub fn find_box<'a>(search_box: &str, offset: usize, current_box_data: &'a [u8]) -> Option<&'a [u8]> {
@@ -82,13 +107,13 @@ pub fn get_box<'a>(search_box: &str, offset: usize, current_box_data: &'a [u8]) 
 //   use std::fs;
 
 //   #[test]
-//   fn test_get_init_segment_end() {
+//   fn test_get_media_start() {
 //     let file_path = "./assets/v_frag.mp4";
   
 //     let expected_value: usize = 907;
 //     let mp4_file = fs::read(file_path);
 //     if let Ok(mp4) = mp4_file {
-//       assert_eq!(get_init_segment_end(&mp4), expected_value);
+//       assert_eq!(get_media_start(&mp4), expected_value);
 //     } else {
 //       panic!("mp4 file {:} cannot be opened", file_path);
 //     }

@@ -1,9 +1,10 @@
 use std::{convert::TryInto, fs::ReadDir};
 use std::str;
 
-use crate::manifest::manifest_generator::ManifestGenerator;
+use crate::{manifest::manifest_generator::ManifestGenerator, media::{TrackInfo, MediaInfo, TrackType}};
 use crate::isobmff::boxes::tfdt::TFDT;
 use crate::manifest::hls::hls_writer::HLSWriter;
+use crate::manifest::hls::{HLSMediaType, HLSBool};
 
 use super::HLSVersion;
 
@@ -53,11 +54,17 @@ impl ManifestGenerator for HLSGenerator {
 }
 
 impl HLSGenerator {
-
   // Need to know:
   // - which veriosn of HLS
   // - All avaialable tracks (audio+langiage, video+resolution/bitrate)
-  pub fn generate_master(read_dir: ReadDir) -> String {
+
+  // 1. Bucket tracks into their own group ids with its own track tracktype. 
+  //  1a. NEED TO TEST DIFFERENT COMBOS (mutliple audio tracks/1 group; mutliple audio tracks/each group id; Combos for CC and Subtitles too) 
+  // 2. Identify video tracks with groups of AUDIO, SUBTITLES, CC
+  //  2a. Combine (codecs) and (bitrates) for audio and video
+  // 3. Assign groupd ids of AUDIO, CC, SUBTITLES to the video stream inf
+  // BONUS: Implement IFrame playlist generation
+  pub fn generate_master(read_dir: ReadDir, metadata: &MediaInfo) -> String {
     let mut mp4_files_path: Vec<String> = vec![];
     for entry in read_dir {
       let file_entry = entry.unwrap();
@@ -66,6 +73,61 @@ impl HLSGenerator {
       }
     }
 
+    let audio_tracks = metadata.track_infos
+      .iter()
+      .filter(|ti|ti.track_type == TrackType::AUDIO);
+
+    let video_tracks = metadata.track_infos
+      .iter()
+      .filter(|ti|ti.track_type == TrackType::VIDEO);
+
+    let is_independent_segments = metadata.track_infos
+      .iter()
+      .filter(|ti|ti.track_type == TrackType::VIDEO)
+      .all(|ti|ti.segments_start_with_i_frame == true);
+      
+    let mut hls_writer = HLSWriter::create_writer();
+    let manifest = hls_writer.start_hls()
+      .new_line()
+      .comment("This manifest is created by Benjamin Toofer");
+    
+    // Iterate over audio tracks
+    // for at in audio_tracks {
+    //   manifest
+    //   .media(
+    //     HLSMediaType::AUDIO,
+    //     at.group_id, 
+    //     at.group_id, 
+    //     Some("uri"), 
+    //     Some(&at.language),
+    //     None, 
+    //     Some(HLSBool::YES),
+    //     Some(HLSBool::YES), 
+    //     None, 
+    //     None, 
+    //     None, 
+    //     Some(at.audio_channels));
+    // }
+
+    // // Iterate over video tracks
+    // for at in audio_tracks {
+    //   manifest
+    //   .stream_inf(
+    //     "path",
+    //     at.max_bandwidth, 
+    //     at.average_bandwidth, 
+    //     at.frame_rate, 
+    //     None,
+    //     None, 
+    //     Some(HLSBool::YES),
+    //     None, 
+    //     at.codec, 
+    //     None, 
+    //     None, 
+    //     Some(at.audio_channels));
+    // }
+    
+      // .media(media_type, group_id, name, uri, language, assoc_language, default, auto_select, forced, instream_id, characteristics, channels)
     "".to_string()
   }
 
@@ -76,27 +138,25 @@ impl HLSGenerator {
   // - maximum segment duration
   // - segment  info (path, duration)
   // TODO (benjamintoofer@gmail.com): Come back to this and finish
-  pub fn generate_media_playlist(metadata: &str) {
+  pub fn generate_media_playlist<'a>(metadata: &'a TrackInfo) -> String {
 
     let mut hls_writer = HLSWriter::create_writer();
-    let manifest_str = hls_writer.start_hls()
+
+    let writer  = hls_writer.start_hls()
       .new_line()
-      .comment("This manifest is created by Benjamin Toofer")
+      .comment("This manifest is created by Luma")
       .new_line()
-      .target_duration(6)
+      .target_duration(metadata.maximum_segment_duration as u8)
       .version(HLSVersion::_7)
-      .map("init.mp4", Option::None, Option::None)
-      .new_line()
-      .inf(6.006, Option::Some("segment_0.mp4"))
-      .inf(6.006, Option::Some("segment_1.mp4"))
-      .inf(6.006, Option::Some("segment_2.mp4"))
-      .inf(6.006, Option::Some("segment_3.mp4"))
-      .inf(6.006, Option::Some("segment_4.mp4"))
-      .endlist()
-      .finish();
-    
-    println!("{}", manifest_str);
-    println!("{}", metadata);
+      .map(metadata.path, Option::Some(metadata.init_segment.bytes), Option::Some(metadata.init_segment.offset))
+      .new_line();
+
+    for media_seg in &metadata.segments {
+      writer.inf(media_seg.duration, Option::None);
+      writer.byte_range(media_seg.bytes, media_seg.offset, metadata.path);
+    }
+
+    writer.endlist().finish().to_string()
   }
 
   pub fn generate_i_frame_playlist() {
