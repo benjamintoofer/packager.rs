@@ -138,14 +138,13 @@ impl HLSGenerator {
   // - maximum segment duration
   // - segment  info (path, duration)
   // TODO (benjamintoofer@gmail.com): Come back to this and finish
-  pub fn generate_media_playlist(metadata: &TrackInfo) {
+  pub fn generate_media_playlist<'a>(metadata: &'a TrackInfo) -> String {
 
-    // println!("{:?}", metadata);
     let mut hls_writer = HLSWriter::create_writer();
 
     let writer  = hls_writer.start_hls()
       .new_line()
-      .comment("This manifest is created by Benjamin Toofer")
+      .comment("This manifest is created by Luma")
       .new_line()
       .target_duration(metadata.maximum_segment_duration as u8)
       .version(HLSVersion::_7)
@@ -157,10 +156,7 @@ impl HLSGenerator {
       writer.byte_range(media_seg.bytes, media_seg.offset, metadata.path);
     }
 
-    let manifest_str = writer.endlist().finish();
-    
-    println!("{}", manifest_str);
-    println!("{:?}", metadata);
+    writer.endlist().finish().to_string()
   }
 
   pub fn generate_i_frame_playlist() {

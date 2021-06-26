@@ -131,7 +131,7 @@ fn generate_manifest(uuid: &Uuid) {
     let mp4_file = fs::read(&mp4_path);
     if let Ok(mp4) = mp4_file {
       let track_info = MediaInfoGenerator::get_track_info(&mp4_path, &mp4).unwrap();
-      HLSGenerator::generate_media_playlist(&track_info)
+      let playlist = HLSGenerator::generate_media_playlist(&track_info);
     }
   }
 }
