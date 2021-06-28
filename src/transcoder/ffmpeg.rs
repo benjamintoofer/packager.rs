@@ -1,6 +1,8 @@
 use std::{fs, process::Command};
 use std::thread;
 
+use crate::media::TrackType;
+
 use super::{VideoResolution, AudioSampleRates};
 use regex::Regex;
 pub struct FFMPEG {}
@@ -9,16 +11,8 @@ impl FFMPEG {
   pub fn determine_sizes_to_transcode() {
 
   }
-  pub fn transcode(input:&str, output: &str, video_res: &Vec<VideoResolution>, audio_rates: &Vec<AudioSampleRates>) {
-    
-    // Create directories for video and audio
-    video_res
-      .iter()
-      .for_each(|res| fs::create_dir_all(format!("{}/{}/{}_{}",output, "video", res.value(), res.get_fps())).unwrap());
+  pub fn transcode(input:&str, base_output_path: &str, video_res: &Vec<VideoResolution>, audio_rates: &Vec<AudioSampleRates>) {
 
-    audio_rates
-      .iter()
-      .for_each(|res|fs::create_dir_all(format!("{}/{}/{}",output, "audio", res.value())).unwrap());
 
     let mut ffmpeg_command = Command::new("ffmpeg");
     let mut args: Vec<String> = vec![
@@ -31,7 +25,9 @@ impl FFMPEG {
       FFMPEG::generate_filter_complex(&video_res, &audio_rates),
     ];
     args.append(&mut filter_arg);
-    let mut mappings = FFMPEG::generate_mappings(&video_res, &audio_rates, output);
+
+
+    let mut mappings = FFMPEG::generate_mappings(&video_res, &audio_rates, base_output_path);
     args.append(&mut mappings);
 
     let handle  = thread::spawn(move || {
@@ -86,7 +82,7 @@ impl FFMPEG {
         "-x264opts".to_string(), format!("keyint={}:no-scenecut",(vid_res.get_fps() * 2)),
         "-r".to_string(), format!("{}", vid_res.get_fps()),
         "-map_metadata:s:v".to_string(), "0:s:v".to_string(),
-        format!("./{}/video/{}_{}/media.mp4",output,vid_res.value(),vid_res.get_fps())
+        format!("{}/video/{}_{}/media.mp4",output,vid_res.value(),vid_res.get_fps())
       ];
       str_vec.append(&mut temp_vec);
     }
@@ -96,7 +92,7 @@ impl FFMPEG {
         temp_vec = vec![
           "-map".to_string(),format!("[aout{}]",i),
           "-map_metadata:s:a".to_string(), "0:s:a".to_string(),
-          format!("./{}/audio/{}/media.mp4",output, aud.value())
+          format!("{}/audio/{}/media.mp4",output, aud.value())
         ];
         str_vec.append(&mut temp_vec);
       }

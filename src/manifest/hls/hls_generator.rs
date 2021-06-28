@@ -8,6 +8,7 @@ use crate::manifest::hls::{HLSMediaType, HLSBool};
 
 use super::HLSVersion;
 
+const DEFAULT_VERSION: HLSVersion = HLSVersion::_7;
 
 pub struct HLSGenerator {
 
@@ -64,15 +65,7 @@ impl HLSGenerator {
   //  2a. Combine (codecs) and (bitrates) for audio and video
   // 3. Assign groupd ids of AUDIO, CC, SUBTITLES to the video stream inf
   // BONUS: Implement IFrame playlist generation
-  pub fn generate_master(read_dir: ReadDir, metadata: &MediaInfo) -> String {
-    let mut mp4_files_path: Vec<String> = vec![];
-    for entry in read_dir {
-      let file_entry = entry.unwrap();
-      if file_entry.path().extension().unwrap() == "mp4" {
-        mp4_files_path.push(file_entry.path().to_str().expect("Error").to_string())
-      }
-    }
-
+  pub fn generate_master(metadata: &MediaInfo) -> String {
     let audio_tracks = metadata.track_infos
       .iter()
       .filter(|ti|ti.track_type == TrackType::AUDIO);
@@ -86,48 +79,57 @@ impl HLSGenerator {
       .filter(|ti|ti.track_type == TrackType::VIDEO)
       .all(|ti|ti.segments_start_with_i_frame == true);
       
+    // GENERATE GROUPS HERE
     let mut hls_writer = HLSWriter::create_writer();
-    let manifest = hls_writer.start_hls()
-      .new_line()
-      .comment("This manifest is created by Benjamin Toofer");
-    
-    // Iterate over audio tracks
-    // for at in audio_tracks {
-    //   manifest
-    //   .media(
-    //     HLSMediaType::AUDIO,
-    //     at.group_id, 
-    //     at.group_id, 
-    //     Some("uri"), 
-    //     Some(&at.language),
-    //     None, 
-    //     Some(HLSBool::YES),
-    //     Some(HLSBool::YES), 
-    //     None, 
-    //     None, 
-    //     None, 
-    //     Some(at.audio_channels));
-    // }
+    let writer = hls_writer.start_hls()
+    .version(DEFAULT_VERSION);
 
-    // // Iterate over video tracks
-    // for at in audio_tracks {
-    //   manifest
-    //   .stream_inf(
-    //     "path",
-    //     at.max_bandwidth, 
-    //     at.average_bandwidth, 
-    //     at.frame_rate, 
-    //     None,
-    //     None, 
-    //     Some(HLSBool::YES),
-    //     None, 
-    //     at.codec, 
-    //     None, 
-    //     None, 
-    //     Some(at.audio_channels));
-    // }
+    // Addd independent segments tag if we detect that all tracks have independent segments
+    if is_independent_segments {
+      writer.independent();
+    }
     
-      // .media(media_type, group_id, name, uri, language, assoc_language, default, auto_select, forced, instream_id, characteristics, channels)
+    writer.new_line()
+    .comment("This manifest is created by Luma")
+    .new_line();
+
+    audio_tracks.for_each(|track|{
+      writer.media(
+        HLSMediaType::AUDIO, 
+        track.audio_group_id.unwrap_or_default(), 
+        &track.language, Some(&track.path), 
+        Some(&track.language), 
+        None, 
+        None, 
+        None, 
+        None, 
+        None, 
+        None, 
+        Some(track.audio_channels));
+    });
+
+    writer.new_line();
+
+    video_tracks.for_each(|track|{
+      writer.stream_inf(
+        &track.path, 
+        track.max_bandwidth, 
+        Some(track.average_bandwidth), 
+        Some(track.frame_rate), 
+        None, 
+        None, 
+        Some(&format!("{}x{}",track.width, track.height)), 
+        None, 
+        Some(&track.codec),
+        None,
+        None, 
+        None,
+        None
+      );
+    });
+
+    println!("-------------MASTER MANIFEST--------------");
+    println!("{}", writer.finish());
     "".to_string()
   }
 
@@ -147,13 +149,13 @@ impl HLSGenerator {
       .comment("This manifest is created by Luma")
       .new_line()
       .target_duration(metadata.maximum_segment_duration as u8)
-      .version(HLSVersion::_7)
-      .map(metadata.path, Option::Some(metadata.init_segment.bytes), Option::Some(metadata.init_segment.offset))
+      .version(DEFAULT_VERSION)
+      .map(&metadata.path, Option::Some(metadata.init_segment.bytes), Option::Some(metadata.init_segment.offset))
       .new_line();
 
     for media_seg in &metadata.segments {
       writer.inf(media_seg.duration, Option::None);
-      writer.byte_range(media_seg.bytes, media_seg.offset, metadata.path);
+      writer.byte_range(media_seg.bytes, media_seg.offset, &metadata.path);
     }
 
     writer.endlist().finish().to_string()

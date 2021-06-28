@@ -1,4 +1,4 @@
-use super::{MediaSegmentInfo, InitSegmentInfo, TrackInfo, TrackType};
+use super::{InitSegmentInfo, MediaInfo, MediaSegmentInfo, TrackInfo, TrackType};
 // TODO (benjamintoofer@gmail.com): Clean these imports
 use crate::error::CustomError;
 use crate::isobmff::HandlerType;
@@ -10,8 +10,25 @@ use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 pub struct MediaInfoGenerator;
 
 impl MediaInfoGenerator {
-  pub fn get_track_info<'a>(path: &'a str, mp4: &[u8]) -> Result<TrackInfo<'a>, CustomError> {
+  pub fn get_media_info<'a>(track_infos: &'a Vec<TrackInfo<'a>>) -> Result<MediaInfo<'a>, CustomError> {
+    let min_vid_duration = track_infos
+      .iter()
+      .filter(|track|track.track_type == TrackType::VIDEO)
+      .min_by(|x,y|x.duration.partial_cmp(&y.duration).unwrap())
+      .map(|track|track.duration)
+      .unwrap();
 
+    let is_independent_segments = track_infos
+      .iter()
+      .all(|track| track.segments_start_with_i_frame == true);
+    
+    Ok(MediaInfo {
+      duration: min_vid_duration,
+      is_independent_segments,
+      track_infos,
+    })
+  }
+  pub fn get_track_info<'a>(path: String, mp4: &[u8]) -> Result<TrackInfo<'a>, CustomError> {
     // General information
     // Boxes
     let sidx = SIDX::parse(&mp4)?;
@@ -44,6 +61,7 @@ impl MediaInfoGenerator {
     // Track information
     let track_id = tkhd_reader.get_track_id()?;
     let track_type = TrackType::handler_to_track_type(hdlr.get_handler_type());
+    let mut track_duration: f32 = 0f32;
     let codec = get_codec(&track_type, &mp4)?;
     let mut frame_rate = 0f32;
     let mut sample_count = 0u32;
@@ -98,6 +116,7 @@ impl MediaInfoGenerator {
       // Update
       offset += sr.referenced_size as usize;
       pts += sr.subsegment_duration as u64;
+      track_duration += duration;
     }
 
     average_bandwidth = (total_bits as f32/ asset_duration) as u32;
@@ -114,6 +133,7 @@ impl MediaInfoGenerator {
       width,
       height,
       language,
+      duration: track_duration,
       average_bandwidth,
       max_bandwidth,
       maximum_segment_duration,

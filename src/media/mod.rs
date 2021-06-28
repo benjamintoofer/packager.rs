@@ -26,8 +26,9 @@ impl TrackType {
 }
 #[derive(Debug)]
 pub struct MediaInfo<'a> {
-  pub duration: f32, // ms
-  pub track_infos: Vec<TrackInfo<'a>>,
+  pub duration: f32, // seconds
+  pub is_independent_segments: bool,
+  pub track_infos: &'a Vec<TrackInfo<'a>>,
 }
 
 #[derive(Debug)]
@@ -47,12 +48,13 @@ pub struct TrackInfo<'a> {
   pub height: f32,
   pub language: String,
   pub audio_channels: u8,
+  pub duration: f32,
   // instream_id: &'a str,
   // Playlist manifest related
   pub maximum_segment_duration: f32,
   // offset: u16, // Default to 0 if VOD
   // stream_type: &'a str, // VOD | LIVE
-  pub path: &'a str,
+  pub path: String,
   pub init_segment: InitSegmentInfo,
   pub segments: Vec<MediaSegmentInfo>,
   pub segments_start_with_i_frame: bool
