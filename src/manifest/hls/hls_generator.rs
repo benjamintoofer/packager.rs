@@ -1,5 +1,6 @@
 use std::{convert::TryInto, fs::ReadDir};
 use std::str;
+use std::collections::HashMap;
 
 use crate::{manifest::manifest_generator::ManifestGenerator, media::{TrackInfo, MediaInfo, TrackType}};
 use crate::isobmff::boxes::tfdt::TFDT;
@@ -66,13 +67,16 @@ impl HLSGenerator {
   // 3. Assign groupd ids of AUDIO, CC, SUBTITLES to the video stream inf
   // BONUS: Implement IFrame playlist generation
   pub fn generate_master(metadata: &MediaInfo) -> String {
-    let audio_tracks = metadata.track_infos
+    let mut audio_groups = HashMap::new();
+    let mut audio_tracks: Vec<&TrackInfo> = metadata.track_infos
       .iter()
-      .filter(|ti|ti.track_type == TrackType::AUDIO);
+      .filter(|ti|ti.track_type == TrackType::AUDIO)
+      .collect();
 
-    let video_tracks = metadata.track_infos
+    let mut video_tracks: Vec<&TrackInfo> = metadata.track_infos
       .iter()
-      .filter(|ti|ti.track_type == TrackType::VIDEO);
+      .filter(|ti|ti.track_type == TrackType::VIDEO)
+      .collect();
 
     let is_independent_segments = metadata.track_infos
       .iter()
@@ -93,7 +97,7 @@ impl HLSGenerator {
     .comment("This manifest is created by Luma")
     .new_line();
 
-    audio_tracks.for_each(|track|{
+    audio_tracks.iter().for_each(|track|{
       writer.media(
         HLSMediaType::AUDIO, 
         track.audio_group_id.unwrap_or_default(), 
@@ -110,27 +114,33 @@ impl HLSGenerator {
 
     writer.new_line();
 
-    video_tracks.for_each(|track|{
-      writer.stream_inf(
-        &track.path, 
-        track.max_bandwidth, 
-        Some(track.average_bandwidth), 
-        Some(track.frame_rate), 
-        None, 
-        None, 
-        Some(&format!("{}x{}",track.width, track.height)), 
-        None, 
-        Some(&track.codec),
-        None,
-        None, 
-        None,
-        None
-      );
+    audio_tracks.iter().for_each(|a_track| {
+      if !audio_groups.contains_key(a_track.audio_group_id.unwrap_or_default()) {
+        video_tracks.iter().for_each(|track|{
+          writer.stream_inf(
+            &track.path.replace("./output", "").replace("media_frag.mp4", "playlist.m3u8"), 
+            track.max_bandwidth, 
+            Some(track.average_bandwidth), 
+            Some(track.frame_rate), 
+            None, 
+            None, 
+            Some(&format!("{}x{}",track.width, track.height)), 
+            None, 
+            Some(&format!("{},{}",&track.codec, a_track.codec)),
+            a_track.audio_group_id,
+            None, 
+            None,
+            None
+          );
+        });
+
+        // Add audio group to seen audio groups map
+        audio_groups.insert(a_track.audio_group_id.unwrap_or_default(), true);
+      }
+      writer.new_line();
     });
 
-    println!("-------------MASTER MANIFEST--------------");
-    println!("{}", writer.finish());
-    "".to_string()
+    writer.finish().to_string()
   }
 
   // Need to know:

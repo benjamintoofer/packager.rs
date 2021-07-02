@@ -38,7 +38,7 @@ pub fn get_codec(track_type: &TrackType, mp4: &[u8]) -> Result<String, CustomErr
       .and_then(|stsd| stsd.read_sample_entry(codec_type).map(|x|x.to_vec()))
       .map(|avc_data|AVCSampleEntry::parse(&avc_data))
       .map(|avc_sample|avc_sample.config)?;
-    let codec = format!("{}.{:X}{:X}{:X}",
+    let codec = format!("{}.{:02X}{:02X}{:02X}",
       codec_type, 
       avc_config.avc_profile_indication, 
       avc_config.profile_compatability,

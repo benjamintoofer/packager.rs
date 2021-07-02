@@ -11,6 +11,7 @@ use crate::media::TrackInfo;
 use crate::transcoder::ffmpeg::FFMPEG;
 use crate::transcoder::bento::Bento;
 use crate::transcoder::{VideoResolution,AudioSampleRates};
+// use crate::app;
 
 
 pub mod isobmff;
@@ -20,6 +21,7 @@ pub mod util;
 pub mod error;
 pub mod transcoder;
 pub mod media;
+pub mod app;
 
 //  1. Given a path to the asset and it's transcoded mp4's (must be fragmented for now and seperated tracks (Need to add ability to parse single mp4 with both tracks))
 //  2. Iterate through each rendition, collect the correct metadata to generate master manifest
@@ -54,6 +56,8 @@ PARSE AAC(MP4A) codec string
  */
 
 fn main() {
+
+  app::main();
   // let file_path = "./assets/v_frag.mp4";
   // let file_path = "./output/recording/1280x720_frag_audio.mp4";
   let file_name = "ToS-4k_30sec.mp4";
@@ -64,16 +68,16 @@ fn main() {
   let output_dir = "./output";
   let base_path = format!("{}/{}",output_dir, uuid.to_string());
   let mut output_paths: Vec<String> = vec![];
-  construct_output_paths(&base_path, &sizes, &rates, &mut output_paths);
+  // construct_output_paths(&base_path, &sizes, &rates, &mut output_paths);
 
-  output_paths
-    .iter()
-    .for_each(|path| fs::create_dir_all(path).unwrap());
+  // output_paths
+  //   .iter()
+  //   .for_each(|path| fs::create_dir_all(path).unwrap());
   
   // transcode_content(file_name, &base_path, &sizes, &rates);
   // segment_content(&output_paths);
 
-  generate_manifest(&output_paths);
+  // generate_manifest(&output_paths);
 
   // HLSGenerator::generate_media_playlist("");
   // let mp4_file = fs::read(file_path);

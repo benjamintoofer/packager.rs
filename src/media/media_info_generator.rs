@@ -6,6 +6,7 @@ use crate::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box,
 use crate::isobmff::{get_codec, get_channel_count};
 use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 
+const DEFAULT_AUDIO_GROUP: &str = "A1";
 
 pub struct MediaInfoGenerator;
 
@@ -125,7 +126,7 @@ impl MediaInfoGenerator {
     let track_info = TrackInfo{
       track_id,
       track_type,
-      audio_group_id: None,
+      audio_group_id: Some(DEFAULT_AUDIO_GROUP),
       cc_group_id: None,
       subtitle_group_id: None,
       codec,
