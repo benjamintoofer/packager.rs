@@ -53,24 +53,3 @@ pub fn get_expandable_size(data: &[u8], offset: &mut usize) -> u32 {
 
   size_of_instance
 }
-
-/// Convert ISO-639-2/T language code to a name
-pub fn map_iso_639_2_to_name(language_code: String) -> String {
-  match language_code.as_str() {
-    "eng" => {"English".to_string()}
-    _ => {"Unknown".to_string()}
-  }
-
-}
-
-#[cfg(test)]
-mod tests {
-
-  use super::*;
-  #[test]
-  fn test_map_iso_639_2_to_name() {
-    assert_eq!(map_iso_639_2_to_name(String::from("eng")), String::from("English"));
-    assert_eq!(map_iso_639_2_to_name(String::from("und")), String::from("Unknown"));
-    assert_eq!(map_iso_639_2_to_name(String::from("random")), String::from("Unknown"));
-  }
-}

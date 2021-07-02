@@ -94,14 +94,37 @@ pub fn get_frame_rate(mp4: &[u8]) -> Result<f32, CustomError> {
   Ok(sample_count as f32 / asset_duration as f32)
 }
 
-pub fn get_bandwidth_and_average() {
-  // 62,886
 
-  // 41,844.33
+/// Convert ISO-639-2/T language code to a name
+pub fn map_iso_639_2_to_name(language_code: &String) -> String {
+  match language_code.as_str() {
+    "eng" => {"English".to_string()}
+    _ => {"Unknown".to_string()}
+  }
 
-  // 14,222.07
+}
 
-  // 448,834.66
+pub fn map_iso_639_2_to_639_1(language_code: &String) -> String {
+  match language_code.as_str() {
+    "eng" => {"en".to_string()}
+    _ => {"un".to_string()}
+  }
+}
 
-  // (((104621 + 42780) + (120973 + 42477) + (119315 + 42780) + (125533 + 42478) + (118733 + 42780) + (109095 + 42780) + (105545 + 42477) + (110456 + 42780) + (111973 + 42780) + (105008 + 42477) + (4344 + 7671))*8) / 30.03
+#[cfg(test)]
+mod tests {
+
+  use super::*;
+  #[test]
+  fn test_map_iso_639_2_to_name() {
+    assert_eq!(map_iso_639_2_to_name(String::from("eng")), String::from("English"));
+    assert_eq!(map_iso_639_2_to_name(String::from("und")), String::from("Unknown"));
+    assert_eq!(map_iso_639_2_to_name(String::from("random")), String::from("Unknown"));
+  }
+
+  #[test]
+  fn test_map_iso_639_2_to_639_1() {
+    assert_eq!(map_iso_639_2_to_639_1(String::from("eng")), String::from("en"));
+    assert_eq!(map_iso_639_2_to_639_1(String::from("und")), String::from("un"));
+  }
 }
