@@ -117,14 +117,14 @@ mod tests {
   use super::*;
   #[test]
   fn test_map_iso_639_2_to_name() {
-    assert_eq!(map_iso_639_2_to_name(String::from("eng")), String::from("English"));
-    assert_eq!(map_iso_639_2_to_name(String::from("und")), String::from("Unknown"));
-    assert_eq!(map_iso_639_2_to_name(String::from("random")), String::from("Unknown"));
+    assert_eq!(map_iso_639_2_to_name(&String::from("eng")), String::from("English"));
+    assert_eq!(map_iso_639_2_to_name(&String::from("und")), String::from("Unknown"));
+    assert_eq!(map_iso_639_2_to_name(&String::from("random")), String::from("Unknown"));
   }
 
   #[test]
   fn test_map_iso_639_2_to_639_1() {
-    assert_eq!(map_iso_639_2_to_639_1(String::from("eng")), String::from("en"));
-    assert_eq!(map_iso_639_2_to_639_1(String::from("und")), String::from("un"));
+    assert_eq!(map_iso_639_2_to_639_1(&String::from("eng")), String::from("en"));
+    assert_eq!(map_iso_639_2_to_639_1(&String::from("und")), String::from("un"));
   }
 }

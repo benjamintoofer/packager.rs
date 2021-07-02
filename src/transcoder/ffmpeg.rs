@@ -136,20 +136,22 @@ mod tests {
 
   #[test]
   fn test_generate_mappings_without_audio() {
-    let expected_output:Vec<&str> = vec!["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30.mp4"];
+    let expected_output:Vec<&str> = vec!["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60/media.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30/media.mp4"];
     let vid_res = vec![
       VideoResolution::_1080_60,
       VideoResolution::_720_30
     ];
     let aud_rates = vec![];
-    let output = FFMPEG::generate_mappings(&vid_res, &aud_rates, "output");
+    let output = FFMPEG::generate_mappings(&vid_res, &aud_rates, "./output");
     output.to_vec();
     assert_eq!(output.to_vec(), expected_output);
   }
 
+  // ["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60/media.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30/media.mp4"]
+  // ["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30.mp4"]
   #[test]
   fn test_generate_mappings_with_audio() {
-    let expected_output: Vec<&str> = vec!["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30.mp4", "-map", "[aout0]", "-map_metadata:s:a", "0:s:a", "./output/audio/96000.mp4"];
+    let expected_output: Vec<&str> = vec!["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60/media.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30/media.mp4", "-map", "[aout0]", "-map_metadata:s:a", "0:s:a", "./output/audio/96000/media.mp4"];
     let vid_res = vec![
       VideoResolution::_1080_60,
       VideoResolution::_720_30
@@ -157,7 +159,7 @@ mod tests {
     let aud_rates = vec![
       AudioSampleRates::_96k,
     ];
-    let output = FFMPEG::generate_mappings(&vid_res, &aud_rates, "output");
+    let output = FFMPEG::generate_mappings(&vid_res, &aud_rates, "./output");
 
     assert_eq!(output.to_vec(), expected_output);
   }
