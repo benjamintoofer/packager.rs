@@ -52,7 +52,7 @@ impl HLSWriter {
     frame_rate: Option<f32>,
     hdcp_level: Option<HDCP_LEVEL>,
     allowed_cpc: Option<&str>,
-    resolution: Option<VideoResolution>,
+    resolution: Option<&str>,
     video_range: Option<VIDEO_RANGE>,
     codecs: Option<&str>,
     // group-ids
@@ -75,7 +75,7 @@ impl HLSWriter {
       self.hls_manifest_str.push_str(format!(",ALLOWED-CPC=\"{}\"", allowed_cpc).as_str());  
     }
     if let Some(resoltuion) = resolution {
-      self.hls_manifest_str.push_str(format!(",RESOLUTION={}", resoltuion.value()).as_str());  
+      self.hls_manifest_str.push_str(format!(",RESOLUTION={}", resoltuion).as_str());  
     }
     if let Some(video_range) = video_range {
       self.hls_manifest_str.push_str(format!(",VIDEO-RANGE={}", video_range.value()).as_str());  
@@ -233,7 +233,7 @@ impl HLSWriter {
    */
 
   pub fn inf(&mut self, duration: f32, uri: Option<&str>) -> &mut HLSWriter {
-    self.hls_manifest_str.push_str(format!("{}INF:{}\n", EXT_TAG_PREFIX, duration).as_str());  
+    self.hls_manifest_str.push_str(format!("{}INF:{:.3}\n", EXT_TAG_PREFIX, duration).as_str());  
     if let Some(uri) = uri {
       self.hls_manifest_str.push_str(format!("{}\n", uri).as_str());  
     }
@@ -393,7 +393,7 @@ mod tests {
       Option::Some(29.97),
       Option::Some(HDCP_LEVEL::TYPE_0),
       Option::Some("com.example.drm1:SMART-TV/PC"),
-      Option::Some(VideoResolution::_1080_60),
+      Option::Some("1920x1080"),
       Option::Some(VIDEO_RANGE::SDR),
       Option::Some("avc1.42e00a,mp4a.40.2"),
       Option::Some("a1"),
