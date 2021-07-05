@@ -147,8 +147,6 @@ mod tests {
     assert_eq!(output.to_vec(), expected_output);
   }
 
-  // ["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60/media.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30/media.mp4"]
-  // ["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30.mp4"]
   #[test]
   fn test_generate_mappings_with_audio() {
     let expected_output: Vec<&str> = vec!["-map", "[vout0]", "-c:v", "libx264", "-x264opts", "keyint=120:no-scenecut", "-r", "60", "-map_metadata:s:v", "0:s:v", "./output/video/1920x1080_60/media.mp4", "-map", "[vout1]", "-c:v", "libx264", "-x264opts", "keyint=60:no-scenecut", "-r", "30", "-map_metadata:s:v", "0:s:v", "./output/video/1280x720_30/media.mp4", "-map", "[aout0]", "-map_metadata:s:a", "0:s:a", "./output/audio/96000/media.mp4"];

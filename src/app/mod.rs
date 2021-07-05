@@ -44,6 +44,7 @@ async fn index(req: HttpRequest) -> Result<NamedFile, Error> {
 #[actix_web::main]
 pub async fn main() -> std::io::Result<()> {
     use actix_web::{web, App, HttpServer};
+    println!("MAIN");
     HttpServer::new(|| {
       let cors = Cors::default()
               .allowed_origin("https://hls-js.netlify.app")
@@ -60,7 +61,7 @@ pub async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .route("/{filename:.*}", web::get().to(index))
     })
-        .bind("127.0.0.1:8080")?
+        .bind(("0.0.0.0",8080))?
         .run()
         .await
 }

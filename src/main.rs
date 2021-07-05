@@ -1,8 +1,6 @@
 use std::{fs, str::FromStr};
-use std::collections::hash_map::DefaultHasher;
 use uuid::Uuid;
 
-use manifest::hls::hls_writer;
 use media::media_info_generator::MediaInfoGenerator;
 
 use crate::isobmff::boxes::{ iso_box };
@@ -11,7 +9,6 @@ use crate::media::TrackInfo;
 use crate::transcoder::ffmpeg::FFMPEG;
 use crate::transcoder::bento::Bento;
 use crate::transcoder::{VideoResolution,AudioSampleRates};
-// use crate::app;
 
 
 pub mod isobmff;
@@ -56,8 +53,11 @@ PARSE AAC(MP4A) codec string
  */
 
 fn main() {
-
-  app::main();
+  println!("------------------------------------------");
+  println!("----------------STARTED-------------------");
+  println!("------------------------------------------");
+  let val = app::main();
+  println!("{:?}", val);
   // let file_path = "./assets/v_frag.mp4";
   // let file_path = "./output/recording/1280x720_frag_audio.mp4";
   let file_name = "ToS-4k_30sec.mp4";
