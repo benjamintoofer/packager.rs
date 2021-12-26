@@ -17,15 +17,6 @@ async fn echo(req_body: String) -> impl Responder {
     HttpResponse::Ok().body(req_body)
 }
 
-// async fn manual_hello(req: HttpRequest) -> impl Responder {
-//   let path: PathBuf = req.match_info().query("filename").parse().unwrap();
-//   println!("{:?}",Path::new("/output").join(&path));
-//   match NamedFile::open(Path::new("/output").join(&path)) {
-//       Ok(manifest) => {HttpResponse::Ok().content_type("application/x-mpegURL").body(manifest);}
-//       Err(_) => {HttpResponse::NotFound();}
-//   }
-//   HttpResponse::Ok().body("Hey there!")
-// }
 
 async fn index(req: HttpRequest) -> Result<NamedFile, Error> {
     let path: PathBuf = req.match_info().query("filename").parse().unwrap();
@@ -44,7 +35,6 @@ async fn index(req: HttpRequest) -> Result<NamedFile, Error> {
 #[actix_web::main]
 pub async fn main() -> std::io::Result<()> {
     use actix_web::{web, App, HttpServer};
-    println!("MAIN");
     HttpServer::new(|| {
       let cors = Cors::default()
               .allowed_origin("https://hls-js.netlify.app")
