@@ -1,5 +1,5 @@
 use crate::{error::CustomError, media::TrackType};
-use crate::isobmff::boxes::{stts::STTSReader, stsd::STSD, sidx::SIDX, trun::TRUN, mvhd::MVHD};
+use crate::container::isobmff::boxes::{stts::STTSReader, stsd::STSD, sidx::SIDX, trun::TRUN, mvhd::MVHD};
 use crate::iso_box::{find_box, get_media_start};
 use self::{sample_entry::{avc_sample_entry::AVCSampleEntry, mp4a_sample_entry::MP4ASampleEntry}};
 

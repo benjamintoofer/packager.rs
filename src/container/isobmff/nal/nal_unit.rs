@@ -20,6 +20,59 @@ impl NALUnit {
 }
 
 impl NALUnit {
+
+  pub fn byte_stream_to_nal_units(byte_stream: &[u8]) -> Result<Vec<NALUnit>, CustomError> {
+    let mut index: usize = 0;
+    if NALUnit::find_boundary(index, byte_stream) == -1 {
+      return Err(construct_error(
+        MajorCode::NAL, 
+        Box::new(NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX),
+        "Invalid nal unit length".to_string(), 
+        file!(), 
+        line!()));
+    }
+
+    while index < byte_stream.len() {
+      let offset = NALUnit::find_boundary(index, byte_stream);
+      if offset == -1 {
+        index += 1;
+        continue;
+      }
+      index += offset as usize;
+      let nal_start_index = index;
+      println!("{:02X?} == i: {} :: len: {}", byte_stream[index], index, byte_stream.len());
+      // Find the other nal units
+
+      let nal_end_index = loop {
+        if index == byte_stream.len() {
+          break index;
+        }
+        if NALUnit::find_boundary(index, byte_stream) != -1 {
+          break index;
+        }
+        index += 1;
+      };
+      let data = byte_stream[nal_start_index..nal_end_index].as_ref();
+      println!("NAL UNIT SIZE: {}", data.len());
+    }
+    return Ok(vec![])
+  }
+
+  pub fn find_boundary(index: usize, data: &[u8]) -> i8 {
+    if data[index] == 0 &&
+      data[index + 1]  == 0 &&
+      data[index + 2]  == 0 &&
+      data[index + 3]  == 1 {
+        return 4;
+    } else if data[index] == 0 &&
+      data[index + 1]  == 0 &&
+      data[index + 2]  == 1 {
+        return 3;
+      }
+
+      return -1;
+  }
+
   pub fn parse(mdat: &[u8], offset: usize, nal_unit_length: u8) -> Result<NALUnit, CustomError> {
     let nal_size = NALUnit::get_nal_unit_size(mdat, offset, nal_unit_length)?;
     let offset_without_nal_length = offset + nal_unit_length as usize;
@@ -28,7 +81,7 @@ impl NALUnit {
     for mut i in 0..nal_data.len() {
       if 
         i + 2 < nal_data.len() && 
-        nal_data[i] == 0x0 &&
+        nal_data[i]     == 0x0 &&
         nal_data[i + 1] == 0x0 &&
         nal_data[i + 2] == 0x3
       {

@@ -1,7 +1,8 @@
+pub mod logger;
+pub mod bit_reader;
+
 use std::{convert::TryInto};
 use crate::error::{error_code:: {MajorCode, UtilMinorCode}, construct_error, CustomError};
-
-pub mod logger;
 
 /**
  * Unsigned operations

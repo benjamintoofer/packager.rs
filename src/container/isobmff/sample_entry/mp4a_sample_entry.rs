@@ -1,9 +1,9 @@
 use super::{sample_entry::{SampleEntry}};
 use super::audio_sample_entry::AudioSampleEntry;
-use crate::isobmff::descriptors::es_descriptor::ESDescriptor;
-use crate::isobmff::boxes::iso_box::find_box;
-use crate::isobmff::descriptors::find_descriptor;
-use crate::isobmff::descriptors::DescriptorTags;
+use crate::container::isobmff::descriptors::es_descriptor::ESDescriptor;
+use crate::container::isobmff::boxes::iso_box::find_box;
+use crate::container::isobmff::descriptors::find_descriptor;
+use crate::container::isobmff::descriptors::DescriptorTags;
 
 #[derive(Debug)]
 pub struct MP4ASampleEntry {

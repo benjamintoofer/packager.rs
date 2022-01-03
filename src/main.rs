@@ -1,3 +1,11 @@
+pub mod container;
+pub mod manifest;
+pub mod util;
+pub mod error;
+pub mod transcoder;
+pub mod media;
+pub mod app;
+
 use std::{fs, str::FromStr};
 use std::collections::hash_map::DefaultHasher;
 use uuid::Uuid;
@@ -5,7 +13,7 @@ use uuid::Uuid;
 use manifest::hls::hls_writer;
 use media::media_info_generator::MediaInfoGenerator;
 
-use crate::isobmff::boxes::{ iso_box };
+use crate::container::isobmff::boxes::{ iso_box };
 use crate::manifest::hls::hls_generator::HLSGenerator;
 use crate::media::TrackInfo;
 use crate::transcoder::ffmpeg::FFMPEG;
@@ -14,14 +22,7 @@ use crate::transcoder::{VideoResolution,AudioSampleRates};
 // use crate::app;
 
 
-pub mod isobmff;
-pub mod transport_stream;
-pub mod manifest;
-pub mod util;
-pub mod error;
-pub mod transcoder;
-pub mod media;
-pub mod app;
+
 
 //  1. Given a path to the asset and it's transcoded mp4's (must be fragmented for now and seperated tracks (Need to add ability to parse single mp4 with both tracks))
 //  2. Iterate through each rendition, collect the correct metadata to generate master manifest
@@ -57,51 +58,40 @@ PARSE AAC(MP4A) codec string
 
 fn main() {
 
-  app::main();
+  // app::main();
   // let file_path = "./assets/v_frag.mp4";
   // let file_path = "./output/recording/1280x720_frag_audio.mp4";
-  let file_name = "ToS-4k_30sec.mp4";
+  // let file_name = "ToS-4k_30sec.mp4";
   // let uuid = Uuid::new_v4();
-  let uuid = Uuid::from_str("e292b8c8-87b8-4016-9d25-567b3ab04f1c").unwrap();
-  let sizes: Vec<VideoResolution> = vec![VideoResolution::_720_30, VideoResolution::_480_30, VideoResolution::_360_30];
-  let rates: Vec<AudioSampleRates> = vec![AudioSampleRates::_96k, AudioSampleRates::_48k];
-  let output_dir = "./output";
-  let base_path = format!("{}/{}",output_dir, uuid.to_string());
-  let mut output_paths: Vec<String> = vec![];
+  // let uuid = Uuid::from_str("e292b8c8-87b8-4016-9d25-567b3ab04f1c").unwrap();
+  // let sizes: Vec<VideoResolution> = vec![VideoResolution::_720_30, VideoResolution::_480_30, VideoResolution::_360_30];
+  // let rates: Vec<AudioSampleRates> = vec![AudioSampleRates::_96k, AudioSampleRates::_48k];
+  // let output_dir = "./output";
+  // let base_path = format!("{}/{}",output_dir, uuid.to_string());
+  // let mut output_paths: Vec<String> = vec![];
   // construct_output_paths(&base_path, &sizes, &rates, &mut output_paths);
 
   // output_paths
   //   .iter()
   //   .for_each(|path| fs::create_dir_all(path).unwrap());
   
-  // transcode_content(file_name, &base_path, &sizes, &rates);
-  // segment_content(&output_paths);
-
-  // generate_manifest(&output_paths);
-
-  // HLSGenerator::generate_media_playlist("");
-  // let mp4_file = fs::read(file_path);
-  // if let Ok(mp4) = mp4_file {
-  //   let track_info = MediaInfoGenerator::get_track_info(&mp4).unwrap();
-
-    // let sidx_box = sidx::SIDX::parse(&mp4).expect("whtever");
-    // let mvhd_box = mvhd::MVHD::parse(&mp4).expect("whatever mvhd");
-    // let mvhd_timescale = mvhd_box.get_timescale() as f64;
-    // let mvhd_duration = mvhd_box.get_duration() as f64;
-    // let offset = iso_box::get_media_start(&mp4);
-    // println!("SIDX timescale: {}; MVHD DUR: {}; MVHD TIMESCALE: {}, ASSET DUR: {}",sidx_box.get_timescale(), mvhd_duration, mvhd_timescale, mvhd_duration / mvhd_timescale);
-    // HLSGenerator::generate(&mp4, sidx_box.get_timescale(), offset, mvhd_duration / mvhd_timescale);
-    // // Need all bitrates
-    // HLSGenerator::generate_master();
-    // let stsd = stsd::STSD::parse(&mp4).expect("whatever stsd");
-    // print!("{:#?}", stsd.get_samples_length());
-  // } else {
-      // let mut error_message = "main: Could not open file = ".to_owned();
-      // error_message.push_str(file_path);
-      // eprintln!("{}", error_message);
-      // process::exit(1);
-  // }
+  let file_path = "/Users/benjamintoofer/Desktop/seg_2_complete_v.ts";
+  tranmux_test(file_path)
     
+}
+
+fn tranmux_test(file_path: &str) {
+  use container::remux::remux_ts_to_mp4;
+
+  if let Ok(ts_file )= fs::read(file_path) {
+    let temp = remux_ts_to_mp4(&ts_file);
+    match temp {
+        Ok(_) => {}
+        Err(err) => {
+          println!("{}", err);
+        }
+    }
+  }
 }
 
 fn construct_output_paths(base_path: &str, vid_res: &Vec<VideoResolution> , aud_rates: &Vec<AudioSampleRates>, output_paths: &mut Vec<String>) {

@@ -145,5 +145,4 @@ mod tests {
     };
     assert_eq!(HDLR::parse_hdlr(&hdlr).unwrap(), expected_hdlr);
   }
-
 }
