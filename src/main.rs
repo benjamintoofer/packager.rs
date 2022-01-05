@@ -5,6 +5,7 @@ pub mod error;
 pub mod transcoder;
 pub mod media;
 pub mod app;
+pub mod codec;
 
 use std::{fs, str::FromStr};
 use std::collections::hash_map::DefaultHasher;

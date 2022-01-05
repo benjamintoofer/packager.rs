@@ -1,7 +1,7 @@
 use crate::error::{CustomError, construct_error, error_code::{UtilMinorCode, MajorCode}};
 
 
-struct BitReader<'a> {
+pub struct BitReader<'a> {
   data: &'a [u8],
   data_index: usize,
   word: usize, //64 bit
@@ -41,8 +41,8 @@ impl<'a> BitReader<'a> {
 
     let diff = 64 - count;
     let mask = !((1usize << diff) - 1);
-    let read_data = (self.word & mask) >> diff;
-
+    let read_data = (self.word & mask) >> (64 - count);
+    
     self.clear_bits(count);
     Ok(read_data)
   }
@@ -52,9 +52,7 @@ impl<'a> BitReader<'a> {
     let mut holder = 0usize;
     let mut index_offset = 0usize;
     let mut bytes = 8usize;
-    if bytes > (self.data.len() - self.data_index) {
-      bytes = self.data.len() - self.data_index
-    }
+
     let temp_word = loop {
       let index = self.data_index + index_offset;
       if index >= self.data.len() {
@@ -75,7 +73,7 @@ impl<'a> BitReader<'a> {
 
     self.word |= temp_word >> self.bit_counter;
     self.data_index += 8 - (self.bit_counter / 8);
-    self.bit_counter = 64;
+    self.bit_counter = index_offset * 8;
   }
 
   fn clear_bits(&mut self, count: usize) {
@@ -83,23 +81,26 @@ impl<'a> BitReader<'a> {
     self.bit_counter -= count;
   }
 
-  pub fn unsigned_exp_golomb(&mut self) -> Result<u8, CustomError> {
-    let leading_zero_count = self.leading_zeroes();
-
-    Ok(0)
+  pub fn unsigned_exp_golomb(&mut self) -> Result<usize, CustomError> {
+    let leading_zero_count = self.leading_zeroes()?;
+    if leading_zero_count == 0 {
+      return Ok(0)
+    }
+    let add = self.read_bits(leading_zero_count)?;
+    let exp_golomb_value = (1 << leading_zero_count) - 1 + add;
+    Ok(exp_golomb_value)
   }
 
-  fn leading_zeroes(&mut self) -> Result<isize, CustomError> {
-    let leading_zeroes = -1isize;
+  fn leading_zeroes(&mut self) -> Result<usize, CustomError> {
+    let mut leading_zeroes = 0usize;
     let mut b = self.read_bits(1)?;
-    return loop {
-      if b != 1 {
+    return loop {     
+      if b == 1 {
         break Ok(leading_zeroes);
       }
-      b = self.read_bits(1)?;
+      b = self.read_bits(1)?; 
+      leading_zeroes += 1;
     };
-
-    Ok(0)
   }
 }
 
@@ -115,13 +116,15 @@ mod tests {
     ];
   
     let mut bit_reader = BitReader::create_bit_reader(&data);
-    assert_eq!(bit_reader.word, 0x01020304);
+    assert_eq!(bit_reader.word, 0x0102030400000000);
+    assert_eq!(bit_reader.bit_counter, 32);
 
     let data_2: [u8; 8] = [
       0x01, 0x02, 0x03, 0x04,0x05, 0x06, 0x07, 0x08,
     ];
     bit_reader = BitReader::create_bit_reader(&data_2);
     assert_eq!(bit_reader.word, 0x0102030405060708);
+    assert_eq!(bit_reader.bit_counter, 64);
   }
 
   #[test]
@@ -138,9 +141,10 @@ mod tests {
 
   #[test]
   fn test_read_bits_with_a_load() {
-    let data: [u8; 16] = [
+    let data: [u8; 24] = [
       0x01, 0x02, 0x03, 0x04,0x05, 0x06, 0x07, 0x08,
       0x09, 0x0a, 0x0b, 0x0c,0x0d, 0x0e, 0x0f, 0x10,
+      0x20, 0x30, 0x40, 0x50,0x60, 0x70, 0x80, 0x90,
     ];
 
     let mut bit_reader = BitReader::create_bit_reader(&data);
@@ -155,5 +159,45 @@ mod tests {
     value = bit_reader.read_bits(16).unwrap();
     assert_eq!(value, 0x0809);
     assert_eq!(bit_reader.bit_counter, 48);
+
+    value = bit_reader.read_bits(45).unwrap();
+    assert_eq!(value, 0x1416181A1C1);
+    assert_eq!(bit_reader.bit_counter, 3);
+
+    value = bit_reader.read_bits(11).unwrap();
+    assert_eq!(value, 0x710);
+    assert_eq!(bit_reader.bit_counter, 53);
+  }
+
+  #[test]
+  fn test_unsigned_exp_golomb() {
+    let data: [u8; 4] = [
+      0b00100110u8, 
+      0b11011010u8, 
+      0b11000100u8,
+      0b10010100u8
+    ];
+    
+    let mut bit_reader = BitReader::create_bit_reader(&data);
+    let mut value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 3);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 0);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 0);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 2);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 2);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 1);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 0);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 0);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 8);
+    value = bit_reader.unsigned_exp_golomb().unwrap();
+    assert_eq!(value, 4);
   }
 }
