@@ -101,7 +101,7 @@ impl MinorError for NalMinorCode {
     match self {
       NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH => { "Unexpected NAL unit length".to_string()}
       NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX => { "Byte stream is missing starting prefix of 0x00000001".to_string() }
-      NalMinorCode::UKNOWN_NAL_UNIT_TYPE => { "Uknown NAL UNit type".to_string() }
+      NalMinorCode::UKNOWN_NAL_UNIT_TYPE => { "Uknown NAL Unit type".to_string() }
     }
   }
 

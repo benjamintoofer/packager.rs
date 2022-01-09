@@ -1,4 +1,5 @@
 use crate::container::isobmff::nal::{nal_unit::NALUnit, NALType};
+use crate::codec::h264::sequence_parameter_set::SequenceParameterSet;
 use crate::container::transport_stream::{
     pes_packet, program_association_table::ProgramAssociationTable,
     program_map_table::ProgramMapTable, ts_packet,
@@ -13,7 +14,7 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
         sps_nal: vec![],
         pps_nal: vec![],
         media_nal: vec![],
-        bucket: &[],
+        bucket: vec![],
         init_callback: None,
         media_callback: None,
     };
@@ -32,7 +33,9 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
     let mut total_video_frames = 0;
 
     avc_extractor.listen_for_init_data(|sps, pps| {
-        println!("SPS DATA: {:?}", sps);
+        println!("SPS DATA: {:02X?}", sps);
+        let sps = SequenceParameterSet::parse(sps).unwrap();
+        // sps
         println!("PPS DATA: {:?}", pps);
     });
     avc_extractor.listen_for_media_data(|media| {});
@@ -86,8 +89,6 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
 
         index = index + TS_PACKET_SIZE;
     }
-
-    NALUnit::byte_stream_to_nal_units(&accumulated_pes_payload);
     println!("TOTAL VIDEO PACKETS {}", counter);
     Ok((vec![], vec![]))
 }
@@ -97,7 +98,7 @@ pub fn remux_ts_to_mp4_media_only(ts_file: &[u8]) -> Result<Vec<u8>, CustomError
     Ok(vec![])
 }
 
-struct AVCExtracter<'a, IF, MF>
+struct AVCExtracter<IF, MF>
 where
     IF: Fn(&Vec<u8>, &Vec<u8>),
     MF: Fn(&Vec<u8>),
@@ -105,78 +106,63 @@ where
     sps_nal: Vec<u8>,
     pps_nal: Vec<u8>,
     media_nal: Vec<u8>,
-    bucket: &'a [u8],
+    bucket: Vec<u8>,
     init_callback: Option<IF>,
     media_callback: Option<MF>,
 }
 
-impl<'a, IF, MF> AVCExtracter<'a, IF, MF>
+impl<IF, MF> AVCExtracter<IF, MF>
 where
     IF: Fn(&Vec<u8>, &Vec<u8>),
     MF: Fn(&Vec<u8>),
 {
-    fn accumulate_pes_payload(&mut self, pes_payload: &'a [u8]) {
-        let mut index: usize = 0;
-        let mut nal_start_index = index;
-        loop {
-            if (index + 4) >= pes_payload.len() {
-                break;
-            }
-            let boundary = NALUnit::find_boundary(index, pes_payload);
-            // Just found a new boundary, flush the accumulated byte data
-            if boundary != -1 {
-              index += boundary as usize;
-              println!("START: {} :: END: {}", nal_start_index, index);
-                if index - nal_start_index > 0 {
-                    let mut nal_unit: Vec<u8> = pes_payload[nal_start_index..index].to_vec();
-                    if self.bucket.len() > 0 {
-                        let temp = [self.bucket, &nal_unit].concat();
-                        nal_unit = temp;
-                    }
-                    let nal_type = match NALType::get_type(nal_unit[0]) {
-                        Ok(nal_type) => nal_type,
-                        Err(err) => {
-                            println!("{}", err.to_string());
-                            continue;
-                        }
-                    };
-
-                    self.handle_nal_unit(nal_type, &nal_unit);
-                    // Have the data to create the init segment
-                    if self.sps_nal.len() > 0 && self.pps_nal.len() > 0 {
-                        if let Some(cb) = &self.init_callback {
-                            cb(&self.sps_nal, &self.pps_nal);
-                        }
-                    }
-                }
-                nal_start_index = index;
-            }
+    fn accumulate_pes_payload(&mut self, pes_payload: &[u8]) {
+      let mut index: usize = 0;
+      let mut nal_start_index = index;
+      loop {
+        if (index + 4) >= pes_payload.len() { // If the next 4 bytes is greater than the total payload, add it to the bucket for the next pes payload
+            let mut leftover: Vec<u8> = pes_payload[nal_start_index..pes_payload.len()].to_vec();
+            self.bucket.append(&mut leftover);
+            break;
+        }
+        let boundary = NALUnit::find_boundary(index, pes_payload);
+        if boundary == -1 { // If no nal boundary is found, increment the index and continue searching for the next boundary
             index += 1;
+            continue;
+        }
+        let mut nal_unit: Vec<u8> = vec![];
+        if !self.bucket.is_empty() {
+          nal_unit = self.bucket.clone();
+          self.bucket.clear();
         }
 
-        // while index < pes_payload.len() {
-        //     let offset = NALUnit::find_boundary(index, pes_payload);
-        //     if offset == -1 {
-        //         index += 1;
-        //         continue;
-        //     }
-        //     index += offset as usize;
-        //     let nal_start_index = index;
-        //     println!("{:02X?} == i: {}", pes_payload[index], index);
-        //     // Find the other nal units
+        if nal_start_index != index {
+          let mut part_payload: Vec<u8> = pes_payload[nal_start_index..index].to_vec();
+          nal_unit.append(&mut part_payload);
+        }
 
-        //     let nal_end_index = loop {
-        //         if index == pes_payload.len() {
-        //             break index;
-        //         }
-        //         if NALUnit::find_boundary(index, pes_payload) != -1 {
-        //             break index;
-        //         }
-        //         index += 1;
-        //     };
-        //     let data = pes_payload[nal_start_index..nal_end_index].as_ref();
-        //     println!("NAL UNIT SIZE: {}", data.len());
-        // }
+        if !nal_unit.is_empty() {
+          let nal_unit_value = nal_unit[0] & 0x1F;
+          let nal_type = match NALType::get_type(nal_unit_value) {
+            Ok(nal_type) => nal_type,
+            Err(err) => {
+              println!("ERROR!!");
+              println!("{}", err.to_string());
+              continue;
+            }
+          };
+          println!("NAL TYPE {:?}", nal_type.value());
+          self.handle_nal_unit(nal_type, &nal_unit);
+          // Have the data to create the init segment
+          if self.sps_nal.len() > 0 && self.pps_nal.len() > 0 {
+              if let Some(cb) = &self.init_callback {
+                  cb(&self.sps_nal, &self.pps_nal);
+              }
+          }
+        }
+        index += boundary as usize;
+        nal_start_index = index;
+      }
     }
 
     fn listen_for_init_data(&mut self, callback: IF) -> &Self {
