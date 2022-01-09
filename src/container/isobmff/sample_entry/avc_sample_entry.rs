@@ -1,7 +1,7 @@
 use super::sample_entry::SampleEntry;
 use super::visual_sample_entry:: VisualSampleEntry;
-use crate::isobmff::boxes::iso_box::find_box;
-use crate::isobmff::configuration_records::avcC::AVCDecoderConfigurationRecord;
+use crate::container::isobmff::boxes::iso_box::find_box;
+use crate::container::isobmff::configuration_records::avcC::AVCDecoderConfigurationRecord;
 #[derive(Debug)]
 pub struct AVCSampleEntry {
   pub sample_entry: SampleEntry,

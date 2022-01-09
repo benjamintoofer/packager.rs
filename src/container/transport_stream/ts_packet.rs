@@ -36,9 +36,6 @@ impl<'a> TransportPacket<'a> {
     let transport_priority = (indicator_data & 0x2000) != 0;
     let pid = indicator_data & 0x1FFF;
 
-    if pid < 257 {
-      println!("PID - {}", pid);
-    }
     start = start + 2;
     let control_data = util::get_u8(ts, start)?;
     let transport_scrambling_control = (control_data & 0xC0) >> 6;

@@ -1,10 +1,10 @@
 use super::{InitSegmentInfo, MediaInfo, MediaSegmentInfo, TrackInfo, TrackType};
 // TODO (benjamintoofer@gmail.com): Clean these imports
 use crate::error::CustomError;
-use crate::isobmff::HandlerType;
-use crate::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_media_start, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD, mdhd::MDHDReader};
-use crate::isobmff::{get_codec, get_channel_count};
-use crate::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
+use crate::container::isobmff::HandlerType;
+use crate::container::isobmff::boxes::{SampleFlag, hdlr::HDLR, iso_box::{find_box, get_box, get_media_start, get_init_segment_end}, sidx::{ SIDX, SIDXReference}, stsd::STSD, tkhd::TKHDReader, trun::TRUN, mvhd::MVHD, mdhd::MDHDReader};
+use crate::container::isobmff::{get_codec, get_channel_count};
+use crate::container::isobmff::sample_entry::avc_sample_entry::AVCSampleEntry;
 
 const DEFAULT_AUDIO_GROUP: &str = "A1";
 
@@ -212,7 +212,7 @@ fn determine_segment_within_target_duration(sr: &SIDXReference, timescale: u32, 
 
 #[cfg(test)]
 mod tests {
-  use crate::isobmff::boxes::sidx;
+  use crate::container::isobmff::boxes::sidx;
   use super::*;
 
   #[test]
