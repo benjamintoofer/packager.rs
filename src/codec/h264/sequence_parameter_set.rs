@@ -107,6 +107,15 @@ impl SequenceParameterSet {
   pub fn height(&self) -> usize {
     ((2 - self.frame_mbs_only_flag)* (self.pic_height_in_map_units_minus1 +1) * 16) - (self.frame_crop_top_offset * 2) - (self.frame_crop_bottom_offset * 2)
   }
+
+  pub fn profile_compatability(&self) -> u8 {
+    (self.constraint_set0_flag << 7) |
+    (self.constraint_set1_flag << 6) |
+    (self.constraint_set2_flag << 5) |
+    (self.constraint_set3_flag << 4) |
+    (self.constraint_set4_flag << 3) |
+    (self.constraint_set5_flag << 2)
+  }
 }
 
 #[cfg(test)]
@@ -147,6 +156,7 @@ mod tests {
     let actual_sps = SequenceParameterSet::parse(&sps).unwrap();
     assert_eq!(actual_sps.width(), 480);
     assert_eq!(actual_sps.height(), 270);
+    assert_eq!(actual_sps.profile_compatability(), 192);
     assert_eq!(actual_sps, expected_sps);
   }
 }

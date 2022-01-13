@@ -1,8 +1,9 @@
 
-use crate::util;
+use crate::{codec::h264::sequence_parameter_set::SequenceParameterSet, error::CustomError, util};
 
 static CLASS: &str = "AVCDecoderConfigurationRecord";
 
+/// AVCDecoderConfigurationRecord: 14496-15; 5.2.4.1
 #[derive(Debug)]
 pub struct AVCDecoderConfigurationRecord {
   pub configuration_version: u8,
@@ -60,5 +61,108 @@ impl  AVCDecoderConfigurationRecord {
       num_of_sequence_parameter_sets,
       num_of_picture_parameter_sets: 0u8
     }
+  }
+}
+
+pub struct AVCDecoderConfigurationRecordBuilder {
+  pub sps_data: Vec<u8>,
+  pub pps_data: Vec<u8>,
+}
+
+impl AVCDecoderConfigurationRecordBuilder {
+  pub fn create_builder() -> AVCDecoderConfigurationRecordBuilder {
+    return AVCDecoderConfigurationRecordBuilder{
+      pps_data: vec![],
+      sps_data: vec![],
+    }
+  }
+
+  pub fn pps(mut self, pps_data: &[u8]) -> AVCDecoderConfigurationRecordBuilder {
+    self.pps_data = pps_data.to_vec();
+    self
+  }
+
+  pub fn sps(mut self, sps_data: &[u8]) -> AVCDecoderConfigurationRecordBuilder {
+    self.sps_data = sps_data.to_vec();
+    self
+  }
+  pub fn build(self) -> Result<Vec<u8>, CustomError> {
+    // sps data
+    let sps = SequenceParameterSet::parse(&self.sps_data)?;
+    let sps_length = self.sps_data.len();
+    let sps_length_array = util::transform_usize_to_u8_array(sps_length);
+
+    // pps data
+    let pps_length = self.pps_data.len();
+    let pps_length_array = util::transform_usize_to_u8_array(pps_length);
+    // calculate size
+    let size = 
+      8 + // header
+      8 +
+      sps_length + 
+      3 + 
+      pps_length;
+    let size_array = util::transform_usize_to_u8_array(size);
+    let avcC: Vec<u8> = [
+      vec![
+        // size
+        size_array[3], size_array[2], size_array[1], size_array[0],
+        // avcC
+        0x61, 0x76, 0x63, 0x43,
+        // configurationVersion
+        0x01,
+        // AVCProfileIndication
+        sps.profile_idc,
+        // profile_compatibility
+        sps.profile_compatability(),
+        // AVCLevelIndication
+        sps.level_idc,
+        // reserved = ‘111111’b + lengthSizeMinusOne = 11 = 3
+        0xFF,
+        // reserved = ‘111’b + numOfSequenceParameterSets = 1 = 1
+        0xE1,
+        // sequenceParameterSetLength
+        sps_length_array[1], sps_length_array[0],
+      ],
+      self.sps_data,
+      vec![
+        // numOfPictureParameterSets
+        0x01,
+        // pictureParameterSetLength
+        pps_length_array[1], pps_length_array[0],
+      ],
+      self.pps_data,
+    ].concat();
+      
+
+
+    
+    return Ok(avcC)
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_build_avcC() {
+    let expected_avcC = vec![
+      0x00, 0x00, 0x00, 0x30, 0x61, 0x76, 0x63, 0x43, 0x01, 0x42, 0xC0, 0x1E, 0xFF, 0xE1, 0x00, 0x19, 0x67, 0x42, 0xC0, 0x1E, 0xD9, 0x01, 0xE0, 0x8F, 0xEB, 0x01, 0x10, 0x00, 0x00, 0x03, 0x00, 0x10, 0x00, 0x00, 0x03, 0x03, 0xC0, 0xF1, 0x62, 0xE4, 0x80, 0x01, 0x00, 0x04, 0x68, 0xCB, 0x8C, 0xB2
+    ];
+    let sps: [u8; 25] = [
+      0x67, 0x42, 0xC0, 0x1E, 0xD9, 0x01, 0xE0, 0x8F, 0xEB, 0x01, 0x10, 0x00, 0x00, 0x03, 0x00, 0x10, 0x00, 0x00, 0x03, 0x03, 0xC0, 0xF1, 0x62, 0xE4, 0x80
+    ];
+    let pps: [u8; 4] = [
+      0x68, 0xcb, 0x8c, 0xb2
+    ];
+
+    let avcC = AVCDecoderConfigurationRecordBuilder::create_builder()
+      .sps(&sps)
+      .pps(&pps)
+      .build()
+      .unwrap();
+    
+    assert_eq!(avcC, expected_avcC);
   }
 }

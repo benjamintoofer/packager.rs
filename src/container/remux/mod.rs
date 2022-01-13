@@ -41,53 +41,52 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
     avc_extractor.listen_for_media_data(|media| {});
 
     while index < ts_file.len() {
-        if ts_file[index] != SYNC_BYTE {
-            // Out of sync so find the next sync point
-            index = index + 1;
-            continue;
-        }
-        let packet =
-            ts_packet::TransportPacket::parse(ts_file[index..(index + TS_PACKET_SIZE)].as_ref())?;
-        // ProgramAssociationTable
-        if packet.pid == 0 {
-            pat = ProgramAssociationTable::parse(packet.data, packet.payload_unit_start_indicator)
-                .unwrap();
-            program_map_pid = pat.program_map_pid;
-        }
+      if ts_file[index] != SYNC_BYTE {
+        // Out of sync so find the next sync point
+        index = index + 1;
+        continue;
+      }
+      let packet = ts_packet::TransportPacket::parse(ts_file[index..(index + TS_PACKET_SIZE)].as_ref())?;
+      // ProgramAssociationTable
+      if packet.pid == 0 {
+        pat = ProgramAssociationTable::parse(packet.data, packet.payload_unit_start_indicator)
+          .unwrap();
+        program_map_pid = pat.program_map_pid;
+      }
 
-        // ProgramMapTable
-        if packet.pid == program_map_pid {
-            pmt = ProgramMapTable::parse(packet.data, packet.payload_unit_start_indicator).unwrap();
-            // Video
-            if let Some(stream_info) = pmt.video_stream_info {
-                video_elem_pid = stream_info.pid;
-            }
-            // Audio
-            if let Some(stream_info) = pmt.audio_stream_info {
-                audio_elem_pid = stream_info.pid;
-            }
+      // ProgramMapTable
+      if packet.pid == program_map_pid {
+        pmt = ProgramMapTable::parse(packet.data, packet.payload_unit_start_indicator).unwrap();
+        // Video
+        if let Some(stream_info) = pmt.video_stream_info {
+          video_elem_pid = stream_info.pid;
         }
-
-        // Video PES
-        if packet.pid == video_elem_pid {
-            counter = counter + 1;
-            let pes = pes_packet::PESPacket::parse(packet.data)?;
-            // if pes.packet_start_code_prefix == 1 {
-            //   total_video_frames = total_video_frames + 1;
-            //   println!("NEW AUD @ {} :: {} :: stream_id {}", counter, total_video_frames, pes.stream_id);
-            //   // println!("PAYLOAD: {:02X?}", pes.payload_data);
-
-            // }
-            avc_extractor.accumulate_pes_payload(pes.payload_data);
-            // accumulated_pes_payload.append(&mut pes.payload_data.to_vec());
+        // Audio
+        if let Some(stream_info) = pmt.audio_stream_info {
+          audio_elem_pid = stream_info.pid;
         }
+      }
 
-        // Audio PES
-        if packet.pid == audio_elem_pid {
-            println!("AUDIO PID");
-        }
+      // Video PES
+      if packet.pid == video_elem_pid {
+        counter = counter + 1;
+        let pes = pes_packet::PESPacket::parse(packet.data)?;
+        // if pes.packet_start_code_prefix == 1 {
+        //   total_video_frames = total_video_frames + 1;
+        //   println!("NEW AUD @ {} :: {} :: stream_id {}", counter, total_video_frames, pes.stream_id);
+        //   // println!("PAYLOAD: {:02X?}", pes.payload_data);
 
-        index = index + TS_PACKET_SIZE;
+        // }
+        avc_extractor.accumulate_pes_payload(pes.payload_data);
+        // accumulated_pes_payload.append(&mut pes.payload_data.to_vec());
+      }
+
+      // Audio PES
+      if packet.pid == audio_elem_pid {
+          println!("AUDIO PID");
+      }
+
+      index = index + TS_PACKET_SIZE;
     }
     println!("TOTAL VIDEO PACKETS {}", counter);
     Ok((vec![], vec![]))
