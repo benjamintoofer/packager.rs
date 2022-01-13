@@ -4,6 +4,7 @@ pub trait MinorError {
   fn code(&self) -> u8;
 }
 
+#[derive(Debug, Eq, PartialEq)]
 pub enum MajorCode {
   ISOBMFF           = 0,
   TRANSPORT_STREAM  = 1,
@@ -14,28 +15,33 @@ pub enum MajorCode {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum ISOBMFFMinorCode {
   UNABLE_TO_FIND_BOX_ERROR  = 0,
   PARSE_BOX_ERROR           = 1,
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum TransportStreamMinorCode {
   PARSE_TS_ERROR  = 0,
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum ManifestMinorCode {
   // TODO
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum UtilMinorCode {
   PARSING_UNSIGNED_ERROR    = 0,
   PARSING_BIT_READER_ERROR  = 1,
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum NalMinorCode {
   UNEXPTED_NAL_UNIT_LENGTH_ERROR          = 0,
   BYTE_STREAM_MISSING_START_PREFIX_ERROR  = 1,
@@ -43,6 +49,7 @@ pub enum NalMinorCode {
 }
 
 #[allow(non_camel_case_types)]
+#[derive(Debug, Eq, PartialEq)]
 pub enum RemuxMinorCode {
   MISSING_BUILDER_DEPENDENCY_ERROR = 0,
 }
