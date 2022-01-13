@@ -65,8 +65,8 @@ impl  AVCDecoderConfigurationRecord {
 }
 
 pub struct AVCDecoderConfigurationRecordBuilder {
-  pub sps_data: Vec<u8>,
-  pub pps_data: Vec<u8>,
+  sps_data: Vec<u8>,
+  pps_data: Vec<u8>,
 }
 
 impl AVCDecoderConfigurationRecordBuilder {
@@ -117,9 +117,9 @@ impl AVCDecoderConfigurationRecordBuilder {
         sps.profile_compatability(),
         // AVCLevelIndication
         sps.level_idc,
-        // reserved = ‘111111’b + lengthSizeMinusOne = 11 = 3
+        // reserved = ‘111111’b + lengthSizeMinusOne = `11`b = 3
         0xFF,
-        // reserved = ‘111’b + numOfSequenceParameterSets = 1 = 1
+        // reserved = ‘111’b + numOfSequenceParameterSets = `1`b = 1
         0xE1,
         // sequenceParameterSetLength
         sps_length_array[1], sps_length_array[0],
@@ -133,11 +133,8 @@ impl AVCDecoderConfigurationRecordBuilder {
       ],
       self.pps_data,
     ].concat();
-      
-
-
     
-    return Ok(avcC)
+    Ok(avcC)
   }
 }
 

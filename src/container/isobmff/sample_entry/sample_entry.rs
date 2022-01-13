@@ -18,3 +18,32 @@ impl SampleEntry {
     SampleEntry{ data_reference_index }
   }
 }
+
+pub struct SampleEntryBuilder {}
+
+impl SampleEntryBuilder {
+  pub fn create_builder() -> SampleEntryBuilder {
+    return SampleEntryBuilder{}
+  }
+  pub fn build(self) -> Vec<u8> {
+    vec![
+      // int(8)[6] reserved
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      // data_reference_index
+      0x00, 0x01,
+    ]
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  #[test]
+  fn test_build_sample_entry() {
+    let expected_sample_entry = vec![0x00, 0x00, 0x00, 0x00, 0x00, 0x00,0x00, 0x01];
+    let sample_entry = SampleEntryBuilder::create_builder().build();
+
+    assert_eq!(sample_entry, expected_sample_entry);
+  }
+}

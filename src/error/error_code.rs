@@ -10,6 +10,7 @@ pub enum MajorCode {
   MANIFEST          = 2,
   UTIL              = 3,
   NAL               = 4,
+  REMUX             = 5,
 }
 
 #[allow(non_camel_case_types)]
@@ -36,9 +37,14 @@ pub enum UtilMinorCode {
 
 #[allow(non_camel_case_types)]
 pub enum NalMinorCode {
-  UNEXPTED_NAL_UNIT_LENGTH          = 0,
-  BYTE_STREAM_MISSING_START_PREFIX  = 1,
-  UKNOWN_NAL_UNIT_TYPE              = 2,
+  UNEXPTED_NAL_UNIT_LENGTH_ERROR          = 0,
+  BYTE_STREAM_MISSING_START_PREFIX_ERROR  = 1,
+  UKNOWN_NAL_UNIT_TYPE_ERROR              = 2,
+}
+
+#[allow(non_camel_case_types)]
+pub enum RemuxMinorCode {
+  MISSING_BUILDER_DEPENDENCY_ERROR = 0,
 }
 
 impl MinorError for ISOBMFFMinorCode {
@@ -72,13 +78,13 @@ impl MinorError for TransportStreamMinorCode {
 }
 
 impl MinorError for ManifestMinorCode {
-    fn message(&self) -> String {
-      todo!()
-    }
+  fn message(&self) -> String {
+    todo!()
+  }
 
-    fn code(&self) -> u8 {
-      todo!()
-    }
+  fn code(&self) -> u8 {
+    todo!()
+  }
 }
 
 impl MinorError for UtilMinorCode {
@@ -99,17 +105,31 @@ impl MinorError for UtilMinorCode {
 impl MinorError for NalMinorCode {
   fn message(&self) -> String {
     match self {
-      NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH => { "Unexpected NAL unit length".to_string()}
-      NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX => { "Byte stream is missing starting prefix of 0x00000001".to_string() }
-      NalMinorCode::UKNOWN_NAL_UNIT_TYPE => { "Uknown NAL Unit type".to_string() }
+      NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH_ERROR => { "Unexpected NAL unit length".to_string()}
+      NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX_ERROR => { "Byte stream is missing starting prefix of 0x00000001".to_string() }
+      NalMinorCode::UKNOWN_NAL_UNIT_TYPE_ERROR => { "Uknown NAL Unit type".to_string() }
     }
   }
 
   fn code(&self) -> u8 {
     match self {
-      NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH => { NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH  as u8 }
-      NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX => { NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX as u8 }
-      NalMinorCode::UKNOWN_NAL_UNIT_TYPE => { NalMinorCode::UKNOWN_NAL_UNIT_TYPE as u8 }
+      NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH_ERROR => { NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH_ERROR  as u8 }
+      NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX_ERROR => { NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX_ERROR as u8 }
+      NalMinorCode::UKNOWN_NAL_UNIT_TYPE_ERROR => { NalMinorCode::UKNOWN_NAL_UNIT_TYPE_ERROR as u8 }
+    }
+  }
+}
+
+impl MinorError for RemuxMinorCode {
+  fn message(&self) -> String {
+    match self {
+      RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR => { "Missing a dependency required for the builder".to_string() }
+    }
+  }
+
+  fn code(&self) -> u8 {
+    match self {
+      RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR => { RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR as u8 }
     }
   }
 }
