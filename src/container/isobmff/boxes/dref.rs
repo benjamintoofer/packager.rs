@@ -1,0 +1,57 @@
+
+
+// DataReferenceBox 14496-12; 8.7.2
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct DREFBuilder {}
+
+impl DREFBuilder {
+  pub fn create_builder() -> DREFBuilder {
+    DREFBuilder{}
+  }
+
+  pub fn build(&self) -> Vec<u8> {
+    vec![
+      // Size
+      0x00, 0x00, 0x00, 0x1C,
+      // dref
+      0x64, 0x72, 0x65, 0x66,
+      // version
+      0x00,
+      // flag
+      0x00, 0x00, 0x00,
+      // entry_count
+      0x00, 0x00, 0x00, 0x01,
+      // data_entry
+      // size
+      0x00, 0x00, 0x00, 0x0C,
+      // url
+      0x75, 0x72, 0x6C, 0x20,
+      // version
+      0x00,
+      // flags
+      0x00, 0x00, 0x01,
+    ]
+  }
+}
+
+#[cfg(test)]
+mod tests {
+
+  use super::*;
+
+  #[test]
+  fn test_build_dref() {
+    let expected_dref: [u8; 28] = [
+      0x00, 0x00, 0x00, 0x1C,
+      0x64, 0x72, 0x65, 0x66,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x01,
+      0x00, 0x00, 0x00, 0x0C,
+      0x75, 0x72, 0x6C, 0x20,
+      0x00, 0x00, 0x00, 0x01,
+    ];
+    let dref = DREFBuilder::create_builder().build();
+    assert_eq!(dref, expected_dref);
+  }
+}

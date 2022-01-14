@@ -7,6 +7,8 @@ pub mod sidx;
 pub mod mvhd;
 pub mod mdhd;
 pub mod hdlr;
+pub mod dinf;
+pub mod dref;
 pub mod stbl;
 pub mod stsd;
 pub mod stts;
