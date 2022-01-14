@@ -11,7 +11,7 @@ use crate::util;
 
 static CLASS: &str = "SIDX";
 
-#[derive(Eq)]
+#[derive(Eq, PartialEq)]
 pub struct SIDXReference {
  pub reference_type: bool,      // u1
  pub referenced_size: u32,      // u31
@@ -32,12 +32,6 @@ impl Debug for SIDXReference {
         .key(&"sap_delta_time: ").value(&self.sap_delta_time)
         .finish()
     }
-}
-
-impl PartialEq for SIDXReference {
-  fn eq(&self, other: &Self) -> bool {
-        self.referenced_size == other.referenced_size
-  }
 }
 
 #[derive(Eq)]

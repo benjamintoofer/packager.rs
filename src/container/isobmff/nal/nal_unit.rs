@@ -26,7 +26,7 @@ impl NALUnit {
     if NALUnit::find_boundary(index, byte_stream) == -1 {
       return Err(construct_error(
         MajorCode::NAL, 
-        Box::new(NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX),
+        Box::new(NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX_ERROR),
         "Invalid nal unit length".to_string(), 
         file!(), 
         line!()));
@@ -105,7 +105,7 @@ impl NALUnit {
       1 => {util::get_u8(mdat, offset).map(|e| e.try_into().unwrap())}
       _ => {Err(construct_error(
         MajorCode::NAL, 
-        Box::new(NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH),
+        Box::new(NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH_ERROR),
         "Invalid nal unit length".to_string(), 
         file!(), 
         line!()))}

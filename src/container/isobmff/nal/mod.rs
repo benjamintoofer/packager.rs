@@ -36,7 +36,7 @@ impl NALType {
       _ => Err(
         construct_error(
           crate::error::error_code::MajorCode::NAL,
-          Box::new(NalMinorCode::UKNOWN_NAL_UNIT_TYPE),
+          Box::new(NalMinorCode::UKNOWN_NAL_UNIT_TYPE_ERROR),
           format!("NAL Type not supported: {}", val),
           file!(),
           line!())

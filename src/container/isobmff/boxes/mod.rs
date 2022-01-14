@@ -1,6 +1,8 @@
 use std::convert::TryInto;
 
 pub mod iso_box;
+pub mod ftyp;
+pub mod moov;
 pub mod sidx;
 pub mod mvhd;
 pub mod mdhd;

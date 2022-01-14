@@ -9,6 +9,10 @@ pub mod configuration_records;
 pub mod descriptors;
 pub mod nal;
 
+trait BoxBuilder {
+  fn build(&self) -> Result<Vec<u8>, CustomError>;
+}
+
 #[derive(Debug)]
 pub enum HandlerType {
   VIDE,
