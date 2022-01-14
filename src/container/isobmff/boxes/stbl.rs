@@ -9,7 +9,7 @@ use crate::container::isobmff::boxes::stco::STCOBuilder;
 
 // SampleTableBox 14496-12; 8.5.1
 
-struct STBLBuilder {
+pub struct STBLBuilder {
   stsd_builder: Option<STSDBuilder>
 }
 
@@ -76,7 +76,7 @@ mod tests {
   #[test]
   fn test_build_stbl() {
     let expected_stbl: [u8; 96] = [
-      // Size
+      // size
       0x00, 0x00, 0x00, 0x60,
       // stbl
       0x73, 0x74, 0x62, 0x6C,
