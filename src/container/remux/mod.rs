@@ -187,3 +187,14 @@ where
         }
     }
 }
+
+use crate::error::{construct_error, error_code::{RemuxMinorCode, MajorCode}};
+
+pub fn generate_error(message: String) -> CustomError {
+  return  construct_error(
+    MajorCode::REMUX, 
+    Box::new(RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR),
+    message,
+    file!(), 
+    line!());
+}

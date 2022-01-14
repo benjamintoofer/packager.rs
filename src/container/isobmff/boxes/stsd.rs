@@ -1,8 +1,9 @@
-use std::str;
+use std::{borrow::Borrow, convert::TryInto, str};
 use std::convert::TryFrom;
 
-use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
+use crate::{container::isobmff::{BoxBuilder, sample_entry::avc_sample_entry::AVCSampleEntryBuilder}, error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::util;
+use crate::container::remux;
 
 static CLASS: &str = "STSD";
 
@@ -123,6 +124,51 @@ impl<'a> STSD<'a> {
   }
 }
 
+struct STSDBuilder {
+  handler: Option<Box<dyn BoxBuilder>>
+}
+
+impl STSDBuilder {
+  pub fn create_builder() -> STSDBuilder {
+    STSDBuilder{
+      handler: None
+    }
+  }
+
+  pub fn handler(mut self, handler: Box<dyn BoxBuilder>) -> STSDBuilder {
+    self.handler = Some(handler);
+    self
+  }
+
+  pub fn build(&self) -> Result<Vec<u8>, CustomError> {
+    let handler = self.handler.as_ref()
+      .ok_or_else(||remux::generate_error(String::from("Missing handler for STSDBuilder")))?
+      .build()?;
+
+    let size = 
+      12 + // header
+      4 +
+      handler.len();
+    let size_array = util::transform_usize_to_u8_array(size);
+
+    Ok([
+      vec![
+      // size
+      size_array[3], size_array[2], size_array[1], size_array[0],
+      // stsd
+      0x73, 0x74, 0x73, 0x64,
+      // version
+      0x00,
+      // flags
+      0x00, 0x00, 0x00,
+      // entry count
+      0x00, 0x00, 0x00, 0x01,
+      ],
+      handler,
+    ].concat())
+  }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -153,5 +199,29 @@ mod tests {
       sample_entries: &[], // We dont compare this
     };
     assert_eq!(STSD::parse_stsd(&stsd).unwrap(), expected_stsd);
+  }
+
+
+  struct MockHandler {}
+
+  impl BoxBuilder for MockHandler {
+    fn build(&self) -> Result<Vec<u8>, CustomError> {
+      Ok(vec![0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
+    }
+  }
+   #[test]
+  fn test_build_stsd() {
+    let expected_stsd = vec![
+      0x00, 0x00, 0x00, 0x18,
+      0x73, 0x74, 0x73, 0x64,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x01,
+      0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07
+    ];
+    let handler = Box::new(MockHandler{});
+    let stsd = STSDBuilder::create_builder()
+      .handler(handler)
+      .build()
+      .unwrap();
   }
 }

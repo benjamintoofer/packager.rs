@@ -108,7 +108,7 @@ impl VisualSampleEntryBuilder {
     self
   }
 
-  pub fn build(self) -> Result<Vec<u8>, CustomError> {
+  pub fn build(&self) -> Result<Vec<u8>, CustomError> {
     let sps = SequenceParameterSet::parse(&self.sps_data)?;
     let width = util::transform_usize_to_u8_array(sps.width());
     let height = util::transform_usize_to_u8_array(sps.height());

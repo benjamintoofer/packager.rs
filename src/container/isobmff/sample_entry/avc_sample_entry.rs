@@ -1,9 +1,9 @@
-use crate::util;
+use crate::{container::isobmff::BoxBuilder, util};
 use super::sample_entry::{SampleEntry, SampleEntryBuilder};
 use super::visual_sample_entry:: {VisualSampleEntry, VisualSampleEntryBuilder};
 use crate::{container::isobmff::boxes::iso_box::find_box, error::CustomError};
 use crate::container::isobmff::configuration_records::avcC::{AVCDecoderConfigurationRecord, AVCDecoderConfigurationRecordBuilder};
-use crate::error::{construct_error, error_code::{RemuxMinorCode, MajorCode}};
+use crate::container::remux;
 #[derive(Debug)]
 pub struct AVCSampleEntry {
   pub sample_entry: SampleEntry,
@@ -31,7 +31,7 @@ impl AVCSampleEntry {
 }
 
 pub struct AVCSampleEntryBuilder {
-  sample_entry_builder: Option<SampleEntryBuilder>,
+  pub sample_entry_builder: Option<SampleEntryBuilder>,
   visual_sample_entry_builder: Option<VisualSampleEntryBuilder>,
   avc_c_builder: Option<AVCDecoderConfigurationRecordBuilder>,
 }
@@ -59,16 +59,18 @@ impl AVCSampleEntryBuilder {
     self.avc_c_builder = Some(avc_c_builder);
     self
   }
+}
 
-  pub fn build(self) -> Result<Vec<u8>, CustomError> {
-    let sample_entry = self.sample_entry_builder
-      .ok_or_else(||generate_error(String::from("Missing sample_entry_builder for AVCSampleEntryBuilder")))?
+impl BoxBuilder for AVCSampleEntryBuilder {
+  fn build(&self) -> Result<Vec<u8>, CustomError> {
+    let sample_entry = self.sample_entry_builder.as_ref()
+      .ok_or_else(||remux::generate_error(String::from("Missing sample_entry_builder for AVCSampleEntryBuilder")))?
       .build();
-    let visual_sample_entry = self.visual_sample_entry_builder
-      .ok_or_else(||generate_error(String::from("Missing visual_sample_entry_builder for AVCSampleEntryBuilder")))?
+    let visual_sample_entry = self.visual_sample_entry_builder.as_ref()
+      .ok_or_else(||remux::generate_error(String::from("Missing visual_sample_entry_builder for AVCSampleEntryBuilder")))?
       .build()?;
-    let avc_c = self.avc_c_builder
-      .ok_or_else(||generate_error(String::from("Missing avcC_builder for AVCSampleEntryBuilder")))?
+    let avc_c = self.avc_c_builder.as_ref()
+      .ok_or_else(||remux::generate_error(String::from("Missing avcC_builder for AVCSampleEntryBuilder")))?
       .build()?;
     let size = 
       8 + // header
@@ -93,18 +95,10 @@ impl AVCSampleEntryBuilder {
   }
 }
 
-fn generate_error(message: String) -> CustomError {
-  return  construct_error(
-    MajorCode::REMUX, 
-    Box::new(RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR),
-    message,
-    file!(), 
-    line!());
-}
-
 #[cfg(test)]
 mod tests {
   use super::*;
+  use crate::error::error_code::{RemuxMinorCode, MajorCode};
 
   #[test]
   fn test_build_avc1_sample_entry() {

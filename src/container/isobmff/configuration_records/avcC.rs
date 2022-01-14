@@ -86,7 +86,7 @@ impl AVCDecoderConfigurationRecordBuilder {
     self.sps_data = sps_data.to_vec();
     self
   }
-  pub fn build(self) -> Result<Vec<u8>, CustomError> {
+  pub fn build(&self) -> Result<Vec<u8>, CustomError> {
     // sps data
     let sps = SequenceParameterSet::parse(&self.sps_data)?;
     let sps_length = self.sps_data.len();
@@ -124,14 +124,14 @@ impl AVCDecoderConfigurationRecordBuilder {
         // sequenceParameterSetLength
         sps_length_array[1], sps_length_array[0],
       ],
-      self.sps_data,
+      self.sps_data.clone(),
       vec![
         // numOfPictureParameterSets
         0x01,
         // pictureParameterSetLength
         pps_length_array[1], pps_length_array[0],
       ],
-      self.pps_data,
+      self.pps_data.clone(),
     ].concat();
     
     Ok(avcC)

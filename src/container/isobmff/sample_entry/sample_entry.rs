@@ -25,7 +25,7 @@ impl SampleEntryBuilder {
   pub fn create_builder() -> SampleEntryBuilder {
     return SampleEntryBuilder{}
   }
-  pub fn build(self) -> Vec<u8> {
+  pub fn build(&self) -> Vec<u8> {
     vec![
       // int(8)[6] reserved
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
