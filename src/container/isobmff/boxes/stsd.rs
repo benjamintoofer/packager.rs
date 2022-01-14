@@ -124,7 +124,7 @@ impl<'a> STSD<'a> {
   }
 }
 
-struct STSDBuilder {
+pub struct STSDBuilder {
   handler: Option<Box<dyn BoxBuilder>>
 }
 
