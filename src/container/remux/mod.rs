@@ -71,14 +71,7 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
       if packet.pid == video_elem_pid {
         counter = counter + 1;
         let pes = pes_packet::PESPacket::parse(packet.data)?;
-        // if pes.packet_start_code_prefix == 1 {
-        //   total_video_frames = total_video_frames + 1;
-        //   println!("NEW AUD @ {} :: {} :: stream_id {}", counter, total_video_frames, pes.stream_id);
-        //   // println!("PAYLOAD: {:02X?}", pes.payload_data);
-
-        // }
         avc_extractor.accumulate_pes_payload(pes.payload_data);
-        // accumulated_pes_payload.append(&mut pes.payload_data.to_vec());
       }
 
       // Audio PES
