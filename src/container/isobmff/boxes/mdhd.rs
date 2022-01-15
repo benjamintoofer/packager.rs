@@ -3,6 +3,7 @@ use std::str;
 use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}};
 use crate::iso_box::find_box;
 use crate::util;
+use crate::util::iso_639::ISO639;
 
 static CLASS: &str = "MDHD";
 
@@ -169,6 +170,60 @@ impl MDHDReader {
   }
 }
 
+pub struct MDHDBuilder {
+  timescale: usize,
+  language: &'static str,
+}
+
+impl MDHDBuilder {
+  pub fn create_builder() -> MDHDBuilder {
+    MDHDBuilder{
+      timescale: 0,
+      language: "und"
+    }
+  }
+
+  pub fn timescale(mut self, timescale: usize) -> MDHDBuilder {
+    self.timescale = timescale;
+    self
+  }
+
+  pub fn language(mut self, language: &'static str) -> MDHDBuilder {
+    self.language = language;
+    self
+  }
+
+  pub fn build(&self) -> Result<Vec<u8>, CustomError>{
+    let timescale_array = util::transform_usize_to_u8_array(self.timescale);
+    let langauge = ISO639::adjust_string_to_iso_639_2(self.language)?;
+
+    Ok(
+      vec![
+        // Size
+        0x00, 0x00, 0x00, 0x20,
+        // mdhd
+        0x6D, 0x64, 0x68, 0x64,
+        // version
+        0x00,
+        // flag
+        0x00, 0x00, 0x00,
+        // creation_time
+        0x00, 0x00, 0x00, 0x00,
+        // modification_time
+        0x00, 0x00, 0x00, 0x00,
+        // timescale
+        timescale_array[3],timescale_array[2],timescale_array[1],timescale_array[0],
+        // duration
+        0x00, 0x00, 0x00, 0x00,
+        // language
+        langauge[0], langauge[1],
+        // pre_defined
+        0x00, 0x00
+      ]
+    )
+  }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -205,5 +260,26 @@ mod tests {
     assert_eq!(mdhd_reader.get_duration().unwrap(), 0);
     assert_eq!(mdhd_reader.get_timescale().unwrap(), 30);
     assert_eq!(mdhd_reader.get_language().unwrap(), "und");
+  }
+
+  #[test]
+  fn test_build_mdhd() {
+    let expected_mdhd: [u8; 32] = [
+      0x00, 0x00, 0x00, 0x20,
+      0x6D, 0x64, 0x68, 0x64,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x01, 0x5F, 0x90,
+      0x00, 0x00, 0x00, 0x00,
+      0x55, 0xC4, 0x00, 0x00,
+    ];
+
+    let mdhd = MDHDBuilder::create_builder()
+      .timescale(90000)
+      .build()
+      .unwrap();
+
+    assert_eq!(mdhd, expected_mdhd);
   }
 }

@@ -124,7 +124,7 @@ impl<'a> STSD<'a> {
   }
 }
 
-struct STSDBuilder {
+pub struct STSDBuilder {
   handler: Option<Box<dyn BoxBuilder>>
 }
 
@@ -209,7 +209,7 @@ mod tests {
       Ok(vec![0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
     }
   }
-   #[test]
+  #[test]
   fn test_build_stsd() {
     let expected_stsd = vec![
       0x00, 0x00, 0x00, 0x18,
@@ -223,5 +223,7 @@ mod tests {
       .handler(handler)
       .build()
       .unwrap();
+
+    assert_eq!(stsd, expected_stsd);
   }
 }

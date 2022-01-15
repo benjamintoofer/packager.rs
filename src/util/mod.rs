@@ -1,5 +1,6 @@
 pub mod logger;
 pub mod bit_reader;
+pub mod iso_639;
 
 use std::{convert::TryInto};
 use crate::error::{error_code:: {MajorCode, UtilMinorCode}, construct_error, CustomError};

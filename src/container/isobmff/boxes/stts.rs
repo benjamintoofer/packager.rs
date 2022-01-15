@@ -6,6 +6,7 @@ use crate::iso_box::find_box;
 
 static CLASS: &str = "STTS";
 
+// TimeToSampleBox 14496-12; 8.6.1.2.1
 #[derive(Debug, PartialEq, Eq)]
 struct STTSSample {
   sample_count: u32,
@@ -32,14 +33,14 @@ impl PartialEq for STTSReader {
 impl STTSReader {
 
   pub fn parse(mp4: &[u8]) -> Result<STTSReader, CustomError> {
-    let tkhd_option = find_box("moov", 0, mp4)
+    let stts_option = find_box("moov", 0, mp4)
       .and_then(|moov|find_box("trak", 8, moov))
       .and_then(|trak|find_box("mdia", 8, trak))
       .and_then(|mdia|find_box("minf", 8, mdia))
       .and_then(|minf|find_box("stbl", 8, minf))
       .and_then(|stbl|find_box("stts", 8, stbl));
     
-    if let Some(stts_data) = tkhd_option {
+    if let Some(stts_data) = stts_option {
       Ok(STTSReader::get_reader(stts_data)?)
     } else {
       Err(construct_error(
@@ -91,6 +92,30 @@ impl STTSReader {
   }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct STTSBuilder {}
+
+impl STTSBuilder {
+  pub fn create_builder() -> STTSBuilder {
+    STTSBuilder{}
+  }
+
+  pub fn build(&self) -> Vec<u8> {
+    vec![
+      // Size
+      0x00, 0x00, 0x00, 0x10,
+      // stts
+      0x73, 0x74, 0x74, 0x73,
+      // version
+      0x00,
+      // flag
+      0x00, 0x00, 0x00,
+      // entry_count
+      0x00, 0x00, 0x00, 0x00,
+    ]
+  }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -118,5 +143,18 @@ mod tests {
     let mut stts_reader = STTSReader::get_reader(&stts).unwrap();
     assert_eq!(stts_reader, expected_stts);
     assert_eq!(stts_reader.get_entry_count().unwrap(), 0);
+  }
+
+  #[test]
+  fn test_build_stts() {
+    let expected_stts: [u8; 16] = [
+      // Size
+      0x00, 0x00, 0x00, 0x10,
+      // stts
+      0x73, 0x74, 0x74, 0x73,
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+    ];
+    let stts = STTSBuilder::create_builder().build();
+    assert_eq!(stts, expected_stts);
   }
 }
