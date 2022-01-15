@@ -184,6 +184,95 @@ impl TKHDReader {
   }
 }
 
+pub struct TKHDBuilder {
+  track_id: usize,
+  volume: usize,
+  width: usize,
+  height: usize,
+}
+
+impl TKHDBuilder {
+  pub fn create_builder() -> TKHDBuilder {
+    TKHDBuilder{
+      track_id: 1,
+      volume: 0,
+      width: 0,
+      height: 0,
+    }
+  }
+
+  pub fn track_id(mut self, track_id: usize) -> TKHDBuilder {
+    self.track_id = track_id;
+    self
+  }
+
+  pub fn volume(mut self, volume: usize) -> TKHDBuilder {
+    self.volume = volume;
+    self
+  }
+
+  pub fn width(mut self, width: usize) -> TKHDBuilder {
+    self.width = width;
+    self
+  }
+
+  pub fn height(mut self, height: usize) -> TKHDBuilder {
+    self.height = height;
+    self
+  }
+
+  pub fn build(&self) -> Vec<u8> {
+    let tid_array = util::transform_usize_to_u8_array(self.track_id);
+    let volume_array = util::transform_usize_to_u8_array(self.volume);
+    let width_array = util::transform_usize_to_u8_array(self.width);
+    let height_array = util::transform_usize_to_u8_array(self.height);
+
+    // Defaulting to version 0 (32 bit values)
+    vec![
+      // Size
+      0x00, 0x00, 0x00, 0x60,
+      // tkhd
+      0x74, 0x6B, 0x68, 0x64,
+      // version
+      0x00,
+      // flag
+      0x00, 0x00, 0x07,
+      // entry_count
+      0x00, 0x00, 0x00, 0x00,
+      // creation_time
+      0x00, 0x00, 0x00, 0x00,
+      // modification_time
+      0x00, 0x00, 0x00, 0x00,
+      // track id
+      tid_array[3], tid_array[2], tid_array[1], tid_array[0],
+      // reserved
+      0x00, 0x00, 0x00, 0x00,
+      // duration
+      0x00, 0x00, 0x00, 0x00,
+      // int(32)[2] reserved
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      // layer
+      0x00, 0x00,
+      // alternate_group
+      0x00, 0x00,
+      // volume
+      volume_array[1], volume_array[0],
+      // reserved
+      0x00, 0x00,
+      // int(32)[9] matrix
+      0x00, 0x01, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,  0x00, 0x01, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  0x40, 0x00, 0x00, 0x00,
+      // width (16.16 float point)
+      width_array[1], width_array[0], 0x00, 0x00,
+      // height (16.16 float point)
+      height_array[1], height_array[0], 0x00, 0x00,
+
+    ]
+  }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -227,4 +316,40 @@ mod tests {
     assert_eq!(tkhd_reader.get_width().unwrap() as f32 / 65536.0, 480.0);
     assert_eq!(tkhd_reader.get_height().unwrap() as f32 / 65536.0, 270.0);
   }
+
+  #[test]
+  fn test_build_tkhd() {
+    let expected_tkhd: [u8; 96] = [
+      0x00, 0x00, 0x00, 0x60,
+      0x74, 0x6B, 0x68, 0x64,
+      0x00, 0x00, 0x00, 0x07,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x02,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x01, 0x00,
+      0x00, 0x00,
+      0x00, 0x01, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,  0x00, 0x01, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,  0x00, 0x00, 0x00, 0x00,  0x40, 0x00, 0x00, 0x00,
+      0x01, 0xE0, 0x00, 0x00,
+      0x01, 0x0E, 0x00, 0x00,
+    ];
+    let tkhd = TKHDBuilder::create_builder()
+      .height(270)
+      .width(480)
+      .volume(0x0100)
+      .track_id(2)
+      .build();
+
+    assert_eq!(tkhd, expected_tkhd);
+  }
 }
+
+// left: `[0, 0, 0, 96, 116, 107, 104, 100, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 1, 224, 0, 0, 1, 14, 0, 0]`,
+ //right:`[0, 0, 0, 96, 116, 107, 104, 100, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 1, 224, 0, 0, 1, 14, 0, 0]`

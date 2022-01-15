@@ -45,7 +45,7 @@ impl STBLBuilder {
     Ok(
       [
         vec![
-          // Size
+          // size
           size_array[3], size_array[2], size_array[1], size_array[0],
           // stbl
           0x73, 0x74, 0x62, 0x6C,

@@ -1,7 +1,7 @@
-use std::{borrow::Borrow, convert::TryInto, str};
+use std::str;
 use std::convert::TryFrom;
 
-use crate::{container::isobmff::{BoxBuilder, sample_entry::avc_sample_entry::AVCSampleEntryBuilder}, error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
+use crate::{container::isobmff::{BoxBuilder}, error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::util;
 use crate::container::remux;
 
