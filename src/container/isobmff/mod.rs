@@ -22,14 +22,26 @@ pub enum HandlerType {
   AUXV
 }
 
+impl HandlerType {
+  fn get_value(&self) -> usize {
+    match self {
+      HandlerType::VIDE => 0x76696465,
+      HandlerType::SOUN => 0x736F756E,
+      HandlerType::HINT => 0x68696e74,
+      HandlerType::META => 0x6d657461,
+      HandlerType::AUXV => 0x61757876,
+    }
+  }
+}
+
 impl PartialEq<u32> for HandlerType {
   fn eq(&self, other: &u32) -> bool {
     match self {
-        HandlerType::VIDE => 0x76696465 == *other,
-        HandlerType::SOUN => 0x736F756E == *other,
-        HandlerType::HINT => 0x68696e74 == *other,
-        HandlerType::META => 0x6d657461 == *other,
-        HandlerType::AUXV => 0x61757876 == *other
+      HandlerType::VIDE => 0x76696465 == *other,
+      HandlerType::SOUN => 0x736F756E == *other,
+      HandlerType::HINT => 0x68696e74 == *other,
+      HandlerType::META => 0x6d657461 == *other,
+      HandlerType::AUXV => 0x61757876 == *other
     }
   }
 }
@@ -96,39 +108,4 @@ pub fn get_frame_rate(mp4: &[u8]) -> Result<f32, CustomError> {
   }
   
   Ok(sample_count as f32 / asset_duration as f32)
-}
-
-
-/// Convert ISO-639-2/T language code to a name
-pub fn map_iso_639_2_to_name(language_code: &String) -> String {
-  match language_code.as_str() {
-    "eng" => {"English".to_string()}
-    _ => {"Unknown".to_string()}
-  }
-
-}
-
-pub fn map_iso_639_2_to_639_1(language_code: &String) -> String {
-  match language_code.as_str() {
-    "eng" => {"en".to_string()}
-    _ => {"un".to_string()}
-  }
-}
-
-#[cfg(test)]
-mod tests {
-
-  use super::*;
-  #[test]
-  fn test_map_iso_639_2_to_name() {
-    assert_eq!(map_iso_639_2_to_name(&String::from("eng")), String::from("English"));
-    assert_eq!(map_iso_639_2_to_name(&String::from("und")), String::from("Unknown"));
-    assert_eq!(map_iso_639_2_to_name(&String::from("random")), String::from("Unknown"));
-  }
-
-  #[test]
-  fn test_map_iso_639_2_to_639_1() {
-    assert_eq!(map_iso_639_2_to_639_1(&String::from("eng")), String::from("en"));
-    assert_eq!(map_iso_639_2_to_639_1(&String::from("und")), String::from("un"));
-  }
 }

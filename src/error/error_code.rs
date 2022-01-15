@@ -36,8 +36,9 @@ pub enum ManifestMinorCode {
 #[allow(non_camel_case_types)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum UtilMinorCode {
-  PARSING_UNSIGNED_ERROR    = 0,
-  PARSING_BIT_READER_ERROR  = 1,
+  PARSING_UNSIGNED_ERROR        = 0,
+  PARSING_BIT_READER_ERROR      = 1,
+  INVALID_ISO_639_2_CODE_ERROR  = 2,
 }
 
 #[allow(non_camel_case_types)]
@@ -58,7 +59,7 @@ impl MinorError for ISOBMFFMinorCode {
   fn message(&self) -> String {
     match self {
       ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR => { "Unable to find box".to_string() }
-      ISOBMFFMinorCode::PARSE_BOX_ERROR => {"Error parsing isobmff box".to_string() }
+      ISOBMFFMinorCode::PARSE_BOX_ERROR => { "Error parsing isobmff box".to_string() }
     }
   }
 
@@ -99,6 +100,7 @@ impl MinorError for UtilMinorCode {
     match self {
       UtilMinorCode::PARSING_UNSIGNED_ERROR => { "An error occurred attempting to parse and unsigned value".to_string() }
       UtilMinorCode::PARSING_BIT_READER_ERROR => { "An error occurred attempting to parse with the bit reader".to_string() }
+      UtilMinorCode::INVALID_ISO_639_2_CODE_ERROR => { "An error occurred attempting to parse an iso_639_2 value".to_string() }
     }
   }
 
@@ -106,13 +108,14 @@ impl MinorError for UtilMinorCode {
     match self {
       UtilMinorCode::PARSING_UNSIGNED_ERROR => { UtilMinorCode::PARSING_UNSIGNED_ERROR as u8 }
       UtilMinorCode::PARSING_BIT_READER_ERROR => { UtilMinorCode::PARSING_BIT_READER_ERROR as u8 }
+      UtilMinorCode::INVALID_ISO_639_2_CODE_ERROR => { UtilMinorCode::INVALID_ISO_639_2_CODE_ERROR as u8 }
     }
   }
 }
 impl MinorError for NalMinorCode {
   fn message(&self) -> String {
     match self {
-      NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH_ERROR => { "Unexpected NAL unit length".to_string()}
+      NalMinorCode::UNEXPTED_NAL_UNIT_LENGTH_ERROR => { "Unexpected NAL unit length".to_string() }
       NalMinorCode::BYTE_STREAM_MISSING_START_PREFIX_ERROR => { "Byte stream is missing starting prefix of 0x00000001".to_string() }
       NalMinorCode::UKNOWN_NAL_UNIT_TYPE_ERROR => { "Uknown NAL Unit type".to_string() }
     }

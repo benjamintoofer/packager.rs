@@ -1,6 +1,7 @@
 use std::str;
 
 use crate::{error::{CustomError, construct_error}, iso_box::{IsoBox, IsoFullBox, find_box}};
+use crate::container::isobmff::HandlerType;
 use crate::error::error_code::{MajorCode, ISOBMFFMinorCode};
 use crate::util;
 
@@ -117,6 +118,73 @@ impl HDLR {
   }
 }
 
+pub struct HDLRBuilder {
+  handler_type: HandlerType
+}
+
+impl HDLRBuilder {
+  pub fn create_builder() -> HDLRBuilder {
+    HDLRBuilder{
+      handler_type: HandlerType::VIDE // Default to video
+    }
+  }
+
+  pub fn handler_type(mut self, handler_type: HandlerType) -> HDLRBuilder {
+    self.handler_type = handler_type;
+    self
+  }
+
+  pub fn build(&self) -> Vec<u8> {
+    let htarray = util::transform_usize_to_u8_array(self.handler_type.get_value());
+    let name_bytes = format!("Luma {} Handler", HDLRBuilder::get_track_string(&self.handler_type)).as_bytes().to_vec();
+    let size = 
+      12 + // header
+      4 +
+      4 +
+      12 +
+      name_bytes.len() + 1;
+    let size_array = util::transform_usize_to_u8_array(size);
+
+    [
+      vec![
+        // Size
+        size_array[3], size_array[2], size_array[1], size_array[0],
+        // hdlr
+        0x68, 0x64, 0x6C, 0x72,
+        // version
+        0x00,
+        // flag
+        0x00, 0x00, 0x00,
+        // pre_defined
+        0x00, 0x00, 0x00, 0x00,
+        // handler_type
+        htarray[3], htarray[2], htarray[1], htarray[0],
+        // int(32)[3] reserved
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+      ],
+      // name
+      name_bytes,
+      vec![
+        // null terminated
+        0x00,
+      ]
+    ].concat()
+    
+  }
+
+  fn get_track_string(handler_type: &HandlerType) -> String {
+    match handler_type {
+        HandlerType::VIDE => "Video".to_string(),
+        HandlerType::SOUN => "Audio".to_string(),
+        HandlerType::HINT => "Hint".to_string(),
+        HandlerType::META => "Meta".to_string(),
+        HandlerType::AUXV => "Auxiliary Video".to_string(),
+    }
+  }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -144,5 +212,26 @@ mod tests {
       name: "Bento4 Video Handler".to_string(),
     };
     assert_eq!(HDLR::parse_hdlr(&hdlr).unwrap(), expected_hdlr);
+  }
+
+  #[test]
+  fn test_build_hdlr() {
+    let expected_hdlr :[u8; 51] = [
+      0x00, 0x00, 0x00, 0x33,
+      0x68, 0x64, 0x6C, 0x72,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x76, 0x69, 0x64, 0x65,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      // name
+      0x4c, 0x75, 0x6d, 0x61, 0x20, 0x56, 0x69, 0x64, 0x65, 0x6f, 0x20, 0x48, 0x61, 0x6e, 0x64, 0x6c, 0x65, 0x72,
+      0x00,
+    ];
+    let hdlr = HDLRBuilder::create_builder()
+      .handler_type(HandlerType::VIDE)
+      .build();
+    assert_eq!(hdlr, expected_hdlr);
   }
 }

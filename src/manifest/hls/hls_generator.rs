@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::media::{TrackInfo, MediaInfo, TrackType};
-use crate::container::isobmff::{map_iso_639_2_to_639_1, map_iso_639_2_to_name};
+use crate::util::iso_639::ISO639;
 use crate::manifest::hls::hls_writer::HLSWriter;
 use crate::manifest::hls::HLSMediaType;
 
@@ -59,9 +59,9 @@ impl HLSGenerator {
       writer.media(
         HLSMediaType::AUDIO, 
         track.audio_group_id.unwrap_or_default(), 
-        &map_iso_639_2_to_name( &track.language), 
+        &ISO639::map_iso_639_2_to_name( &track.language), 
         Some(&track.path), 
-        Some(&map_iso_639_2_to_639_1(&track.language)), 
+        Some(&ISO639::map_iso_639_2_to_639_1(&track.language)), 
         None, 
         None, 
         None, 

@@ -5,6 +5,7 @@ pub mod ftyp;
 pub mod moov;
 pub mod sidx;
 pub mod mvhd;
+pub mod mdia;
 pub mod mdhd;
 pub mod hdlr;
 pub mod smhd;
