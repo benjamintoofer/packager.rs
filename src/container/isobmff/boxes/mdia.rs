@@ -176,7 +176,7 @@ mod tests {
           STBLBuilder::create_builder()
           .stsd(
             STSDBuilder::create_builder()
-            .handler(Box::new(MockHandler{}))
+            .sample_entry(Box::new(MockHandler{}))
           )
         )
       )

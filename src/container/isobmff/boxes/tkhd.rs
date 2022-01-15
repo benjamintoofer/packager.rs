@@ -226,19 +226,18 @@ impl TKHDBuilder {
     let volume_array = util::transform_usize_to_u8_array(self.volume);
     let width_array = util::transform_usize_to_u8_array(self.width);
     let height_array = util::transform_usize_to_u8_array(self.height);
-
+    println!("WIDTH {:02X?}  {:02X?}", width_array[1], width_array[0]);
+    println!("HEIGHT {:02X?}  {:02X?}", height_array[1], height_array[0]);
     // Defaulting to version 0 (32 bit values)
     vec![
       // Size
-      0x00, 0x00, 0x00, 0x60,
+      0x00, 0x00, 0x00, 0x5C,
       // tkhd
       0x74, 0x6B, 0x68, 0x64,
       // version
       0x00,
       // flag
       0x00, 0x00, 0x07,
-      // entry_count
-      0x00, 0x00, 0x00, 0x00,
       // creation_time
       0x00, 0x00, 0x00, 0x00,
       // modification_time
@@ -319,11 +318,10 @@ mod tests {
 
   #[test]
   fn test_build_tkhd() {
-    let expected_tkhd: [u8; 96] = [
-      0x00, 0x00, 0x00, 0x60,
+    let expected_tkhd: [u8; 92] = [
+      0x00, 0x00, 0x00, 0x5C,
       0x74, 0x6B, 0x68, 0x64,
       0x00, 0x00, 0x00, 0x07,
-      0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x02,
@@ -350,6 +348,3 @@ mod tests {
     assert_eq!(tkhd, expected_tkhd);
   }
 }
-
-// left: `[0, 0, 0, 96, 116, 107, 104, 100, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 1, 224, 0, 0, 1, 14, 0, 0]`,
- //right:`[0, 0, 0, 96, 116, 107, 104, 100, 0, 0, 0, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 64, 0, 0, 0, 1, 224, 0, 0, 1, 14, 0, 0]`

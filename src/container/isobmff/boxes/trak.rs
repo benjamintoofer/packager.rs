@@ -19,6 +19,16 @@ impl TRAKBuilder {
     }
   }
 
+  pub fn tkhd(mut self, tkhd_builder: TKHDBuilder) -> TRAKBuilder {
+    self.tkhd_builder = Some(tkhd_builder);
+    self
+  }
+
+  pub fn mdia(mut self, mdia_builder: MDIABuilder) -> TRAKBuilder {
+    self.mdia_builder = Some(mdia_builder);
+    self
+  }
+
   pub fn build(&self) -> Result<Vec<u8>, CustomError> {
     let tkhd = self.tkhd_builder.as_ref()
       .ok_or_else(||remux::generate_error(String::from("Missing tkhd_builder for TRAKBuilder")))?

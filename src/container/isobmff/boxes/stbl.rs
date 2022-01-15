@@ -109,7 +109,7 @@ mod tests {
     ];
     let handler = Box::new(MockHandler{});
     let stsd_builder = STSDBuilder::create_builder()
-      .handler(handler);
+      .sample_entry(handler);
     let stbl = STBLBuilder::create_builder()
       .stsd(stsd_builder)
       .build()
