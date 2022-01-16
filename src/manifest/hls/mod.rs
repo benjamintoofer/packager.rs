@@ -78,6 +78,7 @@ impl HDCP_LEVEL {
   }
 }
 
+#[allow(non_camel_case_types)]
 pub enum VIDEO_RANGE {
   SDR,
   HLG,

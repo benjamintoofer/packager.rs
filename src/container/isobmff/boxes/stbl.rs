@@ -45,7 +45,7 @@ impl STBLBuilder {
     Ok(
       [
         vec![
-          // Size
+          // size
           size_array[3], size_array[2], size_array[1], size_array[0],
           // stbl
           0x73, 0x74, 0x62, 0x6C,
@@ -75,9 +75,9 @@ mod tests {
 
   #[test]
   fn test_build_stbl() {
-    let expected_stbl: [u8; 96] = [
+    let expected_stbl: [u8; 100] = [
       // size
-      0x00, 0x00, 0x00, 0x60,
+      0x00, 0x00, 0x00, 0x64,
       // stbl
       0x73, 0x74, 0x62, 0x6C,
       // stsd
@@ -97,8 +97,9 @@ mod tests {
       0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
       // stsz
-      0x00, 0x00, 0x00, 0x10,
+      0x00, 0x00, 0x00, 0x14,
       0x73, 0x74, 0x73, 0x7A,
+      0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
       // stco
@@ -109,7 +110,7 @@ mod tests {
     ];
     let handler = Box::new(MockHandler{});
     let stsd_builder = STSDBuilder::create_builder()
-      .handler(handler);
+      .sample_entry(handler);
     let stbl = STBLBuilder::create_builder()
       .stsd(stsd_builder)
       .build()

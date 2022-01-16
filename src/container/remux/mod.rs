@@ -4,7 +4,10 @@ use crate::container::transport_stream::{
     pes_packet, program_association_table::ProgramAssociationTable,
     program_map_table::ProgramMapTable, ts_packet,
 };
+use crate::container::writer::mp4_writer::Mp4Writer;
 use crate::error::CustomError;
+
+use std::{fs::File, io::Write};
 
 static SYNC_BYTE: u8 = 0x47;
 static TS_PACKET_SIZE: usize = 188;
@@ -34,9 +37,25 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
 
     avc_extractor.listen_for_init_data(|sps, pps| {
         println!("SPS DATA: {:02X?}", sps);
-        let sps = SequenceParameterSet::parse(sps).unwrap();
-        // sps
         println!("PPS DATA: {:?}", pps);
+        let init_segment = Mp4Writer::create_mp4_writer()
+          .timescale(90000)
+          .sps(sps)
+          .pps(pps)
+          .build_init_segment();
+
+        match init_segment {
+            Ok(x) => {
+              let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_init.mp4").unwrap();
+              match file.write_all(&x) {
+                  Ok(_) => {println!("FINISHED WRITING SEGMENT!!!")}
+                  Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
+              }
+            }
+            Err(err) => {
+              println!("{:?}", err);
+            }
+        }
     });
     avc_extractor.listen_for_media_data(|media| {});
 

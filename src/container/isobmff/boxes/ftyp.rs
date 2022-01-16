@@ -1,5 +1,5 @@
 
-struct FTYPBuilder {}
+pub struct FTYPBuilder {}
 
 impl FTYPBuilder {
 
@@ -7,8 +7,8 @@ impl FTYPBuilder {
     return FTYPBuilder{}
   }
 
-  pub fn build(&self) -> &'static [u8] {
-    return &[
+  pub fn build(&self) -> Vec<u8> {
+    return vec![
        // size
       0x00, 0x00, 0x00, 0x24,
       // ftyp
@@ -61,7 +61,7 @@ mod tests {
       0x69, 0x73, 0x6f, 0x35
     ];
   
-    let ftyp_box: &[u8] = FTYPBuilder::create_builder().build();
-    assert_eq!(ftyp_box, expected_ftyp);
+    let ftyp = FTYPBuilder::create_builder().build();
+    assert_eq!(ftyp, expected_ftyp);
   }
 }

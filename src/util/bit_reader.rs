@@ -51,7 +51,7 @@ impl<'a> BitReader<'a> {
 
     let mut holder = 0usize;
     let mut index_offset = 0usize;
-    let mut bytes = 8usize;
+    let bytes = 8usize;
 
     let temp_word = loop {
       let index = self.data_index + index_offset;
