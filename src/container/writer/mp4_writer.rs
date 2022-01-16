@@ -34,10 +34,7 @@ impl Mp4Writer {
   }
 
   pub fn build_init_segment(self) -> Result<Vec<u8>, CustomError>{
-    let sps_clone = self.sps.clone();
-    let sps = SequenceParameterSet::parse(&sps_clone)?;
-    println!("SPS WIDTH: {}", sps.width());
-    println!("SPS HEIGHT: {}", sps.height());
+    let sps = SequenceParameterSet::parse(&self.sps)?;
     Ok([
       FTYPBuilder::create_builder().build(),
       MOOVBuilder::create_builder()

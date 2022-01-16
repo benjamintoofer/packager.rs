@@ -226,8 +226,7 @@ impl TKHDBuilder {
     let volume_array = util::transform_usize_to_u8_array(self.volume);
     let width_array = util::transform_usize_to_u8_array(self.width);
     let height_array = util::transform_usize_to_u8_array(self.height);
-    println!("WIDTH {:02X?}  {:02X?}", width_array[1], width_array[0]);
-    println!("HEIGHT {:02X?}  {:02X?}", height_array[1], height_array[0]);
+
     // Defaulting to version 0 (32 bit values)
     vec![
       // Size
