@@ -8,7 +8,9 @@ pub struct PESPacket<'a> {
   pub packet_start_code_prefix: u32,        // 24 bit
   pub stream_id: u8,
   pub pes_packet_length: u16,
-  pub payload_data: &'a [u8]
+  pub payload_data: &'a [u8],
+  pub dts: Option<u64>,
+  pub pts: Option<u64>,
 }
 
 impl<'a> PESPacket<'a> {
@@ -25,7 +27,9 @@ impl<'a> PESPacket<'a> {
         packet_start_code_prefix: 0,
         stream_id: 0,
         pes_packet_length: 0,
-        payload_data: payload
+        payload_data: payload,
+        dts: None,
+        pts: None,
       })
     }
     let data = util::get_u32(payload, offset)?;
@@ -36,7 +40,9 @@ impl<'a> PESPacket<'a> {
         packet_start_code_prefix: 0,
         stream_id: 0,
         pes_packet_length: 0,
-        payload_data: payload  
+        payload_data: payload,
+        dts: None,
+        pts: None,
       });
     }
     let stream_id = (data & 0xFF) as u8;
@@ -85,7 +91,9 @@ impl<'a> PESPacket<'a> {
         packet_start_code_prefix: start_prefix,
         stream_id,
         pes_packet_length: 0,
-        payload_data: payload[payload_start_offset..payload.len()].as_ref()
+        payload_data: payload[payload_start_offset..payload.len()].as_ref(),
+        dts: Some(dts),
+        pts: Some(pts),
       });
     }
     

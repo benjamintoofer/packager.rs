@@ -172,6 +172,39 @@ impl TRUN {
   }
 }
 
+pub struct TRUNBuilder {
+  version: usize
+}
+
+impl TRUNBuilder {
+  pub fn create_builder() -> TRUNBuilder {
+    TRUNBuilder{
+      version: 0,
+    }
+  }
+
+  pub fn version(mut self, version: usize) -> TRUNBuilder {
+    self.version = version;
+    self
+  }
+
+  pub fn build(&self) -> Vec<u8> {
+    let version_array = util::transform_usize_to_u8_array(self.version);
+    vec![
+      // Size
+      0x00, 0x00, 0x00, 0x10,
+      // trun
+      0x74, 0x72, 0x75, 0x6E,
+      // version
+      version_array[0],
+      // flag
+      0x00, 0x00, 0x00,
+      // entry_count
+      0x00, 0x00, 0x00, 0x00,
+    ]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;

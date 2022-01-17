@@ -100,6 +100,33 @@ impl TFDT {
   }
 }
 
+pub struct TFDTBuilder {
+  base_media_decode_time: usize,
+}
+
+impl TFDTBuilder {
+  pub fn create_builder() -> TFDTBuilder {
+    TFDTBuilder{
+      base_media_decode_time: 0,
+    }
+  }
+
+  pub fn build(&self) -> Vec<u8> {
+    vec![
+      // Size
+      0x00, 0x00, 0x00, 0x10,
+      // tfdt
+      0x74, 0x66, 0x64, 0x74,
+      // version
+      0x00,
+      // flag
+      0x00, 0x00, 0x00,
+      // entry_count
+      0x00, 0x00, 0x00, 0x00,
+    ]
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
