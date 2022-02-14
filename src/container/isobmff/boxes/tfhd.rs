@@ -221,7 +221,7 @@ mod tests {
   #[test]
   fn test_parse_tfhd() {
     let tfhd: [u8; 28] = [
-      // Size
+      // size
       0x00, 0x00, 0x00, 0x1C,
       // tfhd
       0x74, 0x66, 0x68, 0x64,

@@ -24,6 +24,7 @@ pub mod stsz;
 pub mod stco;
 pub mod tfhd;
 pub mod tkhd;
+pub mod traf;
 pub mod tfdt;
 pub mod trun;
 

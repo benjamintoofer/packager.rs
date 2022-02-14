@@ -111,18 +111,26 @@ impl TFDTBuilder {
     }
   }
 
+  pub fn base_media_decode_time(mut self, base_media_decode_time: usize) -> TFDTBuilder {
+    self.base_media_decode_time = base_media_decode_time;
+    self
+  }
+
   pub fn build(&self) -> Vec<u8> {
+    let dt_array = util::transform_usize_to_u8_array(self.base_media_decode_time);
+    // Default ot version 1, 64 bit value
     vec![
-      // Size
-      0x00, 0x00, 0x00, 0x10,
+      // size
+      0x00, 0x00, 0x00, 0x14,
       // tfdt
       0x74, 0x66, 0x64, 0x74,
       // version
       0x00,
       // flag
       0x00, 0x00, 0x00,
-      // entry_count
-      0x00, 0x00, 0x00, 0x00,
+      // baseMediaDecodeTime
+      dt_array[7], dt_array[6], dt_array[5], dt_array[4],
+      dt_array[3], dt_array[2], dt_array[1], dt_array[0],
     ]
   }
 }
@@ -147,5 +155,20 @@ mod tests {
       base_media_decode_time: 0,
     };
     assert_eq!(TFDT::parse_tfdt(&tfdt).unwrap(), expected_tfdt);
+  }
+
+  #[test]
+  fn test_build_tfdt() {
+    let expected_tfdt: [u8; 20] = [
+      0x00, 0x00, 0x00, 0x14,
+      0x74, 0x66, 0x64, 0x74,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x10, 0xA1, 0xD0,
+    ];
+    let tfdt = TFDTBuilder::create_builder()
+      .base_media_decode_time(1090000)
+      .build();
+    assert_eq!(tfdt, expected_tfdt);
   }
 }

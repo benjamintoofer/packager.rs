@@ -5,6 +5,7 @@ use crate::container::transport_stream::{
 };
 use crate::container::writer::mp4_writer::Mp4Writer;
 use crate::error::CustomError;
+use crate::container::isobmff::nal::NalRep;
 
 use std::{fs::File, io::Write};
 
@@ -21,6 +22,8 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
         media_callback: None,
         all_same_timestamps: true,
         signed_comp_offset: false,
+        current_pts: 0,
+        current_dts: 0,
     };
     let packets: Vec<ts_packet::TransportPacket> = Vec::new();
     let mut accumulated_pes_payload: Vec<u8> = Vec::new();
@@ -61,7 +64,8 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
     });
     avc_extractor.listen_for_media_data(|media| {
       println!("LISTEN MEDIA DATA");
-      println!("COUNT {}", media.len());
+      // println!("COUNT {}", media.len());
+      // println!("{:?}", media);
     });
 
     while index < ts_file.len() {
@@ -118,30 +122,27 @@ pub fn remux_ts_to_mp4_media_only(ts_file: &[u8]) -> Result<Vec<u8>, CustomError
     Ok(vec![])
 }
 
-struct NalRep {
-  nal_unit: Vec<u8>,
-  dts: u64,
-  pts: u64,
-}
 struct AVCExtracter<IF, MF>
 where
   IF: Fn(&Vec<u8>, &Vec<u8>),
-  MF: Fn(&Vec<Vec<u8>>),
+  MF: Fn(&Vec<NalRep>),
 {
   sps_nal: Vec<u8>,
   pps_nal: Vec<u8>,
-  media_nal: Vec<Vec<u8>>,
+  media_nal: Vec<NalRep>,
   bucket: Vec<u8>,
   init_callback: Option<IF>,
   media_callback: Option<MF>,
   signed_comp_offset: bool,
   all_same_timestamps: bool,
+  current_pts: u64,
+  current_dts: u64,
 }
 
 impl<IF, MF> AVCExtracter<IF, MF>
 where
   IF: Fn(&Vec<u8>, &Vec<u8>),
-  MF: Fn(&Vec<Vec<u8>>),
+  MF: Fn(&Vec<NalRep>),
 {
   fn is_all_same_timestamps(self) -> bool {
     self.all_same_timestamps
@@ -155,6 +156,7 @@ where
     let mut index: usize = 0;
     let mut nal_start_index = index;
     let pes_payload = pes.payload_data;
+
     loop {
       if (index + 4) >= pes_payload.len() { // If the next 4 bytes is greater than the total payload, add it to the bucket for the next pes payload
           let mut leftover: Vec<u8> = pes_payload[nal_start_index..pes_payload.len()].to_vec();
@@ -203,6 +205,23 @@ where
       index += boundary as usize;
       nal_start_index = index;
     }
+
+    if let Some(pts) = pes.pts {
+      // Can assume dts is there because the pes parser will set it if its not there
+      let dts = pes.dts.unwrap();
+      // Set the flag that the composition offset will be negative. Will set the version in trun to 1
+      if dts > pts {
+        self.signed_comp_offset = true;
+      }
+
+      // Determine if we'll need to set the compoisiton offset in the trun
+      if pts > dts {
+        self.all_same_timestamps = false;
+      }
+
+      self.current_pts = pts;
+      self.current_dts = dts;
+    }
   }
 
   fn listen_for_init_data(&mut self, callback: IF) -> &Self {
@@ -224,14 +243,21 @@ where
       NALType::AUD => {}
       _ => {
         println!("NAL MEDIA SIZE: {}", nal_unit.len());
-        // self.media_nal.append(&mut nal_unit.to_vec());
-        self.media_nal.push(nal_unit.to_vec())
+        self.media_nal.push(NalRep{
+          nal_unit: nal_unit.to_vec(),
+          pts: self.current_pts,
+          dts: self.current_dts,
+        })
       }
     }
   }
 
   fn flush_final_media(&mut self) {
-    self.media_nal.push(self.bucket.to_vec());
+    self.media_nal.push(NalRep{
+          nal_unit: self.bucket.to_vec(),
+          pts: self.current_pts,
+          dts: self.current_dts,
+        });
     if let Some(cb) = &self.media_callback {
       cb(&self.media_nal);
     }
