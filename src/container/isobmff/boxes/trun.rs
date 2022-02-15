@@ -2,7 +2,7 @@
 // "Independent and Disposable Samples Box"
 use std::str;
 
-use crate::{iso_box::{IsoBox, IsoFullBox, find_box}, util::bit_reader::BitReader};
+use crate::iso_box::{IsoBox, IsoFullBox, find_box};
 use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}};
 use crate::container::isobmff::nal::NalRep;
 use crate::util;
@@ -195,6 +195,7 @@ pub struct TRUNBuilder {
   version: usize,
   flags: usize,
   data_offset: usize,
+  first_sample_flags: Option<usize>,
   samples: Vec<NalRep>,
 }
 
@@ -204,6 +205,7 @@ impl TRUNBuilder {
       version: 0,
       flags: 0,
       data_offset: 0,
+      first_sample_flags: None,
       samples: vec![],
     }
   }
@@ -228,6 +230,11 @@ impl TRUNBuilder {
     self
   }
 
+  pub fn first_sample_flags(mut self, first_sample_flags: usize) -> TRUNBuilder {
+    self.first_sample_flags = Some(first_sample_flags);
+    self
+  }
+
   pub fn build(&self) -> Vec<u8> {
     let version_array = util::transform_usize_to_u8_array(self.version);
     let flags_array = util::transform_usize_to_u8_array(self.flags);
@@ -237,19 +244,23 @@ impl TRUNBuilder {
     let all_samples_size = calculated_sample_size * self.samples.len();
     let sample_data = TRUNBuilder::create_sample_data(&self.samples, calculated_sample_size, self.flags, self.version);
 
-    let size = 
+    let mut size: usize = 
       12 + // header
       4 + // sample_count
-      4 + // data_offset. NOTE(benjamintoofer@gmail.com): This is optional but for CMAF is required...We doin CMAF son
-      tfhd.len() +
-      tfdt.len() +
-      trun.len();
-    let final_data_offset = all_samples_size + self.data_offset;
+      4;  // data_offset. NOTE(benjamintoofer@gmail.com): This is optional but for CMAF it's required...We doin CMAF son
+
+    if let  Some(first_sample_flags) = self.first_sample_flags {
+      size += 4;
+    }
+    
+    size += all_samples_size;
+    let size_array = util::transform_usize_to_u8_array(size);
+    let final_data_offset = size + self.data_offset;
     let data_offset_array = util::transform_usize_to_u8_array(final_data_offset);
     [
       vec![
         // Size
-        0x00, 0x00, 0x00, 0x10,
+        size_array[3], size_array[2], size_array[1], size_array[0],
         // trun
         0x74, 0x72, 0x75, 0x6E,
         // version
