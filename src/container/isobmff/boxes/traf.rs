@@ -1,3 +1,5 @@
+use std::{borrow::Borrow, convert::TryInto, ops::{Deref, DerefMut}};
+
 use crate::container::isobmff::boxes::{tfhd::TFHDBuilder, tfdt::TFDTBuilder, trun::TRUNBuilder};
 use crate::container::remux;
 use crate::error::CustomError;
@@ -7,6 +9,7 @@ pub struct TRAFBuilder {
   tfhd_builder: Option<TFHDBuilder>,
   tfdt_builder: Option<TFDTBuilder>,
   trun_builder: Option<TRUNBuilder>,
+  data_offset: usize,
 }
 
 impl TRAFBuilder {
@@ -15,6 +18,7 @@ impl TRAFBuilder {
       tfhd_builder: None,
       tfdt_builder: None,
       trun_builder: None,
+      data_offset: 0,
     }
   }
 
@@ -33,16 +37,22 @@ impl TRAFBuilder {
     self
   }
 
-  pub fn build(&self) -> Result<Vec<u8>, CustomError> {
+  pub fn set_data_offset(mut self, data_offset: usize) -> TRAFBuilder {
+    self.data_offset = data_offset;
+    self
+  }
+
+  pub fn build(self) -> Result<Vec<u8>, CustomError> {
     let tfhd = self.tfhd_builder.as_ref()
       .ok_or_else(||remux::generate_error(String::from("Missing tfhd_builder for STBLBuilder")))?
       .build();
     let tfdt = self.tfdt_builder.as_ref()
       .ok_or_else(||remux::generate_error(String::from("Missing tfdt_builder for STBLBuilder")))?
       .build();
-    let data_offset = 0;
-    let trun = self.trun_builder.as_ref()
+    let data_offset = self.data_offset + tfhd.len() + tfdt.len() + 8;
+    let trun = self.trun_builder
       .ok_or_else(||remux::generate_error(String::from("Missing trun_builder for STBLBuilder")))?
+      .data_offset(data_offset)
       .build();
 
     let size = 

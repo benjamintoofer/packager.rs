@@ -10,6 +10,8 @@ pub mod trak;
 pub mod mvhd;
 pub mod mdia;
 pub mod mdhd;
+pub mod moof;
+pub mod mfhd;
 pub mod hdlr;
 pub mod smhd;
 pub mod vmhd;

@@ -194,6 +194,7 @@ impl TRUN {
 pub struct TRUNBuilder {
   version: usize,
   flags: usize,
+  data_offset: usize,
   samples: Vec<NalRep>,
 }
 
@@ -202,6 +203,7 @@ impl TRUNBuilder {
     TRUNBuilder{
       version: 0,
       flags: 0,
+      data_offset: 0,
       samples: vec![],
     }
   }
@@ -221,6 +223,11 @@ impl TRUNBuilder {
     self
   }
 
+  pub fn data_offset(mut self, data_offset: usize) -> TRUNBuilder {
+    self.data_offset = data_offset;
+    self
+  }
+
   pub fn build(&self) -> Vec<u8> {
     let version_array = util::transform_usize_to_u8_array(self.version);
     let flags_array = util::transform_usize_to_u8_array(self.flags);
@@ -230,6 +237,15 @@ impl TRUNBuilder {
     let all_samples_size = calculated_sample_size * self.samples.len();
     let sample_data = TRUNBuilder::create_sample_data(&self.samples, calculated_sample_size, self.flags, self.version);
 
+    let size = 
+      12 + // header
+      4 + // sample_count
+      4 + // data_offset. NOTE(benjamintoofer@gmail.com): This is optional but for CMAF is required...We doin CMAF son
+      tfhd.len() +
+      tfdt.len() +
+      trun.len();
+    let final_data_offset = all_samples_size + self.data_offset;
+    let data_offset_array = util::transform_usize_to_u8_array(final_data_offset);
     [
       vec![
         // Size
@@ -243,7 +259,7 @@ impl TRUNBuilder {
         // sample_count
         sample_count_array[3], sample_count_array[2], sample_count_array[1], sample_count_array[0],
         // data_offset (optional but it is required for CMAF)
-        0x00, 0x00, 0x00, 0x00, // Can't determine this at the time of building the box. Set it later
+        data_offset_array[3], data_offset_array[2], data_offset_array[1], data_offset_array[0],
       ],
       sample_data
     ].concat()
@@ -284,7 +300,6 @@ impl TRUNBuilder {
     let mut sample_data = vec![0u8; sample_size];
     let mut offset = 0usize;
     if flags & 0x000100 != 0{ // sample-duration-present
-      todo!("Implement sample-duration in create_sample");
       let duration_array = util::transform_usize_to_u8_array(duration);
       let end = offset + 4;
       sample_data
@@ -299,7 +314,6 @@ impl TRUNBuilder {
       offset = end;
     }
     if flags & 0x000400 != 0 { // sample-flags-present
-      todo!("Implement sample-falgs in create_sample");
       let sf_array = util::transform_usize_to_u8_array(sample_flag);
       let end = offset + 4;
       sample_data
