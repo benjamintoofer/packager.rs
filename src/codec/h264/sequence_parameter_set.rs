@@ -46,14 +46,13 @@ impl SequenceParameterSet {
        profile_idc == 138 || profile_idc == 139 || profile_idc == 134 ||
        profile_idc == 135
        {
-        //  todo!("Color data for other profiles")
         let chroma_format_idc = bit_reader.unsigned_exp_golomb()?;
         if chroma_format_idc == 3 {
-          let separate_colour_plane_flag = bit_reader.read_bits(1);
+          let _separate_colour_plane_flag = bit_reader.read_bits(1);
         }
-        let bit_depth_luma_minus8 = bit_reader.unsigned_exp_golomb()?;
-        let bit_depth_chroma_minus8 = bit_reader.unsigned_exp_golomb()?;
-        let qpprime_y_zero_transform_bypass_flag = bit_reader.read_bits(1)?;
+        let _bit_depth_luma_minus8 = bit_reader.unsigned_exp_golomb()?;
+        let _bit_depth_chroma_minus8 = bit_reader.unsigned_exp_golomb()?;
+        let _qpprime_y_zero_transform_bypass_flag = bit_reader.read_bits(1)?;
         let seq_scaling_matrix_present_flag = bit_reader.read_bits(1)?;
         if seq_scaling_matrix_present_flag == 1 {
           todo!("Need to implement seq_scaling_matrix in the sps")
