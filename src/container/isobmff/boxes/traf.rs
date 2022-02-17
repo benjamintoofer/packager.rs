@@ -66,13 +66,7 @@ impl TRAFBuilder {
           // size
           size_array[3], size_array[2], size_array[1], size_array[0],
           // traf
-          0x73, 0x74, 0x73, 0x63,
-          // version
-          0x00,
-          // flag
-          0x00, 0x00, 0x00,
-          // entry_count
-          0x00, 0x00, 0x00, 0x00,
+          0x74, 0x72, 0x61, 0x66,
         ],
         tfhd,
         tfdt,

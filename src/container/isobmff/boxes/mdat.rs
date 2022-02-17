@@ -1,6 +1,5 @@
 use crate::util;
 use crate::error::CustomError;
-use crate::container::remux;
 use crate::container::isobmff::nal::NalRep;
 
 // MediaDataBox 14496-12; 8.1.1
@@ -27,17 +26,18 @@ impl MDATBuilder {
       .map(|nal_unit|nal_unit.nal_unit.len() + 4)
       .sum();
     let mut nal_stream: Vec<u8> = vec![0; all_nal_size];
-    let index = 0usize;
+    let mut index = 0usize;
     for nal_unit in self.nal_units {
       let nal_size: u32 = nal_unit.nal_unit.len() as u32;
       let nal_size_array = util::transform_u32_to_u8_array(nal_size).to_vec();
       let data = [
-        nal_size_array,
+        vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
         nal_unit.nal_unit
       ].concat();
       let start = index;
       let end = start + data.len();
       nal_stream.splice(start..end, data.into_iter());
+      index = end;
     }
     let size = 
       8 + // header

@@ -64,8 +64,23 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
     });
     avc_extractor.listen_for_media_data(|media| {
       println!("LISTEN MEDIA DATA");
-      // println!("COUNT {}", media.len());
-      // println!("{:?}", media);
+      let media_segment = Mp4Writer::create_mp4_writer()
+          .timescale(90000)
+          .nals(media.clone())
+          .build_media_segment();
+
+      match media_segment {
+            Ok(x) => {
+              let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_media.mp4").unwrap();
+              match file.write_all(&x) {
+                  Ok(_) => {println!("FINISHED WRITING MEDIA SEGMENT!!!")}
+                  Err(_) => {println!("FUCKED UP WRITING MEDIA SEGMENT")}
+              }
+            }
+            Err(err) => {
+              println!("{:?}", err);
+            }
+        }
     });
 
     while index < ts_file.len() {
@@ -99,9 +114,6 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
       if packet.pid == video_elem_pid {
         counter = counter + 1;
         let pes = pes_packet::PESPacket::parse(packet.data)?;
-        if let Some(pts) = pes.pts {
-          println!("PTS {}; DTS: {}", pts, pes.dts.unwrap());
-        }
         avc_extractor.accumulate_pes_payload(pes);
       }
 
@@ -189,7 +201,7 @@ where
             continue;
           }
         };
-        println!("NAL TYPE {:?}", nal_type.value());
+
         self.handle_nal_unit(nal_type, &nal_unit);
         // Have the data to create the init segment
         if self.sps_nal.len() > 0 && self.pps_nal.len() > 0 {
@@ -242,7 +254,6 @@ where
       NALType::PPS => self.pps_nal = nal_unit.to_vec(),
       NALType::AUD => {}
       _ => {
-        println!("NAL MEDIA SIZE: {}", nal_unit.len());
         self.media_nal.push(NalRep{
           nal_unit: nal_unit.to_vec(),
           pts: self.current_pts,

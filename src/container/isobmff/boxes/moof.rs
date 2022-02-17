@@ -17,8 +17,8 @@ impl MOOFBuilder {
     }
   }
 
-  pub fn traf(mut self, trac_builder: TRAFBuilder) -> MOOFBuilder {
-    self.traf_builder = Some(trac_builder);
+  pub fn traf(mut self, traf_builder: TRAFBuilder) -> MOOFBuilder {
+    self.traf_builder = Some(traf_builder);
     self
   }
 

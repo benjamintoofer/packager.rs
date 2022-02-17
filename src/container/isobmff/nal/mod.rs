@@ -3,6 +3,7 @@ pub mod nal_unit;
 use crate::error::{CustomError, construct_error, error_code::NalMinorCode};
 use std::fmt::Debug;
 
+#[derive(Clone)]
 pub struct NalRep {
   pub nal_unit: Vec<u8>,
   pub dts: u64,
