@@ -4,6 +4,7 @@ use std::str;
 
 use crate::iso_box::{IsoBox, IsoFullBox, find_box};
 use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}};
+use crate::container::isobmff::nal::NalRep;
 use crate::util;
 
 static CLASS: &str = "TRUN";
@@ -90,7 +91,7 @@ impl TRUN {
     // Parse size
     let size = util::get_u32(trun_data, start)?;
 
-    start = start + 4;
+    start += 4;
     let end = start + 4;
     let box_type = str::from_utf8(trun_data[start..end].as_ref()); 
     
@@ -100,25 +101,25 @@ impl TRUN {
     };
 
     // Parse flags
-    start = start + 4;
+    start += 4;
     let flags = util::get_u32(trun_data, start)? & 0xFFFFFF;
 
-    start = start + 4;
+    start += 4;
     let sample_count = util::get_u32(trun_data, start)?;
-    start = start + 4;
+    start += 4;
 
     // data-offset-present
     let mut data_offset:Option<i32> = Option::None;
     if (flags & 0x000001) != 0 {
       data_offset = Option::Some(util::get_i32(trun_data, start)?);
-      start = start + 4;
+      start += 4;
     }
     
     // first-sample-flags-present
     let mut first_sample_flags:Option<u32> = Option::None;
     if (flags & 0x000004) != 0 {
       first_sample_flags = Option::Some(util::get_u32(trun_data, start)?);
-      start = start + 4;
+      start += 4;
     }
 
     let mut samples: Vec<Sample> = vec![];
@@ -127,28 +128,28 @@ impl TRUN {
       let mut sample_duration:Option<u32> = Option::None;
       if (flags & 0x000100) != 0 {
         sample_duration = Option::Some(util::get_u32(trun_data, start)?);
-        start = start + 4;
+        start += 4;
       }
 
       // sample-size-present
       let mut sample_size:Option<u32> = Option::None;
       if (flags & 0x000200) != 0 {
         sample_size = Option::Some(util::get_u32(trun_data, start)?);
-        start = start + 4;
+        start += 4;
       }
 
       // sample-flags-present
       let mut sample_flags:Option<u32> = Option::None;
       if (flags & 0x000400) != 0 {
         sample_flags = Option::Some(util::get_u32(trun_data, start)?);
-        start = start + 4;
+        start += 4;
       }
 
       // sample-composition-time-offsets-present
       let mut sample_composition_time_offset:Option<i32> = Option::None;
       if (flags & 0x000800) != 0 {
         sample_composition_time_offset = Option::Some(util::get_i32(trun_data, start)?);
-        start = start + 4;
+        start += 4;
       }
 
       samples.push(Sample {
@@ -172,6 +173,177 @@ impl TRUN {
   }
 }
 
+pub struct TRUNBuilder {
+  version: usize,
+  flags: usize,
+  data_offset: usize,
+  first_sample_flags: Option<usize>,
+  samples: Vec<NalRep>,
+}
+
+impl TRUNBuilder {
+  pub fn create_builder() -> TRUNBuilder {
+    TRUNBuilder{
+      version: 0,
+      flags: 0,
+      data_offset: 0,
+      first_sample_flags: None,
+      samples: vec![],
+    }
+  }
+
+  pub fn samples(mut self, samples: Vec<NalRep>) -> TRUNBuilder {
+    self.samples = samples;
+    self
+  }
+
+  pub fn version(mut self, version: usize) -> TRUNBuilder {
+    self.version = version;
+    self
+  }
+
+  pub fn flags(mut self, flags: usize) -> TRUNBuilder {
+    self.flags = flags;
+    self
+  }
+
+  pub fn data_offset(mut self, data_offset: usize) -> TRUNBuilder {
+    self.data_offset = data_offset;
+    self
+  }
+
+  pub fn first_sample_flags(mut self, first_sample_flags: usize) -> TRUNBuilder {
+    self.first_sample_flags = Some(first_sample_flags);
+    self
+  }
+
+  pub fn build(&self) -> Vec<u8> {
+    let version_array = util::transform_usize_to_u8_array(self.version);
+    let flags_array = util::transform_usize_to_u8_array(self.flags);
+    let sample_count_array = util::transform_usize_to_u8_array(self.samples.len());
+    let calculated_sample_size = self.calculate_sample_size(self.flags);
+    let all_samples_size = calculated_sample_size * self.samples.len();
+    let sample_data = TRUNBuilder::create_sample_data(&self.samples, calculated_sample_size, self.flags, self.version);
+
+    let mut size: usize = 
+      12 + // header
+      4 + // sample_count
+      4;  // data_offset. NOTE(benjamintoofer@gmail.com): This is optional but for CMAF it's required...We doin CMAF son
+
+    if let  Some(_) = self.first_sample_flags {
+      size += 4;
+    }
+    
+    size += all_samples_size;
+    let size_array = util::transform_usize_to_u8_array(size);
+    let final_data_offset = 
+      size +
+      self.data_offset +
+      8; // mdat header
+    let data_offset_array = util::transform_usize_to_u8_array(final_data_offset);
+
+    let mut trun = vec![
+      // Size
+      size_array[3], size_array[2], size_array[1], size_array[0],
+      // trun
+      0x74, 0x72, 0x75, 0x6E,
+      // version
+      version_array[0],
+      // flag
+      flags_array[2], flags_array[1], flags_array[0],
+      // sample_count
+      sample_count_array[3], sample_count_array[2], sample_count_array[1], sample_count_array[0],
+      // data_offset (optional but it is required for CMAF)
+      data_offset_array[3], data_offset_array[2], data_offset_array[1], data_offset_array[0],
+    ];
+    if let  Some(first_sample_flags) = self.first_sample_flags {
+      let first_sample_flags_array = util::transform_usize_to_u8_array(first_sample_flags).to_vec();
+      // first_sample_flags_array.reverse();
+      trun = [
+        trun,
+        vec![first_sample_flags_array[3], first_sample_flags_array[2], first_sample_flags_array[1], first_sample_flags_array[0]],
+      ].concat();
+    }
+
+    [
+      trun,
+      sample_data
+    ].concat()
+  }
+
+  fn calculate_sample_size(&self, flags: usize) -> usize {
+    let mut calc_size = 0usize;
+    if flags & 0x000100 != 0{ // sample-duration-present
+      calc_size += 4;
+    }
+    if flags & 0x000200 != 0 { // sample-size-present
+      calc_size += 4;
+    }
+    if flags & 0x000400 != 0 { // sample-flags-present
+      calc_size += 4;
+    }
+    if flags & 0x000800 != 0 { // sample-composition-time-offsets-present
+      calc_size += 4;
+    }
+    calc_size
+  }
+
+  fn create_sample_data(samples: &Vec<NalRep>, sample_size: usize, flags: usize, version: usize) -> Vec<u8> {
+    let total_sample_size = samples.len() * sample_size;
+    let mut data: Vec<u8> = vec![0; total_sample_size];
+    let mut offset = 0usize;
+    for nal in samples.iter() {
+      let sample = TRUNBuilder::create_sample(nal, sample_size, flags, version, 0, 0);
+      let end = offset + sample_size;
+      data.splice(offset..end, sample);
+      offset = end;
+    }
+
+    data
+  }
+
+  pub fn create_sample(sample: &NalRep, sample_size: usize, flags: usize, version: usize, duration: usize, sample_flag: usize) -> Vec<u8>{
+    let mut sample_data = vec![0u8; sample_size];
+    let mut offset = 0usize;
+    if flags & 0x000100 != 0{ // sample-duration-present
+      let duration_array = util::transform_usize_to_u8_array(duration);
+      let end = offset + 4;
+      sample_data
+        .splice(offset..end, vec![duration_array[3], duration_array[2], duration_array[1], duration_array[0]]);
+      offset = end;
+    }
+    if flags & 0x000200 != 0 { // sample-size-present
+      let size_array = util::transform_usize_to_u8_array(sample.nal_unit.len() + 4);
+      let end = offset + 4;
+      sample_data
+        .splice(offset..end, vec![size_array[3], size_array[2], size_array[1], size_array[0]]);
+      offset = end;
+    }
+    if flags & 0x000400 != 0 { // sample-flags-present
+      let sf_array = util::transform_usize_to_u8_array(sample_flag);
+      let end = offset + 4;
+      sample_data
+        .splice(offset..end, vec![sf_array[3], sf_array[2], sf_array[1], sf_array[0]]);
+      offset = end;
+    }
+    if flags & 0x000800 != 0 { // sample-composition-time-offsets-present
+      let data: Vec<u8>;
+      if version == 1  {
+        let diff = sample.pts as i32 - sample.pts as i32;
+        data = util::transform_i32_to_u8_array(diff).to_vec();
+      } else {
+        let diff = (sample.pts - sample.pts) as usize;
+        data = util::transform_usize_to_u8_array(diff).to_vec();
+      }
+      let end = offset + 4;
+      sample_data
+        .splice(offset..end, vec![data[3], data[2], data[1], data[0]]);
+    }
+
+    sample_data
+  }
+}
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -179,7 +351,7 @@ mod tests {
   #[test]
   fn test_parse_trun() {
     let trun: [u8; 384] = [
-      // Size
+      // size
       0x00, 0x00, 0x01, 0x80,
       // trun
       0x74, 0x72, 0x75, 0x6E,
@@ -308,5 +480,522 @@ mod tests {
       ]
     };
     assert_eq!(TRUN::parse_trun(&trun).unwrap(), expected_trun);
+  }
+
+  #[test]
+  fn test_build_trun() {
+    let expected_trun: [u8; 384] = [
+      // size
+      0x00, 0x00, 0x01, 0x80,
+      // trun
+      0x74, 0x72, 0x75, 0x6E,
+      0x00, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x5A, 0x00, 0x00, 0x01, 0xE0, 0x02, 0x00,
+      0x00, 0x00, 0x00, 0x00, 0x37, 0x46, 0x00, 0x00, 0x01, 0xEB, 0x00, 0x00, 0x02, 0xD8,
+      0x00, 0x00, 0x02, 0xF7, 0x00, 0x00, 0x04, 0x03, 0x00, 0x00, 0x02, 0xF0, 0x00, 0x00,
+      0x03, 0x9B, 0x00, 0x00, 0x03, 0xC2, 0x00, 0x00, 0x03, 0xFD, 0x00, 0x00, 0x04, 0x2D,
+      0x00, 0x00, 0x04, 0x0E, 0x00, 0x00, 0x03, 0xDF, 0x00, 0x00, 0x03, 0xB6, 0x00, 0x00,
+      0x03, 0xD7, 0x00, 0x00, 0x04, 0x19, 0x00, 0x00, 0x04, 0x52, 0x00, 0x00, 0x04, 0xC8,
+      0x00, 0x00, 0x04, 0x9D, 0x00, 0x00, 0x04, 0xBF, 0x00, 0x00, 0x04, 0x5F, 0x00, 0x00,
+      0x04, 0x94, 0x00, 0x00, 0x04, 0xEB, 0x00, 0x00, 0x05, 0x26, 0x00, 0x00, 0x05, 0x06,
+      0x00, 0x00, 0x04, 0xE4, 0x00, 0x00, 0x04, 0x58, 0x00, 0x00, 0x04, 0xB1, 0x00, 0x00,
+      0x04, 0x83, 0x00, 0x00, 0x04, 0xB5, 0x00, 0x00, 0x04, 0xAE, 0x00, 0x00, 0x05, 0x3F,
+      0x00, 0x00, 0x04, 0x8C, 0x00, 0x00, 0x05, 0x37, 0x00, 0x00, 0x05, 0xF4, 0x00, 0x00,
+      0x05, 0x73, 0x00, 0x00, 0x04, 0xF4, 0x00, 0x00, 0x05, 0x5C, 0x00, 0x00, 0x04, 0x9E,
+      0x00, 0x00, 0x05, 0x01, 0x00, 0x00, 0x04, 0xAF, 0x00, 0x00, 0x05, 0x20, 0x00, 0x00,
+      0x04, 0xDE, 0x00, 0x00, 0x05, 0xA1, 0x00, 0x00, 0x05, 0x27, 0x00, 0x00, 0x04, 0xCE,
+      0x00, 0x00, 0x04, 0xED, 0x00, 0x00, 0x04, 0xDD, 0x00, 0x00, 0x04, 0xE1, 0x00, 0x00,
+      0x05, 0x9C, 0x00, 0x00, 0x05, 0x1B, 0x00, 0x00, 0x04, 0xF7, 0x00, 0x00, 0x04, 0xBB,
+      0x00, 0x00, 0x04, 0x87, 0x00, 0x00, 0x04, 0xBF, 0x00, 0x00, 0x04, 0xEF, 0x00, 0x00,
+      0x04, 0xE1, 0x00, 0x00, 0x04, 0xC0, 0x00, 0x00, 0x05, 0x07, 0x00, 0x00, 0x05, 0x1B,
+      0x00, 0x00, 0x04, 0xD9, 0x00, 0x00, 0x05, 0x02, 0x00, 0x00, 0x04, 0x5E, 0x00, 0x00,
+      0x04, 0xD8, 0x00, 0x00, 0x04, 0xAE, 0x00, 0x00, 0x04, 0xFA, 0x00, 0x00, 0x04, 0xC2,
+      0x00, 0x00, 0x04, 0xA4, 0x00, 0x00, 0x05, 0x29, 0x00, 0x00, 0x05, 0x27, 0x00, 0x00,
+      0x04, 0xBE, 0x00, 0x00, 0x05, 0x0A, 0x00, 0x00, 0x04, 0xA2, 0x00, 0x00, 0x04, 0x59,
+      0x00, 0x00, 0x05, 0x2C, 0x00, 0x00, 0x04, 0xEE, 0x00, 0x00, 0x04, 0x6A, 0x00, 0x00,
+      0x04, 0xDA, 0x00, 0x00, 0x04, 0xF4, 0x00, 0x00, 0x04, 0xE4, 0x00, 0x00, 0x04, 0x30,
+      0x00, 0x00, 0x04, 0xF2, 0x00, 0x00, 0x04, 0x67, 0x00, 0x00, 0x04, 0x6D, 0x00, 0x00,
+      0x05, 0x4E, 0x00, 0x00, 0x04, 0xF0, 0x00, 0x00, 0x05, 0x72, 0x00, 0x00, 0x04, 0xAB,
+      0x00, 0x00, 0x05, 0x01, 0x00, 0x00, 0x04, 0xE6, 0x00, 0x00, 0x05, 0x06
+    ];
+
+    let nal_units = generate_test_nal_units();
+
+    let trun = TRUNBuilder::create_builder()
+      .version(0)
+      .flags(0x0205)
+      .first_sample_flags(0x2000000)
+      .data_offset(88)
+      .samples(nal_units)
+      .build();
+    assert_eq!(trun, expected_trun);
+
+  }
+
+  #[test]
+  fn test_create_sample() {
+    let nal_rep = NalRep{
+      nal_unit: vec![0x00, 0x01, 0x02, 0x03, 0x04],
+      pts: 0,
+      dts: 0,
+    };
+    let sample_size = 16;
+    let flags = 0x000F00;
+    TRUNBuilder::create_sample(&nal_rep, sample_size, flags, 0, 0, 0);
+    // TODO (benjamintoofer@gmail.com): Finish this unit test
+  }
+
+  fn generate_test_nal_units() -> Vec<NalRep> {
+    vec![
+       NalRep{
+        nal_unit: vec![0; 14146],
+        pts: 0,
+        dts: 0,
+      },
+      NalRep{
+        nal_unit: vec![0; 487],
+        pts: 1,
+        dts: 1,
+      },
+      NalRep{
+        nal_unit: vec![0; 724],
+        pts: 2,
+        dts: 2,
+      },
+      NalRep{
+        nal_unit: vec![0; 755],
+        pts: 3,
+        dts: 3,
+      },
+      NalRep{
+        nal_unit: vec![0; 1023],
+        pts: 4,
+        dts: 4,
+      },
+      NalRep{
+        nal_unit: vec![0; 748],
+        pts: 5,
+        dts: 5,
+      },
+      NalRep{
+        nal_unit: vec![0; 919],
+        pts: 6,
+        dts: 6,
+      },
+      NalRep{
+        nal_unit: vec![0; 958],
+        pts: 7,
+        dts: 7,
+      },
+      NalRep{
+        nal_unit: vec![0; 1017],
+        pts: 8,
+        dts: 8,
+      },
+      NalRep{
+        nal_unit: vec![0; 1065],
+        pts: 9,
+        dts: 9,
+      },
+      NalRep{
+        nal_unit: vec![0; 1034],
+        pts: 10,
+        dts: 10
+      },
+      NalRep{
+        nal_unit: vec![0; 987],
+        pts: 11,
+        dts: 11
+      },
+      NalRep{
+        nal_unit: vec![0; 946],
+        pts: 12,
+        dts: 12
+      },
+      NalRep{
+        nal_unit: vec![0; 979],
+        pts: 13,
+        dts: 13
+      },
+      NalRep{
+        nal_unit: vec![0; 1045],
+        pts: 14,
+        dts: 14
+      },
+      NalRep{
+        nal_unit: vec![0; 1102],
+        pts: 15,
+        dts: 15
+      },
+      NalRep{
+        nal_unit: vec![0; 1220],
+        pts: 16,
+        dts: 16
+      },
+      NalRep{
+        nal_unit: vec![0; 1177],
+        pts: 17,
+        dts: 17
+      },
+      NalRep{
+        nal_unit: vec![0; 1211],
+        pts: 18,
+        dts: 18
+      },
+      NalRep{
+        nal_unit: vec![0; 1115],
+        pts: 19,
+        dts: 19
+      },
+      NalRep{
+        nal_unit: vec![0; 1168],
+        pts: 20,
+        dts: 20
+      },
+      NalRep{
+        nal_unit: vec![0; 1255],
+        pts: 21,
+        dts: 21
+      },
+      NalRep{
+        nal_unit: vec![0; 1314],
+        pts: 22,
+        dts: 22
+      },
+      NalRep{
+        nal_unit: vec![0; 1282],
+        pts: 23,
+        dts: 23
+      },
+      NalRep{
+        nal_unit: vec![0; 1248],
+        pts: 24,
+        dts: 24
+      },
+      NalRep{
+        nal_unit: vec![0; 1108],
+        pts: 25,
+        dts: 25
+      },
+      NalRep{
+        nal_unit: vec![0; 1197],
+        pts: 26,
+        dts: 26
+      },
+      NalRep{
+        nal_unit: vec![0; 1151],
+        pts: 27,
+        dts: 27
+      },
+      NalRep{
+        nal_unit: vec![0; 1201],
+        pts: 28,
+        dts: 28
+      },
+      NalRep{
+        nal_unit: vec![0; 1194],
+        pts: 29,
+        dts: 29
+      },
+      NalRep{
+        nal_unit: vec![0; 1339],
+        pts: 30,
+        dts: 30
+      },
+      NalRep{
+        nal_unit: vec![0; 1160],
+        pts: 31,
+        dts: 31
+      },
+      NalRep{
+        nal_unit: vec![0; 1331],
+        pts: 32,
+        dts: 32
+      },
+      NalRep{
+        nal_unit: vec![0; 1520],
+        pts: 33,
+        dts: 33
+      },
+      NalRep{
+        nal_unit: vec![0; 1391],
+        pts: 34,
+        dts: 34
+      },
+      NalRep{
+        nal_unit: vec![0; 1264],
+        pts: 35,
+        dts: 35
+      },
+      NalRep{
+        nal_unit: vec![0; 1368],
+        pts: 36,
+        dts: 36
+      },
+      NalRep{
+        nal_unit: vec![0; 1178],
+        pts: 37,
+        dts: 37
+      },
+      NalRep{
+        nal_unit: vec![0; 1277],
+        pts: 38,
+        dts: 38
+      },
+      NalRep{
+        nal_unit: vec![0; 1195],
+        pts: 39,
+        dts: 39
+      },
+      NalRep{
+        nal_unit: vec![0; 1308],
+        pts: 40,
+        dts: 40
+      },
+      NalRep{
+        nal_unit: vec![0; 1242],
+        pts: 41,
+        dts: 41
+      },
+      NalRep{
+        nal_unit: vec![0; 1437],
+        pts: 42,
+        dts: 42
+      },
+      NalRep{
+        nal_unit: vec![0; 1315],
+        pts: 43,
+        dts: 43
+      },
+      NalRep{
+        nal_unit: vec![0; 1226],
+        pts: 44,
+        dts: 44
+      },
+      NalRep{
+        nal_unit: vec![0; 1257],
+        pts: 45,
+        dts: 45
+      },
+      NalRep{
+        nal_unit: vec![0; 1241],
+        pts: 46,
+        dts: 46
+      },
+      NalRep{
+        nal_unit: vec![0; 1245],
+        pts: 47,
+        dts: 47
+      },
+      NalRep{
+        nal_unit: vec![0; 1432],
+        pts: 48,
+        dts: 48
+      },
+      NalRep{
+        nal_unit: vec![0; 1303],
+        pts: 49,
+        dts: 49
+      },
+      NalRep{
+        nal_unit: vec![0; 1267],
+        pts: 50,
+        dts: 50
+      },
+      NalRep{
+        nal_unit: vec![0; 1207],
+        pts: 51,
+        dts: 51
+      },
+      NalRep{
+        nal_unit: vec![0; 1155],
+        pts: 52,
+        dts: 52
+      },
+      NalRep{
+        nal_unit: vec![0; 1211],
+        pts: 53,
+        dts: 53
+      },
+      NalRep{
+        nal_unit: vec![0; 1259],
+        pts: 54,
+        dts: 54
+      },
+      NalRep{
+        nal_unit: vec![0; 1245],
+        pts: 55,
+        dts: 55
+      },
+      NalRep{
+        nal_unit: vec![0; 1212],
+        pts: 56,
+        dts: 56
+      },
+      NalRep{
+        nal_unit: vec![0; 1283],
+        pts: 57,
+        dts: 57
+      },
+      NalRep{
+        nal_unit: vec![0; 1303],
+        pts: 58,
+        dts: 58
+      },
+      NalRep{
+        nal_unit: vec![0; 1237],
+        pts: 59,
+        dts: 59
+      },
+      NalRep{
+        nal_unit: vec![0; 1278],
+        pts: 60,
+        dts: 60
+      },
+      NalRep{
+        nal_unit: vec![0; 1114],
+        pts: 61,
+        dts: 61
+      },
+      NalRep{
+        nal_unit: vec![0; 1236],
+        pts: 62,
+        dts: 62
+      },
+      NalRep{
+        nal_unit: vec![0; 1194],
+        pts: 63,
+        dts: 63
+      },
+      NalRep{
+        nal_unit: vec![0; 1270],
+        pts: 64,
+        dts: 64
+      },
+      NalRep{
+        nal_unit: vec![0; 1214],
+        pts: 65,
+        dts: 65
+      },
+      NalRep{
+        nal_unit: vec![0; 1184],
+        pts: 66,
+        dts: 66
+      },
+      NalRep{
+        nal_unit: vec![0; 1317],
+        pts: 67,
+        dts: 67
+      },
+      NalRep{
+        nal_unit: vec![0; 1315],
+        pts: 68,
+        dts: 68
+      },
+      NalRep{
+        nal_unit: vec![0; 1210],
+        pts: 69,
+        dts: 69
+      },
+      NalRep{
+        nal_unit: vec![0; 1286],
+        pts: 70,
+        dts: 70
+      },
+      NalRep{
+        nal_unit: vec![0; 1182],
+        pts: 71,
+        dts: 71
+      },
+      NalRep{
+        nal_unit: vec![0; 1109],
+        pts: 72,
+        dts: 72
+      },
+      NalRep{
+        nal_unit: vec![0; 1320],
+        pts: 73,
+        dts: 73
+      },
+      NalRep{
+        nal_unit: vec![0; 1258],
+        pts: 74,
+        dts: 74
+      },
+      NalRep{
+        nal_unit: vec![0; 1126],
+        pts: 75,
+        dts: 75
+      },
+      NalRep{
+        nal_unit: vec![0; 1238],
+        pts: 76,
+        dts: 76
+      },
+      NalRep{
+        nal_unit: vec![0; 1264],
+        pts: 77,
+        dts: 77
+      },
+      NalRep{
+        nal_unit: vec![0; 1248],
+        pts: 78,
+        dts: 78
+      },
+      NalRep{
+        nal_unit: vec![0; 1068],
+        pts: 79,
+        dts: 79
+      },
+      NalRep{
+        nal_unit: vec![0; 1262],
+        pts: 80,
+        dts: 80
+      },
+      NalRep{
+        nal_unit: vec![0; 1123],
+        pts: 81,
+        dts: 81
+      },
+      NalRep{
+        nal_unit: vec![0; 1129],
+        pts: 82,
+        dts: 82
+      },
+      NalRep{
+        nal_unit: vec![0; 1354],
+        pts: 83,
+        dts: 83
+      },
+      NalRep{
+        nal_unit: vec![0; 1260],
+        pts: 84,
+        dts: 84
+      },
+      NalRep{
+        nal_unit: vec![0; 1390],
+        pts: 85,
+        dts: 85
+      },
+      NalRep{
+        nal_unit: vec![0; 1191],
+        pts: 86,
+        dts: 86
+      },
+      NalRep{
+        nal_unit: vec![0; 1277],
+        pts: 87,
+        dts: 87
+      },
+      NalRep{
+        nal_unit: vec![0; 1250],
+        pts: 88,
+        dts: 88
+      },
+      NalRep{
+        nal_unit: vec![0; 1282],
+        pts: 89,
+        dts: 89
+      },
+    ]
   }
 }

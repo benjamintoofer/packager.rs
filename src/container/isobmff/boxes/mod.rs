@@ -1,6 +1,7 @@
 use std::convert::TryInto;
 
 pub mod iso_box;
+pub mod mdat;
 pub mod ftyp;
 pub mod moov;
 pub mod sidx;
@@ -10,6 +11,8 @@ pub mod trak;
 pub mod mvhd;
 pub mod mdia;
 pub mod mdhd;
+pub mod moof;
+pub mod mfhd;
 pub mod hdlr;
 pub mod smhd;
 pub mod vmhd;
@@ -24,6 +27,7 @@ pub mod stsz;
 pub mod stco;
 pub mod tfhd;
 pub mod tkhd;
+pub mod traf;
 pub mod tfdt;
 pub mod trun;
 

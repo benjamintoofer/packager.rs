@@ -12,7 +12,7 @@ impl STCOBuilder {
 
   pub fn build(&self) -> Vec<u8> {
     vec![
-      // Size
+      // size
       0x00, 0x00, 0x00, 0x10,
       // stco
       0x73, 0x74, 0x63, 0x6F,
@@ -34,7 +34,7 @@ mod tests {
   #[test]
   fn test_build_stco() {
     let expected_stco: [u8; 16] = [
-      // Size
+      // size
       0x00, 0x00, 0x00, 0x10,
       // stco
       0x73, 0x74, 0x63, 0x6F,

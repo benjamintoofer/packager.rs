@@ -151,6 +151,69 @@ impl TFHD {
   }
 }
 
+pub struct TFHDBuilder {
+  track_id: usize,
+  sample_duration: usize,
+}
+
+impl TFHDBuilder {
+  pub fn create_builder() -> TFHDBuilder {
+    TFHDBuilder{
+      track_id: 1,
+      sample_duration: 0,
+    }
+  }
+
+  pub fn track_id(mut self, track_id: usize) -> TFHDBuilder {
+    self.track_id = track_id;
+    self
+  }
+
+  pub fn sample_duration(mut self, sample_duration: usize) -> TFHDBuilder {
+    self.sample_duration = sample_duration;
+    self
+  }
+
+  pub fn build(&self) -> Vec<u8> {
+    let track_id_array = util::transform_usize_to_u8_array(self.track_id);
+    let sample_duration_array = util::transform_usize_to_u8_array(self.sample_duration);
+    vec![
+      // size
+      0x00, 0x00, 0x00, 0x1C,
+      // tfhd
+      0x74, 0x66, 0x68, 0x64,
+      // version
+      0x00,
+      // flag
+      0x02, 0x00, 0x2A,
+      // track id
+      track_id_array[3], track_id_array[2], track_id_array[1], track_id_array[0],
+      // sample_description_index
+      0x00, 0x00, 0x00, 0x01,
+      // default_sample_duration
+      sample_duration_array[3], sample_duration_array[2], sample_duration_array[1], sample_duration_array[0],
+      // default_sample_flags
+      0x01, 0x01, 0x00, 0x00,
+    ]
+  }
+}
+
+/** CURRRENT TFHD EXAMPLE
+track_id                                  => 1
+0x000002 sample-description-index-present => 1
+0x000008 default-sample-duration-present  => 1 
+0x000020 default-sample-flags-present     => 0x01010000
+rese  is_lead | sample_depends_on | sample_is_depended_on | sample_has_redundancy | sample_padding_value | sample_is_non_sync_sample  |  sample_degradation_priority
+0000    00            01                  00                      00                      000                         1                         00000000 00000000
+0x020000 default-base-is-moof:
+*/
+/**
+0x000001 base-data-offset-present = NO
+0x000002 sample-description-index-present = ??
+0x000008 default-sample-duration-present = ??
+0x020000 default-base-is-moof = YES
+*/
+
 #[cfg(test)]
 mod tests {
   use super::*;
@@ -158,7 +221,7 @@ mod tests {
   #[test]
   fn test_parse_tfhd() {
     let tfhd: [u8; 28] = [
-      // Size
+      // size
       0x00, 0x00, 0x00, 0x1C,
       // tfhd
       0x74, 0x66, 0x68, 0x64,
@@ -180,5 +243,23 @@ mod tests {
       duration_is_empty: false
     };
     assert_eq!(TFHD::parse_tfhd(&tfhd).unwrap(), expected_tfhd);
+  }
+
+  #[test]
+  fn test_build_tfhd() {
+    let expected_tfhd: [u8; 28] = [
+      0x00, 0x00, 0x00, 0x1C,
+      0x74, 0x66, 0x68, 0x64,
+      0x00, 0x02, 0x00, 0x2A,
+      0x00, 0x00, 0x00, 0x01,
+      0x00, 0x00, 0x00, 0x01,
+      0x00, 0x00, 0x00, 0x01,
+      0x01, 0x01, 0x00, 0x00,
+    ];
+    let tfhd = TFHDBuilder::create_builder()
+      .track_id(1)
+      .sample_duration(1)
+      .build();
+    assert_eq!(tfhd, expected_tfhd);
   }
 }

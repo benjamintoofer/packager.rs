@@ -12,7 +12,7 @@ impl STSCBuilder {
 
   pub fn build(&self) -> Vec<u8> {
     vec![
-      // Size
+      // size
       0x00, 0x00, 0x00, 0x10,
       // stsc
       0x73, 0x74, 0x73, 0x63,

@@ -1,6 +1,24 @@
-use crate::error::{CustomError, construct_error, error_code::NalMinorCode};
-
 pub mod nal_unit;
+
+use crate::error::{CustomError, construct_error, error_code::NalMinorCode};
+use std::fmt::Debug;
+
+#[derive(Clone)]
+pub struct NalRep {
+  pub nal_unit: Vec<u8>,
+  pub dts: u64,
+  pub pts: u64,
+}
+
+impl Debug for NalRep {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_map()
+        .key(&"pts: ").value(&self.pts)
+        .key(&"dts: ").value(&self.dts)
+        .key(&"nal_unit: ").value(&self.nal_unit.len())
+        .finish()
+    }
+}
 
 // ffmpeg -i in.264 -c copy -bsf:v trace_headers -f null - 2> NALUS.txt
 #[allow(non_camel_case_types)]
