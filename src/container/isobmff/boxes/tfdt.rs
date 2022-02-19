@@ -125,7 +125,7 @@ impl TFDTBuilder {
       // tfdt
       0x74, 0x66, 0x64, 0x74,
       // version
-      0x00,
+      0x01,
       // flag
       0x00, 0x00, 0x00,
       // baseMediaDecodeTime
@@ -151,7 +151,7 @@ mod tests {
     let expected_tfdt: TFDT = TFDT{
       box_type: "tfdt".to_string(),
       size: 20,
-      version: 0,
+      version: 1,
       base_media_decode_time: 0,
     };
     assert_eq!(TFDT::parse_tfdt(&tfdt).unwrap(), expected_tfdt);
@@ -162,7 +162,7 @@ mod tests {
     let expected_tfdt: [u8; 20] = [
       0x00, 0x00, 0x00, 0x14,
       0x74, 0x66, 0x64, 0x74,
-      0x00, 0x00, 0x00, 0x00,
+      0x01, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
       0x00, 0x10, 0xA1, 0xD0,
     ];

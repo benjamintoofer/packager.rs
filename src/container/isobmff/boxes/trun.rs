@@ -221,7 +221,6 @@ impl TRUNBuilder {
     let version_array = util::transform_usize_to_u8_array(self.version);
     let flags_array = util::transform_usize_to_u8_array(self.flags);
     let sample_count_array = util::transform_usize_to_u8_array(self.samples.len());
-    println!("NAL UNITS :: {}", self.samples.len());
     let calculated_sample_size = self.calculate_sample_size(self.flags);
     let all_samples_size = calculated_sample_size * self.samples.len();
     let sample_data = TRUNBuilder::create_sample_data(&self.samples, calculated_sample_size, self.flags, self.version);
@@ -490,7 +489,7 @@ mod tests {
       0x00, 0x00, 0x01, 0x80,
       // trun
       0x74, 0x72, 0x75, 0x6E,
-      0x00, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x5A, 0x00, 0x00, 0x01, 0xD8, 0x02, 0x00,
+      0x00, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x5A, 0x00, 0x00, 0x01, 0xE0, 0x02, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x37, 0x46, 0x00, 0x00, 0x01, 0xEB, 0x00, 0x00, 0x02, 0xD8,
       0x00, 0x00, 0x02, 0xF7, 0x00, 0x00, 0x04, 0x03, 0x00, 0x00, 0x02, 0xF0, 0x00, 0x00,
       0x03, 0x9B, 0x00, 0x00, 0x03, 0xC2, 0x00, 0x00, 0x03, 0xFD, 0x00, 0x00, 0x04, 0x2D,
@@ -515,7 +514,7 @@ mod tests {
       0x00, 0x00, 0x05, 0x2C, 0x00, 0x00, 0x04, 0xEE, 0x00, 0x00, 0x04, 0x6A, 0x00, 0x00,
       0x04, 0xDA, 0x00, 0x00, 0x04, 0xF4, 0x00, 0x00, 0x04, 0xE4, 0x00, 0x00, 0x04, 0x30,
       0x00, 0x00, 0x04, 0xF2, 0x00, 0x00, 0x04, 0x67, 0x00, 0x00, 0x04, 0x6D, 0x00, 0x00,
-      0x05, 0x4E, 0x00, 0x00, 0x04, 0xF0, 0x00, 0x00, 0x05, 0x72, 0x00, 0x00, 0x04, 0xB3,
+      0x05, 0x4E, 0x00, 0x00, 0x04, 0xF0, 0x00, 0x00, 0x05, 0x72, 0x00, 0x00, 0x04, 0xAB,
       0x00, 0x00, 0x05, 0x01, 0x00, 0x00, 0x04, 0xE6, 0x00, 0x00, 0x05, 0x06
     ];
 
@@ -548,452 +547,452 @@ mod tests {
   fn generate_test_nal_units() -> Vec<NalRep> {
     vec![
        NalRep{
-        nal_unit: vec![0; 14150],
+        nal_unit: vec![0; 14146],
         pts: 0,
         dts: 0,
       },
       NalRep{
-        nal_unit: vec![0; 491],
+        nal_unit: vec![0; 487],
         pts: 1,
         dts: 1,
       },
       NalRep{
-        nal_unit: vec![0; 728],
+        nal_unit: vec![0; 724],
         pts: 2,
         dts: 2,
       },
       NalRep{
-        nal_unit: vec![0; 759],
+        nal_unit: vec![0; 755],
         pts: 3,
         dts: 3,
       },
       NalRep{
-        nal_unit: vec![0; 1027],
+        nal_unit: vec![0; 1023],
         pts: 4,
         dts: 4,
       },
       NalRep{
-        nal_unit: vec![0; 752],
+        nal_unit: vec![0; 748],
         pts: 5,
         dts: 5,
       },
       NalRep{
-        nal_unit: vec![0; 923],
+        nal_unit: vec![0; 919],
         pts: 6,
         dts: 6,
       },
       NalRep{
-        nal_unit: vec![0; 962],
+        nal_unit: vec![0; 958],
         pts: 7,
         dts: 7,
       },
       NalRep{
-        nal_unit: vec![0; 1021],
+        nal_unit: vec![0; 1017],
         pts: 8,
         dts: 8,
       },
       NalRep{
-        nal_unit: vec![0; 1069],
+        nal_unit: vec![0; 1065],
         pts: 9,
         dts: 9,
       },
       NalRep{
-        nal_unit: vec![0; 1038],
+        nal_unit: vec![0; 1034],
         pts: 10,
         dts: 10
       },
       NalRep{
-        nal_unit: vec![0; 991],
+        nal_unit: vec![0; 987],
         pts: 11,
         dts: 11
       },
       NalRep{
-        nal_unit: vec![0; 950],
+        nal_unit: vec![0; 946],
         pts: 12,
         dts: 12
       },
       NalRep{
-        nal_unit: vec![0; 983],
+        nal_unit: vec![0; 979],
         pts: 13,
         dts: 13
       },
       NalRep{
-        nal_unit: vec![0; 1049],
+        nal_unit: vec![0; 1045],
         pts: 14,
         dts: 14
       },
       NalRep{
-        nal_unit: vec![0; 1106],
+        nal_unit: vec![0; 1102],
         pts: 15,
         dts: 15
       },
       NalRep{
-        nal_unit: vec![0; 1224],
+        nal_unit: vec![0; 1220],
         pts: 16,
         dts: 16
       },
       NalRep{
-        nal_unit: vec![0; 1181],
+        nal_unit: vec![0; 1177],
         pts: 17,
         dts: 17
       },
       NalRep{
-        nal_unit: vec![0; 1215],
+        nal_unit: vec![0; 1211],
         pts: 18,
         dts: 18
       },
       NalRep{
-        nal_unit: vec![0; 1119],
+        nal_unit: vec![0; 1115],
         pts: 19,
         dts: 19
       },
       NalRep{
-        nal_unit: vec![0; 1172],
+        nal_unit: vec![0; 1168],
         pts: 20,
         dts: 20
       },
       NalRep{
-        nal_unit: vec![0; 1259],
+        nal_unit: vec![0; 1255],
         pts: 21,
         dts: 21
       },
       NalRep{
-        nal_unit: vec![0; 1318],
+        nal_unit: vec![0; 1314],
         pts: 22,
         dts: 22
       },
       NalRep{
-        nal_unit: vec![0; 1286],
+        nal_unit: vec![0; 1282],
         pts: 23,
         dts: 23
       },
       NalRep{
-        nal_unit: vec![0; 1252],
+        nal_unit: vec![0; 1248],
         pts: 24,
         dts: 24
       },
       NalRep{
-        nal_unit: vec![0; 1112],
+        nal_unit: vec![0; 1108],
         pts: 25,
         dts: 25
       },
       NalRep{
-        nal_unit: vec![0; 1201],
+        nal_unit: vec![0; 1197],
         pts: 26,
         dts: 26
       },
       NalRep{
-        nal_unit: vec![0; 1155],
+        nal_unit: vec![0; 1151],
         pts: 27,
         dts: 27
       },
       NalRep{
-        nal_unit: vec![0; 1205],
+        nal_unit: vec![0; 1201],
         pts: 28,
         dts: 28
       },
       NalRep{
-        nal_unit: vec![0; 1198],
+        nal_unit: vec![0; 1194],
         pts: 29,
         dts: 29
       },
       NalRep{
-        nal_unit: vec![0; 1343],
+        nal_unit: vec![0; 1339],
         pts: 30,
         dts: 30
       },
       NalRep{
-        nal_unit: vec![0; 1164],
+        nal_unit: vec![0; 1160],
         pts: 31,
         dts: 31
       },
       NalRep{
-        nal_unit: vec![0; 1335],
+        nal_unit: vec![0; 1331],
         pts: 32,
         dts: 32
       },
       NalRep{
-        nal_unit: vec![0; 1524],
+        nal_unit: vec![0; 1520],
         pts: 33,
         dts: 33
       },
       NalRep{
-        nal_unit: vec![0; 1395],
+        nal_unit: vec![0; 1391],
         pts: 34,
         dts: 34
       },
       NalRep{
-        nal_unit: vec![0; 1268],
+        nal_unit: vec![0; 1264],
         pts: 35,
         dts: 35
       },
       NalRep{
-        nal_unit: vec![0; 1372],
+        nal_unit: vec![0; 1368],
         pts: 36,
         dts: 36
       },
       NalRep{
-        nal_unit: vec![0; 1182],
+        nal_unit: vec![0; 1178],
         pts: 37,
         dts: 37
       },
       NalRep{
-        nal_unit: vec![0; 1281],
+        nal_unit: vec![0; 1277],
         pts: 38,
         dts: 38
       },
       NalRep{
-        nal_unit: vec![0; 1199],
+        nal_unit: vec![0; 1195],
         pts: 39,
         dts: 39
       },
       NalRep{
-        nal_unit: vec![0; 1312],
+        nal_unit: vec![0; 1308],
         pts: 40,
         dts: 40
       },
       NalRep{
-        nal_unit: vec![0; 1246],
+        nal_unit: vec![0; 1242],
         pts: 41,
         dts: 41
       },
       NalRep{
-        nal_unit: vec![0; 1441],
+        nal_unit: vec![0; 1437],
         pts: 42,
         dts: 42
       },
       NalRep{
-        nal_unit: vec![0; 1319],
+        nal_unit: vec![0; 1315],
         pts: 43,
         dts: 43
       },
       NalRep{
-        nal_unit: vec![0; 1230],
+        nal_unit: vec![0; 1226],
         pts: 44,
         dts: 44
       },
       NalRep{
-        nal_unit: vec![0; 1261],
+        nal_unit: vec![0; 1257],
         pts: 45,
         dts: 45
       },
       NalRep{
-        nal_unit: vec![0; 1245],
+        nal_unit: vec![0; 1241],
         pts: 46,
         dts: 46
       },
       NalRep{
-        nal_unit: vec![0; 1249],
+        nal_unit: vec![0; 1245],
         pts: 47,
         dts: 47
       },
       NalRep{
-        nal_unit: vec![0; 1436],
+        nal_unit: vec![0; 1432],
         pts: 48,
         dts: 48
       },
       NalRep{
-        nal_unit: vec![0; 1307],
+        nal_unit: vec![0; 1303],
         pts: 49,
         dts: 49
       },
       NalRep{
-        nal_unit: vec![0; 1271],
+        nal_unit: vec![0; 1267],
         pts: 50,
         dts: 50
       },
       NalRep{
-        nal_unit: vec![0; 1211],
+        nal_unit: vec![0; 1207],
         pts: 51,
         dts: 51
       },
       NalRep{
-        nal_unit: vec![0; 1159],
+        nal_unit: vec![0; 1155],
         pts: 52,
         dts: 52
       },
       NalRep{
-        nal_unit: vec![0; 1215],
+        nal_unit: vec![0; 1211],
         pts: 53,
         dts: 53
       },
       NalRep{
-        nal_unit: vec![0; 1263],
+        nal_unit: vec![0; 1259],
         pts: 54,
         dts: 54
       },
       NalRep{
-        nal_unit: vec![0; 1249],
+        nal_unit: vec![0; 1245],
         pts: 55,
         dts: 55
       },
       NalRep{
-        nal_unit: vec![0; 1216],
+        nal_unit: vec![0; 1212],
         pts: 56,
         dts: 56
       },
       NalRep{
-        nal_unit: vec![0; 1287],
+        nal_unit: vec![0; 1283],
         pts: 57,
         dts: 57
       },
       NalRep{
-        nal_unit: vec![0; 1307],
+        nal_unit: vec![0; 1303],
         pts: 58,
         dts: 58
       },
       NalRep{
-        nal_unit: vec![0; 1241],
+        nal_unit: vec![0; 1237],
         pts: 59,
         dts: 59
       },
       NalRep{
-        nal_unit: vec![0; 1282],
+        nal_unit: vec![0; 1278],
         pts: 60,
         dts: 60
       },
       NalRep{
-        nal_unit: vec![0; 1118],
+        nal_unit: vec![0; 1114],
         pts: 61,
         dts: 61
       },
       NalRep{
-        nal_unit: vec![0; 1240],
+        nal_unit: vec![0; 1236],
         pts: 62,
         dts: 62
       },
       NalRep{
-        nal_unit: vec![0; 1198],
+        nal_unit: vec![0; 1194],
         pts: 63,
         dts: 63
       },
       NalRep{
-        nal_unit: vec![0; 1274],
+        nal_unit: vec![0; 1270],
         pts: 64,
         dts: 64
       },
       NalRep{
-        nal_unit: vec![0; 1218],
+        nal_unit: vec![0; 1214],
         pts: 65,
         dts: 65
       },
       NalRep{
-        nal_unit: vec![0; 1188],
+        nal_unit: vec![0; 1184],
         pts: 66,
         dts: 66
       },
       NalRep{
-        nal_unit: vec![0; 1321],
+        nal_unit: vec![0; 1317],
         pts: 67,
         dts: 67
       },
       NalRep{
-        nal_unit: vec![0; 1319],
+        nal_unit: vec![0; 1315],
         pts: 68,
         dts: 68
       },
       NalRep{
-        nal_unit: vec![0; 1214],
+        nal_unit: vec![0; 1210],
         pts: 69,
         dts: 69
       },
       NalRep{
-        nal_unit: vec![0; 1290],
+        nal_unit: vec![0; 1286],
         pts: 70,
         dts: 70
       },
       NalRep{
-        nal_unit: vec![0; 1186],
+        nal_unit: vec![0; 1182],
         pts: 71,
         dts: 71
       },
       NalRep{
-        nal_unit: vec![0; 1113],
+        nal_unit: vec![0; 1109],
         pts: 72,
         dts: 72
       },
       NalRep{
-        nal_unit: vec![0; 1324],
+        nal_unit: vec![0; 1320],
         pts: 73,
         dts: 73
       },
       NalRep{
-        nal_unit: vec![0; 1262],
+        nal_unit: vec![0; 1258],
         pts: 74,
         dts: 74
       },
       NalRep{
-        nal_unit: vec![0; 1130],
+        nal_unit: vec![0; 1126],
         pts: 75,
         dts: 75
       },
       NalRep{
-        nal_unit: vec![0; 1242],
+        nal_unit: vec![0; 1238],
         pts: 76,
         dts: 76
       },
       NalRep{
-        nal_unit: vec![0; 1268],
+        nal_unit: vec![0; 1264],
         pts: 77,
         dts: 77
       },
       NalRep{
-        nal_unit: vec![0; 1252],
+        nal_unit: vec![0; 1248],
         pts: 78,
         dts: 78
       },
       NalRep{
-        nal_unit: vec![0; 1072],
+        nal_unit: vec![0; 1068],
         pts: 79,
         dts: 79
       },
       NalRep{
-        nal_unit: vec![0; 1266],
+        nal_unit: vec![0; 1262],
         pts: 80,
         dts: 80
       },
       NalRep{
-        nal_unit: vec![0; 1127],
+        nal_unit: vec![0; 1123],
         pts: 81,
         dts: 81
       },
       NalRep{
-        nal_unit: vec![0; 1133],
+        nal_unit: vec![0; 1129],
         pts: 82,
         dts: 82
       },
       NalRep{
-        nal_unit: vec![0; 1358],
+        nal_unit: vec![0; 1354],
         pts: 83,
         dts: 83
       },
       NalRep{
-        nal_unit: vec![0; 1264],
+        nal_unit: vec![0; 1260],
         pts: 84,
         dts: 84
       },
       NalRep{
-        nal_unit: vec![0; 1394],
+        nal_unit: vec![0; 1390],
         pts: 85,
         dts: 85
       },
       NalRep{
-        nal_unit: vec![0; 1203],
+        nal_unit: vec![0; 1191],
         pts: 86,
         dts: 86
       },
       NalRep{
-        nal_unit: vec![0; 1281],
+        nal_unit: vec![0; 1277],
         pts: 87,
         dts: 87
       },
       NalRep{
-        nal_unit: vec![0; 1254],
+        nal_unit: vec![0; 1250],
         pts: 88,
         dts: 88
       },
       NalRep{
-        nal_unit: vec![0; 1286],
+        nal_unit: vec![0; 1282],
         pts: 89,
         dts: 89
       },
