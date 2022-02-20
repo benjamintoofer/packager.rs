@@ -62,3 +62,6 @@ impl ESDescriptor {
     }
   }
 }
+
+// TODO: https://github.com/video-dev/hls.js/blob/0c5bd8b3e86dea194d0871c49be83f8b4130bfb8/src/remux/mp4-generator.ts#L739
+// Generating the ESDescriptor

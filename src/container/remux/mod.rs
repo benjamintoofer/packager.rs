@@ -1,4 +1,4 @@
-use crate::container::isobmff::nal::{nal_unit::NALUnit, NALType};
+use crate::{container::isobmff::nal::{nal_unit::NALUnit, NALType}, util::bit_reader::BitReader};
 use crate::container::transport_stream::{
     pes_packet, program_association_table::ProgramAssociationTable,
     program_map_table::ProgramMapTable, ts_packet,
@@ -13,18 +13,8 @@ static SYNC_BYTE: u8 = 0x47;
 static TS_PACKET_SIZE: usize = 188;
 
 pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError> {
-    let mut avc_extractor = AVCExtracter {
-        sps_nal: vec![],
-        pps_nal: vec![],
-        media_nal: vec![],
-        bucket: vec![],
-        init_callback: None,
-        media_callback: None,
-        all_same_timestamps: true,
-        signed_comp_offset: false,
-        current_pts: 0,
-        current_dts: 0,
-    };
+    let mut avc_extractor = AVCExtractor::create();
+    let mut aac_extractor = AACExtractor::create();
     let packets: Vec<ts_packet::TransportPacket> = Vec::new();
     let mut accumulated_pes_payload: Vec<u8> = Vec::new();
     let minimum_decode_time: u64 = u64::MAX;
@@ -119,7 +109,10 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
 
       // Audio PES
       if packet.pid == audio_elem_pid {
-          println!("AUDIO PID");
+          let pes = pes_packet::PESPacket::parse(packet.data)?;
+          println!("PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
+          aac_extractor.accumulate_pes_payload(pes);
+          // panic!("DONE");
       }
 
       index = index + TS_PACKET_SIZE;
@@ -134,7 +127,50 @@ pub fn remux_ts_to_mp4_media_only(ts_file: &[u8]) -> Result<Vec<u8>, CustomError
     Ok(vec![])
 }
 
-struct AVCExtracter<IF, MF>
+struct AACExtractor {
+  bucket: Vec<u8>,
+  current_pts: u64,
+  current_dts: u64,
+}
+
+impl AACExtractor {
+  pub fn create() -> AACExtractor {
+    AACExtractor {
+      bucket: vec![],
+      current_pts: 0,
+      current_dts: 0,
+    }
+  }
+
+  pub fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) {
+    
+    // if pes.payload_data.len() < 7 { // ADTS Header is at least 7 bytes
+    //   self.bucket.append(&mut pes.payload_data.to_vec());
+    // }
+
+    // Flush bucket since we are encountering a new ADTS frame
+    if pes.pts.is_some() && !self.bucket.is_empty() {
+      let adts_packet = self.bucket.clone();
+      self.bucket.clear();
+
+     let adts = ADTS::parse(&adts_packet);
+     panic!("DONE");
+    }
+
+    if let Some(pts) = pes.pts {
+      let dts = pes.dts.map_or_else(||pts, |dts|dts);
+      self.current_dts = dts;
+      self.current_pts = pts;
+    }
+
+    self.bucket.append(&mut pes.payload_data.to_vec());
+  }
+
+  // Final flush
+}
+
+
+struct AVCExtractor<IF, MF>
 where
   IF: Fn(&Vec<u8>, &Vec<u8>),
   MF: Fn(&Vec<NalRep>),
@@ -151,11 +187,26 @@ where
   current_dts: u64,
 }
 
-impl<IF, MF> AVCExtracter<IF, MF>
+impl<IF, MF> AVCExtractor<IF, MF>
 where
   IF: Fn(&Vec<u8>, &Vec<u8>),
   MF: Fn(&Vec<NalRep>),
 {
+  fn create() -> AVCExtractor<IF, MF> {
+    AVCExtractor {
+      sps_nal: vec![],
+      pps_nal: vec![],
+      media_nal: vec![],
+      bucket: vec![],
+      init_callback: None,
+      media_callback: None,
+      all_same_timestamps: true,
+      signed_comp_offset: false,
+      current_pts: 0,
+      current_dts: 0,
+    }
+  }
+
   fn is_all_same_timestamps(self) -> bool {
     self.all_same_timestamps
   }
@@ -276,6 +327,8 @@ where
 }
 
 use crate::error::{construct_error, error_code::{RemuxMinorCode, MajorCode}};
+
+use super::transport_stream::adts::ADTS;
 
 pub fn generate_error(message: String) -> CustomError {
   return  construct_error(

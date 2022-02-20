@@ -24,7 +24,8 @@ pub enum ISOBMFFMinorCode {
 #[allow(non_camel_case_types)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum TransportStreamMinorCode {
-  PARSE_TS_ERROR  = 0,
+  PARSE_TS_ERROR           = 0,
+  UNSUPPORTED_ADTS_PARSING = 1,
 }
 
 #[allow(non_camel_case_types)]
@@ -75,12 +76,14 @@ impl MinorError for TransportStreamMinorCode {
     fn message(&self) -> String {
       match self {
           TransportStreamMinorCode::PARSE_TS_ERROR => { "Unable to parse transport stream".to_string() }
+          TransportStreamMinorCode::UNSUPPORTED_ADTS_PARSING => { "Unable to parse audio data transport stream".to_string() }
       }
     }
 
     fn code(&self) -> u8 {
       match self {
           TransportStreamMinorCode::PARSE_TS_ERROR => { TransportStreamMinorCode::PARSE_TS_ERROR as u8 }
+          TransportStreamMinorCode::UNSUPPORTED_ADTS_PARSING => {TransportStreamMinorCode::UNSUPPORTED_ADTS_PARSING as u8 }
       }
     }
 }

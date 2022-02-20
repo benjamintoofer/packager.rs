@@ -77,7 +77,8 @@ fn main() {
   //   .for_each(|path| fs::create_dir_all(path).unwrap());
   
   // let file_path = "/Users/benjamintoofer/Desktop/seg_2_complete_v.ts";
-  let file_path = "/Users/benjamintoofer/Desktop/testing/tos/segment-2.ts";
+  // let file_path = "/Users/benjamintoofer/Desktop/testing/tos/segment-2.ts";
+  let file_path = "/Users/benjamintoofer/Desktop/output_audio.ts";
   tranmux_test(file_path)
     
 }
