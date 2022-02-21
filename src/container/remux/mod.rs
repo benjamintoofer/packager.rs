@@ -104,20 +104,20 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
       if packet.pid == video_elem_pid {
         counter = counter + 1;
         let pes = pes_packet::PESPacket::parse(packet.data)?;
-        avc_extractor.accumulate_pes_payload(pes);
+        avc_extractor.accumulate_pes_payload(pes)?;
       }
 
       // Audio PES
       if packet.pid == audio_elem_pid {
           let pes = pes_packet::PESPacket::parse(packet.data)?;
           println!("PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
-          aac_extractor.accumulate_pes_payload(pes);
-          // panic!("DONE");
+          aac_extractor.accumulate_pes_payload(pes)?;
       }
 
       index = index + TS_PACKET_SIZE;
     }
     avc_extractor.flush_final_media();
+    aac_extractor.flush_final_media()?;
     println!("TOTAL VIDEO PACKETS {}", counter);
     Ok((vec![], vec![]))
 }
@@ -142,19 +142,16 @@ impl AACExtractor {
     }
   }
 
-  pub fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) {
-    
-    // if pes.payload_data.len() < 7 { // ADTS Header is at least 7 bytes
-    //   self.bucket.append(&mut pes.payload_data.to_vec());
-    // }
+  pub fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) -> Result<(), CustomError> {
 
-    // Flush bucket since we are encountering a new ADTS frame
+    // Flush bucket since we are encountering a new ADTS sequence
     if pes.pts.is_some() && !self.bucket.is_empty() {
       let adts_packet = self.bucket.clone();
       self.bucket.clear();
 
-     let adts = ADTS::parse(&adts_packet);
-     panic!("DONE");
+     let adts_frames = ADTS::parse(&adts_packet)?;
+     println!("NUM FRAMES = {:?}", adts_frames.len());
+    //  panic!("DONE");
     }
 
     if let Some(pts) = pes.pts {
@@ -164,9 +161,15 @@ impl AACExtractor {
     }
 
     self.bucket.append(&mut pes.payload_data.to_vec());
+
+    Ok(())
   }
 
-  // Final flush
+  fn flush_final_media(&mut self) -> Result<(), CustomError> {
+    let adts_frames = ADTS::parse(&self.bucket)?;
+    println!("FINAL FLUSH NUM FRAMES = {:?}", adts_frames.len());
+    Ok(())
+  }
 }
 
 
@@ -215,7 +218,7 @@ where
     self.signed_comp_offset
   }
 
-  fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) {
+  fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) -> Result<(), CustomError> {
     let mut index: usize = 0;
     let mut nal_start_index = index;
     let pes_payload = pes.payload_data;
@@ -244,14 +247,7 @@ where
 
       if !nal_unit.is_empty() {
         let nal_unit_value = nal_unit[0] & 0x1F;
-        let nal_type = match NALType::get_type(nal_unit_value) {
-          Ok(nal_type) => nal_type,
-          Err(err) => {
-            println!("ERROR!!");
-            println!("{}", err.to_string());
-            continue;
-          }
-        };
+        let nal_type = NALType::get_type(nal_unit_value)?;
 
         self.handle_nal_unit(nal_type, &nal_unit);
         // Have the data to create the init segment
@@ -285,6 +281,8 @@ where
       self.current_pts = pts;
       self.current_dts = dts;
     }
+
+    Ok(())
   }
 
   fn listen_for_init_data(&mut self, callback: IF) -> &Self {

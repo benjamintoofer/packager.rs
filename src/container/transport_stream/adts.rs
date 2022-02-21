@@ -1,6 +1,7 @@
 use crate::error::{CustomError, construct_error, error_code::{MajorCode, TransportStreamMinorCode}};
 use crate::util::bit_reader::BitReader;
 
+#[derive(Debug)]
 pub struct ADTSHeader {
   id_version: u8,
   profile: u8,
@@ -10,6 +11,7 @@ pub struct ADTSHeader {
   crc: Option<u16>
 }
 
+#[derive(Debug)]
 pub struct ADTSFrame {
   header: ADTSHeader,
   data: Vec<u8>,
@@ -27,18 +29,28 @@ pub struct ADTS {
 
 impl ADTS {
   pub fn parse(data: &[u8]) -> Result<Vec<ADTSFrame>, CustomError> {
-    let mut data_read = data;
+    let data_read = data;
     let mut index = 0usize;
-    while data_read.len() > 0 {
-      let adts_header = ADTS::parse_adts_header(data_read)?;
-      let start = index;
-      let end = start + adts_header.frame_length as usize;
-      data_read = data_read[start..end].as_ref();
+    let mut adts_frames: Vec<ADTSFrame> = vec![];
+    while index < data_read.len() {
+      let adts_header = ADTS::parse_adts_header(data_read[index..].as_ref())?;
+      let mut offset = 7usize;
+      if adts_header.crc.is_some() {
+        offset = 9;
+      }
+      let start = index + offset;
+      let end = index + adts_header.frame_length as usize;
+      let frame_data = data_read[start..end].to_vec();
+      let adts_frame = ADTSFrame{
+        header: adts_header,
+        data: frame_data,
+      };
 
+      adts_frames.push(adts_frame);
       index = end;
     }
     Ok(
-      vec![]
+      adts_frames
     )
   }
 
