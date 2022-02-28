@@ -15,9 +15,6 @@ static TS_PACKET_SIZE: usize = 188;
 pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError> {
     let mut avc_extractor = AVCExtractor::create();
     let mut aac_extractor = AACExtractor::create();
-    let packets: Vec<ts_packet::TransportPacket> = Vec::new();
-    let mut accumulated_pes_payload: Vec<u8> = Vec::new();
-    let minimum_decode_time: u64 = u64::MAX;
     let mut index = 0usize;
 
     let mut pat: ProgramAssociationTable;
@@ -27,9 +24,20 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
     let mut video_elem_pid = u16::max_value();
     let mut audio_elem_pid = u16::max_value();
 
-    let mut counter = 0;
-    let mut total_video_frames = 0;
+    // AAC
+    aac_extractor.listen_for_init_data(|adts_frame| {
+      let init_segment = Mp4Writer::create_mp4_writer()
+        // .timescale(timescale)
+        .build_init_segment();
+    });
 
+    aac_extractor.listen_for_media_data(|adts_frame| {
+      let init_segment = Mp4Writer::create_mp4_writer()
+        // .timescale(timescale)
+        .build_init_segment();
+    });
+
+    // AVC
     avc_extractor.listen_for_init_data(|sps, pps| {
         println!("SPS DATA: {:02X?}", sps);
         println!("PPS DATA: {:?}", pps);
@@ -102,23 +110,21 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
 
       // Video PES
       if packet.pid == video_elem_pid {
-        counter = counter + 1;
-        let pes = pes_packet::PESPacket::parse(packet.data)?;
-        avc_extractor.accumulate_pes_payload(pes)?;
+        // let pes = pes_packet::PESPacket::parse(packet.data)?;
+        // avc_extractor.accumulate_pes_payload(pes)?;
       }
 
       // Audio PES
       if packet.pid == audio_elem_pid {
-          let pes = pes_packet::PESPacket::parse(packet.data)?;
-          println!("PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
-          aac_extractor.accumulate_pes_payload(pes)?;
+        let pes = pes_packet::PESPacket::parse(packet.data)?;
+        println!("AUDIO PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
+        // aac_extractor.accumulate_pes_payload(pes)?;
       }
 
       index = index + TS_PACKET_SIZE;
     }
     avc_extractor.flush_final_media();
     aac_extractor.flush_final_media()?;
-    println!("TOTAL VIDEO PACKETS {}", counter);
     Ok((vec![], vec![]))
 }
 
@@ -127,18 +133,32 @@ pub fn remux_ts_to_mp4_media_only(ts_file: &[u8]) -> Result<Vec<u8>, CustomError
     Ok(vec![])
 }
 
-struct AACExtractor {
+struct AACExtractor <IF, MF>
+where
+  IF: Fn(&ADTSFrame),
+  MF: Fn(&Vec<ADTSFrame>),
+{
   bucket: Vec<u8>,
   current_pts: u64,
   current_dts: u64,
+  adts_frames: Vec<ADTSFrame>,
+  init_callback: Option<IF>,
+  media_callback: Option<MF>,
 }
 
-impl AACExtractor {
-  pub fn create() -> AACExtractor {
+impl<IF, MF> AACExtractor<IF, MF>
+where
+  IF: Fn(&ADTSFrame),
+  MF: Fn(&Vec<ADTSFrame>),
+{
+  pub fn create() -> AACExtractor<IF, MF> {
     AACExtractor {
       bucket: vec![],
+      adts_frames: vec![],
       current_pts: 0,
       current_dts: 0,
+      init_callback: None,
+      media_callback: None,
     }
   }
 
@@ -149,9 +169,11 @@ impl AACExtractor {
       let adts_packet = self.bucket.clone();
       self.bucket.clear();
 
-     let adts_frames = ADTS::parse(&adts_packet)?;
-     println!("NUM FRAMES = {:?}", adts_frames.len());
-    //  panic!("DONE");
+     let mut adts_frames = ADTS::parse(&adts_packet)?;
+     self.adts_frames.append(&mut adts_frames);
+
+     // If we have am aac frame, we can immediatley begin generating the init segment
+
     }
 
     if let Some(pts) = pes.pts {
@@ -166,9 +188,19 @@ impl AACExtractor {
   }
 
   fn flush_final_media(&mut self) -> Result<(), CustomError> {
-    let adts_frames = ADTS::parse(&self.bucket)?;
-    println!("FINAL FLUSH NUM FRAMES = {:?}", adts_frames.len());
+    let mut adts_frames = ADTS::parse(&self.bucket)?;
+    self.adts_frames.append(&mut adts_frames);
     Ok(())
+  }
+
+  fn listen_for_init_data(&mut self, callback: IF) -> &Self {
+      self.init_callback = Some(callback);
+      return self;
+  }
+
+  fn listen_for_media_data(&mut self, callback: MF) -> &Self {
+      self.media_callback = Some(callback);
+      return self;
   }
 }
 
@@ -326,7 +358,7 @@ where
 
 use crate::error::{construct_error, error_code::{RemuxMinorCode, MajorCode}};
 
-use super::transport_stream::adts::ADTS;
+use super::transport_stream::adts::{ADTS, ADTSFrame};
 
 pub fn generate_error(message: String) -> CustomError {
   return  construct_error(

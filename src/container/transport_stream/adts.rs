@@ -14,7 +14,7 @@ pub struct ADTSHeader {
 #[derive(Debug)]
 pub struct ADTSFrame {
   header: ADTSHeader,
-  data: Vec<u8>,
+  pub data: Vec<u8>,
 }
 
 
@@ -81,7 +81,8 @@ impl ADTS {
     // Skip original_copy, home, copyright_identification_bit, and copyright_identification_start
     bit_reader.read_bits(4)?;
     let frame_length = bit_reader.read_bits(13)? as u16;
-    let buffer_fullness = bit_reader.read_bits(11)?;
+    // Skip adts buffer fullness
+    bit_reader.read_bits(11)?;
     let number_of_raw_data_blocks_in_frame = bit_reader.read_bits(2)?;
 
     // Checkout ISO/IEC 13818-7: 6.2 Audio Data Transport Stream, ADTS :: Table 5 — Syntax of adts_frame()

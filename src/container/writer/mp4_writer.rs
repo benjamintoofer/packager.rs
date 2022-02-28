@@ -1,12 +1,12 @@
-use crate::{codec::h264::sequence_parameter_set::SequenceParameterSet, container::isobmff::{boxes::{ftyp::FTYPBuilder, hdlr::HDLRBuilder, mdat::MDATBuilder, mdhd::MDHDBuilder, mdia::MDIABuilder, minf::MINFBuilder, moof::MOOFBuilder, moov::MOOVBuilder, mvex::MVEXBuilder, mvhd::MVHDBuilder, stbl::STBLBuilder, stsd::STSDBuilder, tfdt::TFDTBuilder, tfhd::TFHDBuilder, tkhd::TKHDBuilder, traf::TRAFBuilder, trak::TRAKBuilder, trex::TREXBuilder, trun::TRUNBuilder, vmhd::VMHDBuilder}, configuration_records::avcC::AVCDecoderConfigurationRecordBuilder, sample_entry::{avc_sample_entry::AVCSampleEntryBuilder, sample_entry::SampleEntryBuilder, visual_sample_entry::VisualSampleEntryBuilder}}, error::CustomError};
+use crate::{codec::{Codec, h264::sequence_parameter_set::SequenceParameterSet}, container::{isobmff::{boxes::{ftyp::FTYPBuilder, hdlr::HDLRBuilder, mdat::MDATBuilder, mdhd::MDHDBuilder, mdia::MDIABuilder, minf::MINFBuilder, moof::MOOFBuilder, moov::MOOVBuilder, mvex::MVEXBuilder, mvhd::MVHDBuilder, stbl::STBLBuilder, stsd::STSDBuilder, tfdt::TFDTBuilder, tfhd::TFHDBuilder, tkhd::TKHDBuilder, traf::TRAFBuilder, trak::TRAKBuilder, trex::TREXBuilder, trun::TRUNBuilder, vmhd::VMHDBuilder}, configuration_records::avcC::AVCDecoderConfigurationRecordBuilder, sample_entry::{avc_sample_entry::AVCSampleEntryBuilder, sample_entry::SampleEntryBuilder, visual_sample_entry::VisualSampleEntryBuilder}}, transport_stream::adts::{ADTSFrame, ADTSHeader}}, error::CustomError};
 use crate::container::isobmff::HandlerType;
 use crate::container::isobmff::nal::NalRep;
-
 
 pub struct Mp4Writer{
   sps: Vec<u8>,
   pps: Vec<u8>,
   media_nals: Vec<NalRep>,
+  adts_frames: Vec<ADTSFrame>,
   timescale: usize,
 }
 
@@ -18,8 +18,12 @@ impl Mp4Writer {
       pps: vec![],
       media_nals: vec![],
       timescale: 0,
+      adts_frames: vec![],
     }
   }
+}
+
+impl Mp4Writer {
   
   pub fn timescale(mut self, timescale: usize) -> Mp4Writer {
     self.timescale = timescale;
@@ -110,9 +114,7 @@ impl Mp4Writer {
         .build()?
     ].concat())
   }
-
-  pub fn build_media_segment(self) -> Result<Vec<u8>, CustomError> {
-    println!("LOWEST DTS: {}", self.media_nals[0].dts);
+  pub fn build_aac_media_segment(self) -> Result<Vec<u8>, CustomError> {
     Ok([
       MOOFBuilder::create_builder()
         .traf(
@@ -136,7 +138,36 @@ impl Mp4Writer {
         )
         .build()?,
       MDATBuilder::create_builder()
-        .nal_units(self.media_nals)
+        .media_data(MDATBuilder::convert_adts_frames(self.adts_frames))
+        .build()?
+    ].concat())
+  }
+  pub fn build_media_segment(self) -> Result<Vec<u8>, CustomError> {
+    // println!("LOWEST DTS: {}", self.media_nals[0].dts);
+    Ok([
+      MOOFBuilder::create_builder()
+        .traf(
+          TRAFBuilder::create_builder()
+            .tfhd(
+              TFHDBuilder::create_builder()
+                .sample_duration(3000) // CHANGE THIS
+                .track_id(1) // CHANGE THIS
+            )
+            .tfdt(
+              TFDTBuilder::create_builder()
+                .base_media_decode_time(self.media_nals[0].dts as usize)
+            )
+            .trun(
+              TRUNBuilder::create_builder()
+                .version(0)
+                .flags(0x0205)
+                .first_sample_flags(0x2000000)
+                .samples(self.media_nals.clone())
+            )
+        )
+        .build()?,
+      MDATBuilder::create_builder()
+        .media_data(MDATBuilder::convert_nal_units(self.media_nals))
         .build()?
     ].concat())
   }

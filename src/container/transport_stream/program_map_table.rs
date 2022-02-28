@@ -86,6 +86,12 @@ impl ProgramMapTable {
           ElementaryStreamType::AAC => {
             audio_stream_info = Some(StreamInfo{pid: elementary_pid, stream_type: stream});
           }
+          ElementaryStreamType::AC3 => {
+            audio_stream_info = Some(StreamInfo{pid: elementary_pid, stream_type: stream});
+          }
+          ElementaryStreamType::E_AC3 => {
+            audio_stream_info = Some(StreamInfo{pid: elementary_pid, stream_type: stream});
+          }
           ElementaryStreamType::H_264 => {
             video_stream_info = Some(StreamInfo{pid: elementary_pid, stream_type: stream});
           }
