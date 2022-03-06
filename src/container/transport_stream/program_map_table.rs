@@ -62,7 +62,7 @@ impl ProgramMapTable {
 
     start = start + 2;
     let program_info_length = util::get_u16(data, start)? & 0xFFF;
-
+    println!("PROGRAM INFO LENGTH: {}", program_info_length);
     start = start + 2;
     let program_end = start + program_info_length as usize;
 
@@ -93,6 +93,9 @@ impl ProgramMapTable {
             audio_stream_info = Some(StreamInfo{pid: elementary_pid, stream_type: stream});
           }
           ElementaryStreamType::H_264 => {
+            video_stream_info = Some(StreamInfo{pid: elementary_pid, stream_type: stream});
+          }
+          ElementaryStreamType::H_265 => {
             video_stream_info = Some(StreamInfo{pid: elementary_pid, stream_type: stream});
           }
           ElementaryStreamType::UNKNOWN => {}

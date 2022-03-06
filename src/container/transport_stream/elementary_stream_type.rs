@@ -11,6 +11,7 @@ pub enum ElementaryStreamType {
   AC3,
   E_AC3,
   H_264,
+  H_265,
   UNKNOWN
 }
 
@@ -21,6 +22,7 @@ impl ElementaryStreamType {
       0x81 => {ElementaryStreamType::AC3}
       0x87 => {ElementaryStreamType::E_AC3}
       0x1B => {ElementaryStreamType::H_264}
+      0x24 => {ElementaryStreamType::H_265}
       _ => {ElementaryStreamType::UNKNOWN}
     }
   }
@@ -31,6 +33,7 @@ impl ElementaryStreamType {
         ElementaryStreamType::AC3 => {0x81}
         ElementaryStreamType::E_AC3 => {0x87}
         ElementaryStreamType::H_264 => {0x1B}
+        ElementaryStreamType::H_265 => {0x24}
         ElementaryStreamType::UNKNOWN => {0x0}
     }
   }
@@ -41,6 +44,7 @@ impl ElementaryStreamType {
         ElementaryStreamType::AC3 => {"ATSC Dolby Digital; AC-3".to_string()}
         ElementaryStreamType::E_AC3 => {"ATSC Dolby Digital Plus; E-AC-3".to_string()}
         ElementaryStreamType::H_264 => {"ITU-T Rec. H.264 and ISO/IEC 14496-10 (lower bit-rate video)".to_string()}
+        ElementaryStreamType::H_265 => {"ITU-T Rec. H.265 and ISO/IEC 23008-2 (Ultra HD video)".to_string()}
         ElementaryStreamType::UNKNOWN => {"Uknown type".to_string()}
     }
   }

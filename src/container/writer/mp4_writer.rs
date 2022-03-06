@@ -1,4 +1,4 @@
-use crate::{codec::{Codec, h264::sequence_parameter_set::SequenceParameterSet}, container::{isobmff::{boxes::{ftyp::FTYPBuilder, hdlr::HDLRBuilder, mdat::MDATBuilder, mdhd::MDHDBuilder, mdia::MDIABuilder, minf::MINFBuilder, moof::MOOFBuilder, moov::MOOVBuilder, mvex::MVEXBuilder, mvhd::MVHDBuilder, stbl::STBLBuilder, stsd::STSDBuilder, tfdt::TFDTBuilder, tfhd::TFHDBuilder, tkhd::TKHDBuilder, traf::TRAFBuilder, trak::TRAKBuilder, trex::TREXBuilder, trun::TRUNBuilder, vmhd::VMHDBuilder}, configuration_records::avcC::AVCDecoderConfigurationRecordBuilder, sample_entry::{avc_sample_entry::AVCSampleEntryBuilder, sample_entry::SampleEntryBuilder, visual_sample_entry::VisualSampleEntryBuilder}}, transport_stream::adts::{ADTSFrame, ADTSHeader}}, error::CustomError};
+use crate::{codec::{Codec, h264::sequence_parameter_set::SequenceParameterSet}, container::{isobmff::{BoxBuilder, boxes::{ftyp::FTYPBuilder, hdlr::HDLRBuilder, mdat::MDATBuilder, mdhd::MDHDBuilder, mdia::MDIABuilder, minf::MINFBuilder, moof::MOOFBuilder, moov::MOOVBuilder, mvex::MVEXBuilder, mvhd::MVHDBuilder, stbl::STBLBuilder, stsd::STSDBuilder, tfdt::TFDTBuilder, tfhd::TFHDBuilder, tkhd::TKHDBuilder, traf::TRAFBuilder, trak::TRAKBuilder, trex::TREXBuilder, trun::TRUNBuilder, vmhd::VMHDBuilder}, configuration_records::avcC::AVCDecoderConfigurationRecordBuilder, sample_entry::{avc_sample_entry::AVCSampleEntryBuilder, sample_entry::SampleEntryBuilder, visual_sample_entry::VisualSampleEntryBuilder}}, transport_stream::adts::{ADTSFrame, ADTSHeader}}, error::CustomError};
 use crate::container::isobmff::HandlerType;
 use crate::container::isobmff::nal::NalRep;
 
@@ -30,6 +30,10 @@ impl Mp4Writer {
     self
   }
 
+  // pub fn sample_entry(mut self, impl BoxBuilder) -> Mp4Writer {
+  //   self.
+  // }
+
   pub fn pps(mut self, pps: &[u8]) -> Mp4Writer {
     self.pps = pps.to_vec();
     self
@@ -45,7 +49,7 @@ impl Mp4Writer {
     self
   }
 
-  pub fn build_init_segment(self) -> Result<Vec<u8>, CustomError> {
+  pub fn build_init_segment(self, sample_entry: impl BoxBuilder + 'static) -> Result<Vec<u8>, CustomError> {
     let sps = SequenceParameterSet::parse(&self.sps)?;
     Ok([
       FTYPBuilder::create_builder().build(),
@@ -81,19 +85,20 @@ impl Mp4Writer {
                           STSDBuilder::create_builder()
                             .sample_entry(
                               Box::new(
-                                AVCSampleEntryBuilder::create_builder()
-                                  .sample_entry(
-                                    SampleEntryBuilder::create_builder()
-                                  )
-                                  .visual_sample_entry(
-                                    VisualSampleEntryBuilder::create_builder()
-                                      .sps(&self.sps)
-                                  )
-                                  .avc_c(
-                                    AVCDecoderConfigurationRecordBuilder::create_builder()
-                                      .sps(&self.sps)
-                                      .pps(&self.pps)
-                                  )
+                                // AVCSampleEntryBuilder::create_builder()
+                                //   .sample_entry(
+                                //     SampleEntryBuilder::create_builder()
+                                //   )
+                                //   .visual_sample_entry(
+                                //     VisualSampleEntryBuilder::create_builder()
+                                //       .sps(&self.sps)
+                                //   )
+                                //   .avc_c(
+                                //     AVCDecoderConfigurationRecordBuilder::create_builder()
+                                //       .sps(&self.sps)
+                                //       .pps(&self.pps)
+                                //   )
+                                sample_entry
                               )
                           )
                         )

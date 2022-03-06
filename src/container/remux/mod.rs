@@ -7,7 +7,10 @@ use crate::container::writer::mp4_writer::Mp4Writer;
 use crate::error::CustomError;
 use crate::container::isobmff::nal::NalRep;
 
+use core::panic;
 use std::{fs::File, io::Write};
+
+pub mod extractor;
 
 static SYNC_BYTE: u8 = 0x47;
 static TS_PACKET_SIZE: usize = 188;
@@ -45,7 +48,21 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
           .timescale(90000)
           .sps(sps)
           .pps(pps)
-          .build_init_segment();
+          .build_init_segment(
+             AVCSampleEntryBuilder::create_builder()
+                                  .sample_entry(
+                                    SampleEntryBuilder::create_builder()
+                                  )
+                                  .visual_sample_entry(
+                                    VisualSampleEntryBuilder::create_builder()
+                                      .sps(&self.sps)
+                                  )
+                                  .avc_c(
+                                    AVCDecoderConfigurationRecordBuilder::create_builder()
+                                      .sps(&self.sps)
+                                      .pps(&self.pps)
+                                  )
+          );
 
         match init_segment {
             Ok(x) => {
@@ -116,8 +133,13 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
 
       // Audio PES
       if packet.pid == audio_elem_pid {
+        match pmt.audio_stream_info.unwrap().stream_type {
+
+        }
         let pes = pes_packet::PESPacket::parse(packet.data)?;
         println!("AUDIO PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
+        println!("PES DATA: {:02X?}", pes.payload_data);
+        panic!("DONE");
         // aac_extractor.accumulate_pes_payload(pes)?;
       }
 
