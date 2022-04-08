@@ -1,53 +1,25 @@
-use crate::{container::{isobmff::nal::NalRep, transport_stream::pes_packet}, error::CustomError};
+use crate::{container::{isobmff::nal::NalRep, remux::extractor::TSExtractor, transport_stream::pes_packet, writer::mp4_writer::SampleInfo}, error::CustomError};
 use crate::container::isobmff::nal::{nal_unit::NALUnit, NALType};
+use crate::container::isobmff::configuration_records::avcC::AVCDecoderConfigurationRecordBuilder;
+use crate::container::isobmff::sample_entry::{visual_sample_entry::VisualSampleEntryBuilder, sample_entry::SampleEntryBuilder, avc_sample_entry::AVCSampleEntryBuilder};
+use crate::container::isobmff::BoxBuilder;
+use crate::util;
 
-
-pub struct AVCExtractor<IF, MF>
-where
-  IF: Fn(&Vec<u8>, &Vec<u8>),
-  MF: Fn(&Vec<NalRep>),
-{
+pub struct AVCExtractor {
   sps_nal: Vec<u8>,
   pps_nal: Vec<u8>,
   media_nal: Vec<NalRep>,
   bucket: Vec<u8>,
-  init_callback: Option<IF>,
-  media_callback: Option<MF>,
+  init_callback: Option<fn(Vec<u8>)>,
+  media_callback: Option<fn(Vec<SampleInfo>)>,
   signed_comp_offset: bool,
   all_same_timestamps: bool,
   current_pts: u64,
   current_dts: u64,
 }
 
-impl<IF, MF> AVCExtractor<IF, MF>
-where
-  IF: Fn(&Vec<u8>, &Vec<u8>),
-  MF: Fn(&Vec<NalRep>),
-{
-  fn create() -> AVCExtractor<IF, MF> {
-    AVCExtractor {
-      sps_nal: vec![],
-      pps_nal: vec![],
-      media_nal: vec![],
-      bucket: vec![],
-      init_callback: None,
-      media_callback: None,
-      all_same_timestamps: true,
-      signed_comp_offset: false,
-      current_pts: 0,
-      current_dts: 0,
-    }
-  }
-
-  fn is_all_same_timestamps(self) -> bool {
-    self.all_same_timestamps
-  }
-
-  fn is_signed_comp_offset(self) -> bool {
-    self.signed_comp_offset
-  }
-
-  fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) -> Result<(), CustomError> {
+impl TSExtractor for AVCExtractor {
+  fn  accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) -> Result<(), CustomError> {
     let mut index: usize = 0;
     let mut nal_start_index = index;
     let pes_payload = pes.payload_data;
@@ -81,13 +53,26 @@ where
         self.handle_nal_unit(nal_type, &nal_unit);
         // Have the data to create the init segment
         if self.sps_nal.len() > 0 && self.pps_nal.len() > 0 {
-            if let Some(cb) = &self.init_callback {
-                let sps = self.sps_nal[0..].to_vec();
-                let pps = self.pps_nal[0..].to_vec();
-                self.sps_nal.clear();
-                self.pps_nal.clear();
-                cb(&sps, &pps);
-            }
+          if let Some(cb) = &self.init_callback {
+            let sps = self.sps_nal[0..].to_vec();
+            let pps = self.pps_nal[0..].to_vec();
+            self.sps_nal.clear();
+            self.pps_nal.clear();
+              let sample_entry = AVCSampleEntryBuilder::create_builder()
+                .sample_entry(
+                  SampleEntryBuilder::create_builder()
+                )
+                .visual_sample_entry(
+                  VisualSampleEntryBuilder::create_builder()
+                    .sps(&sps)
+                )
+                .avc_c(
+                  AVCDecoderConfigurationRecordBuilder::create_builder()
+                    .sps(&sps)
+                    .pps(&pps)
+                ).build()?;
+            cb(sample_entry);
+          }
         }
       }
       index += boundary as usize;
@@ -114,14 +99,54 @@ where
     Ok(())
   }
 
-  fn listen_for_init_data(&mut self, callback: IF) -> &Self {
-      self.init_callback = Some(callback);
-      return self;
+  fn is_all_same_timestamps(self) -> bool {
+    self.all_same_timestamps
   }
 
-  fn listen_for_media_data(&mut self, callback: MF) -> &Self {
-      self.media_callback = Some(callback);
-      return self;
+  fn is_signed_comp_offset(self) -> bool {
+    self.signed_comp_offset
+  }
+
+  fn build_sample_entry(self) -> Vec<u8> {
+      todo!()
+  }
+
+  fn flush_final_media(&mut self) -> Result<(), CustomError> {
+    self.media_nal.push(NalRep{
+      nal_unit: self.bucket.to_vec(),
+      pts: self.current_pts,
+      dts: self.current_dts,
+    });
+    if let Some(cb) = &self.media_callback {
+      cb(AVCExtractor::convert_nal_units_to_sample_infos(self.media_nal));
+    }
+
+    Ok(())
+  }
+
+  fn listen_for_init_data(&mut self, callback: fn(Vec<u8>)) {
+    self.init_callback = Some(callback);
+  }
+
+  fn listen_for_media_data(&mut self, callback: fn(Vec<SampleInfo>)) {
+    self.media_callback = Some(callback);
+  }
+}
+
+impl AVCExtractor {
+  pub fn create() -> AVCExtractor {
+    AVCExtractor {
+      sps_nal: vec![],
+      pps_nal: vec![],
+      media_nal: vec![],
+      bucket: vec![],
+      init_callback: None,
+      media_callback: None,
+      all_same_timestamps: true,
+      signed_comp_offset: false,
+      current_pts: 0,
+      current_dts: 0,
+    }
   }
 
   fn handle_nal_unit(&mut self, nal_type: NALType, nal_unit: &[u8]) {
@@ -141,14 +166,24 @@ where
     }
   }
 
-  fn flush_final_media(&mut self) {
-    self.media_nal.push(NalRep{
-          nal_unit: self.bucket.to_vec(),
-          pts: self.current_pts,
-          dts: self.current_dts,
-        });
-    if let Some(cb) = &self.media_callback {
-      cb(&self.media_nal);
-    }
+  fn convert_nal_units_to_sample_infos(nal_units: Vec<NalRep>) -> Vec<SampleInfo> {
+    let sample_infos: Vec<SampleInfo> = nal_units
+      .iter()
+      .map(|nu| {
+        // Create the sample data
+        let nal_size: u32 = nu.nal_unit.len() as u32;
+        let nal_size_array = util::transform_u32_to_u8_array(nal_size).to_vec();
+        let sample = [
+          vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
+          nu.nal_unit
+        ].concat();
+        return SampleInfo{
+          data: sample,
+          dts: nu.dts,
+          pts: nu.pts,
+        }
+      })
+      .collect();
+    sample_infos
   }
 }

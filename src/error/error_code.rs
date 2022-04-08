@@ -54,6 +54,7 @@ pub enum NalMinorCode {
 #[derive(Debug, Eq, PartialEq)]
 pub enum RemuxMinorCode {
   MISSING_BUILDER_DEPENDENCY_ERROR = 0,
+  UNKNOWN_STREAM_TYPE =  1,
 }
 
 impl MinorError for ISOBMFFMinorCode {
@@ -137,12 +138,14 @@ impl MinorError for RemuxMinorCode {
   fn message(&self) -> String {
     match self {
       RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR => { "Missing a dependency required for the builder".to_string() }
+      RemuxMinorCode::UNKNOWN_STREAM_TYPE => { "Uknown elementary stream type".to_string() }
     }
   }
 
   fn code(&self) -> u8 {
     match self {
       RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR => { RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR as u8 }
+      RemuxMinorCode::UNKNOWN_STREAM_TYPE => { RemuxMinorCode::UNKNOWN_STREAM_TYPE as u8 }
     }
   }
 }

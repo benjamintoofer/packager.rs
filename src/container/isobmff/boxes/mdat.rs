@@ -1,4 +1,4 @@
-use crate::{container::transport_stream::adts::ADTSFrame, util};
+use crate::{container::{transport_stream::adts::ADTSFrame, writer::mp4_writer::SampleInfo}, util};
 use crate::error::CustomError;
 use crate::container::isobmff::nal::NalRep;
 
@@ -61,6 +61,22 @@ impl MDATBuilder {
         self.media_data,
       ].concat()
     )
+  }
+
+  pub fn merge_samples(samples: Vec<SampleInfo>) -> Vec<u8> {
+    let total_sample_size: usize = samples
+      .iter()
+      .map(|sample|sample.data.len())
+      .sum();
+    let mut sample_stream: Vec<u8> = vec![0; total_sample_size];
+    let mut index = 0usize;
+    for sample in samples {
+      let start = index;
+      let end = start + sample.data.len();
+      sample_stream.splice(start..end, sample.data.into_iter());
+      index = end;
+    }
+    sample_stream
   }
 
   pub fn convert_nal_units(nal_units: Vec<NalRep>) -> Vec<u8> {

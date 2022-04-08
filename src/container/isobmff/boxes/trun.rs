@@ -2,7 +2,7 @@
 // "Independent and Disposable Samples Box"
 use std::str;
 
-use crate::iso_box::{IsoBox, IsoFullBox, find_box};
+use crate::{container::writer::mp4_writer::SampleInfo, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}};
 use crate::container::isobmff::nal::NalRep;
 use crate::util;
@@ -178,7 +178,7 @@ pub struct TRUNBuilder {
   flags: usize,
   data_offset: usize,
   first_sample_flags: Option<usize>,
-  samples: Vec<NalRep>,
+  samples: Vec<SampleInfo>,
 }
 
 impl TRUNBuilder {
@@ -192,7 +192,7 @@ impl TRUNBuilder {
     }
   }
 
-  pub fn samples(mut self, samples: Vec<NalRep>) -> TRUNBuilder {
+  pub fn samples(mut self, samples: Vec<SampleInfo>) -> TRUNBuilder {
     self.samples = samples;
     self
   }
@@ -288,7 +288,7 @@ impl TRUNBuilder {
     calc_size
   }
 
-  fn create_sample_data(samples: &Vec<NalRep>, sample_size: usize, flags: usize, version: usize) -> Vec<u8> {
+  fn create_sample_data(samples: &Vec<SampleInfo>, sample_size: usize, flags: usize, version: usize) -> Vec<u8> {
     let total_sample_size = samples.len() * sample_size;
     let mut data: Vec<u8> = vec![0; total_sample_size];
     let mut offset = 0usize;
@@ -302,7 +302,7 @@ impl TRUNBuilder {
     data
   }
 
-  pub fn create_sample(sample: &NalRep, sample_size: usize, flags: usize, version: usize, duration: usize, sample_flag: usize) -> Vec<u8>{
+  pub fn create_sample(sample: &SampleInfo, sample_size: usize, flags: usize, version: usize, duration: usize, sample_flag: usize) -> Vec<u8>{
     let mut sample_data = vec![0u8; sample_size];
     let mut offset = 0usize;
     if flags & 0x000100 != 0{ // sample-duration-present
@@ -313,7 +313,7 @@ impl TRUNBuilder {
       offset = end;
     }
     if flags & 0x000200 != 0 { // sample-size-present
-      let size_array = util::transform_usize_to_u8_array(sample.nal_unit.len() + 4);
+      let size_array = util::transform_usize_to_u8_array(sample.data.len());
       let end = offset + 4;
       sample_data
         .splice(offset..end, vec![size_array[3], size_array[2], size_array[1], size_array[0]]);
