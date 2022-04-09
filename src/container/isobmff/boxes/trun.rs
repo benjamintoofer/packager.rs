@@ -547,452 +547,452 @@ mod tests {
   fn generate_test_nal_units() -> Vec<SampleInfo> {
     vec![
        SampleInfo{
-        data: vec![0; 14146],
+        data: vec![0; 14150],
         pts: 0,
         dts: 0,
       },
       SampleInfo{
-        data: vec![0; 487],
+        data: vec![0; 491],
         pts: 1,
         dts: 1,
       },
       SampleInfo{
-        data: vec![0; 724],
+        data: vec![0; 728],
         pts: 2,
         dts: 2,
       },
       SampleInfo{
-        data: vec![0; 755],
+        data: vec![0; 759],
         pts: 3,
         dts: 3,
       },
       SampleInfo{
-        data: vec![0; 1023],
+        data: vec![0; 1027],
         pts: 4,
         dts: 4,
       },
       SampleInfo{
-        data: vec![0; 748],
+        data: vec![0; 752],
         pts: 5,
         dts: 5,
       },
       SampleInfo{
-        data: vec![0; 919],
+        data: vec![0; 923],
         pts: 6,
         dts: 6,
       },
       SampleInfo{
-        data: vec![0; 958],
+        data: vec![0; 962],
         pts: 7,
         dts: 7,
       },
       SampleInfo{
-        data: vec![0; 1017],
+        data: vec![0; 1021],
         pts: 8,
         dts: 8,
       },
       SampleInfo{
-        data: vec![0; 1065],
+        data: vec![0; 1069],
         pts: 9,
         dts: 9,
       },
       SampleInfo{
-        data: vec![0; 1034],
+        data: vec![0; 1038],
         pts: 10,
         dts: 10
       },
       SampleInfo{
-        data: vec![0; 987],
+        data: vec![0; 991],
         pts: 11,
         dts: 11
       },
       SampleInfo{
-        data: vec![0; 946],
+        data: vec![0; 950],
         pts: 12,
         dts: 12
       },
       SampleInfo{
-        data: vec![0; 979],
+        data: vec![0; 983],
         pts: 13,
         dts: 13
       },
       SampleInfo{
-        data: vec![0; 1045],
+        data: vec![0; 1049],
         pts: 14,
         dts: 14
       },
       SampleInfo{
-        data: vec![0; 1102],
+        data: vec![0; 1106],
         pts: 15,
         dts: 15
       },
       SampleInfo{
-        data: vec![0; 1220],
+        data: vec![0; 1224],
         pts: 16,
         dts: 16
       },
       SampleInfo{
-        data: vec![0; 1177],
+        data: vec![0; 1181],
         pts: 17,
         dts: 17
       },
       SampleInfo{
-        data: vec![0; 1211],
+        data: vec![0; 1215],
         pts: 18,
         dts: 18
       },
       SampleInfo{
-        data: vec![0; 1115],
+        data: vec![0; 1119],
         pts: 19,
         dts: 19
       },
       SampleInfo{
-        data: vec![0; 1168],
+        data: vec![0; 1172],
         pts: 20,
         dts: 20
       },
       SampleInfo{
-        data: vec![0; 1255],
+        data: vec![0; 1259],
         pts: 21,
         dts: 21
       },
       SampleInfo{
-        data: vec![0; 1314],
+        data: vec![0; 1318],
         pts: 22,
         dts: 22
       },
       SampleInfo{
-        data: vec![0; 1282],
+        data: vec![0; 1286],
         pts: 23,
         dts: 23
       },
       SampleInfo{
-        data: vec![0; 1248],
+        data: vec![0; 1252],
         pts: 24,
         dts: 24
       },
       SampleInfo{
-        data: vec![0; 1108],
+        data: vec![0; 1112],
         pts: 25,
         dts: 25
       },
       SampleInfo{
-        data: vec![0; 1197],
+        data: vec![0; 1201],
         pts: 26,
         dts: 26
       },
       SampleInfo{
-        data: vec![0; 1151],
+        data: vec![0; 1155],
         pts: 27,
         dts: 27
       },
       SampleInfo{
-        data: vec![0; 1201],
+        data: vec![0; 1205],
         pts: 28,
         dts: 28
       },
       SampleInfo{
-        data: vec![0; 1194],
+        data: vec![0; 1198],
         pts: 29,
         dts: 29
       },
       SampleInfo{
-        data: vec![0; 1339],
+        data: vec![0; 1343],
         pts: 30,
         dts: 30
       },
       SampleInfo{
-        data: vec![0; 1160],
+        data: vec![0; 1164],
         pts: 31,
         dts: 31
       },
       SampleInfo{
-        data: vec![0; 1331],
+        data: vec![0; 1335],
         pts: 32,
         dts: 32
       },
       SampleInfo{
-        data: vec![0; 1520],
+        data: vec![0; 1524],
         pts: 33,
         dts: 33
       },
       SampleInfo{
-        data: vec![0; 1391],
+        data: vec![0; 1395],
         pts: 34,
         dts: 34
       },
       SampleInfo{
-        data: vec![0; 1264],
+        data: vec![0; 1268],
         pts: 35,
         dts: 35
       },
       SampleInfo{
-        data: vec![0; 1368],
+        data: vec![0; 1372],
         pts: 36,
         dts: 36
       },
       SampleInfo{
-        data: vec![0; 1178],
+        data: vec![0; 1182],
         pts: 37,
         dts: 37
       },
       SampleInfo{
-        data: vec![0; 1277],
+        data: vec![0; 1281],
         pts: 38,
         dts: 38
       },
       SampleInfo{
-        data: vec![0; 1195],
+        data: vec![0; 1199],
         pts: 39,
         dts: 39
       },
       SampleInfo{
-        data: vec![0; 1308],
+        data: vec![0; 1312],
         pts: 40,
         dts: 40
       },
       SampleInfo{
-        data: vec![0; 1242],
+        data: vec![0; 1246],
         pts: 41,
         dts: 41
       },
       SampleInfo{
-        data: vec![0; 1437],
+        data: vec![0; 1441],
         pts: 42,
         dts: 42
       },
       SampleInfo{
-        data: vec![0; 1315],
+        data: vec![0; 1319],
         pts: 43,
         dts: 43
       },
       SampleInfo{
-        data: vec![0; 1226],
+        data: vec![0; 1230],
         pts: 44,
         dts: 44
       },
       SampleInfo{
-        data: vec![0; 1257],
+        data: vec![0; 1261],
         pts: 45,
         dts: 45
       },
       SampleInfo{
-        data: vec![0; 1241],
+        data: vec![0; 1245],
         pts: 46,
         dts: 46
       },
       SampleInfo{
-        data: vec![0; 1245],
+        data: vec![0; 1249],
         pts: 47,
         dts: 47
       },
       SampleInfo{
-        data: vec![0; 1432],
+        data: vec![0; 1436],
         pts: 48,
         dts: 48
       },
       SampleInfo{
-        data: vec![0; 1303],
+        data: vec![0; 1307],
         pts: 49,
         dts: 49
       },
       SampleInfo{
-        data: vec![0; 1267],
+        data: vec![0; 1271],
         pts: 50,
         dts: 50
       },
       SampleInfo{
-        data: vec![0; 1207],
+        data: vec![0; 1211],
         pts: 51,
         dts: 51
       },
       SampleInfo{
-        data: vec![0; 1155],
+        data: vec![0; 1159],
         pts: 52,
         dts: 52
       },
       SampleInfo{
-        data: vec![0; 1211],
+        data: vec![0; 1215],
         pts: 53,
         dts: 53
       },
       SampleInfo{
-        data: vec![0; 1259],
+        data: vec![0; 1263],
         pts: 54,
         dts: 54
       },
       SampleInfo{
-        data: vec![0; 1245],
+        data: vec![0; 1249],
         pts: 55,
         dts: 55
       },
       SampleInfo{
-        data: vec![0; 1212],
+        data: vec![0; 1216],
         pts: 56,
         dts: 56
       },
       SampleInfo{
-        data: vec![0; 1283],
+        data: vec![0; 1287],
         pts: 57,
         dts: 57
       },
       SampleInfo{
-        data: vec![0; 1303],
+        data: vec![0; 1307],
         pts: 58,
         dts: 58
       },
       SampleInfo{
-        data: vec![0; 1237],
+        data: vec![0; 1241],
         pts: 59,
         dts: 59
       },
       SampleInfo{
-        data: vec![0; 1278],
+        data: vec![0; 1282],
         pts: 60,
         dts: 60
       },
       SampleInfo{
-        data: vec![0; 1114],
+        data: vec![0; 1118],
         pts: 61,
         dts: 61
       },
       SampleInfo{
-        data: vec![0; 1236],
+        data: vec![0; 1240],
         pts: 62,
         dts: 62
       },
       SampleInfo{
-        data: vec![0; 1194],
+        data: vec![0; 1198],
         pts: 63,
         dts: 63
       },
       SampleInfo{
-        data: vec![0; 1270],
+        data: vec![0; 1274],
         pts: 64,
         dts: 64
       },
       SampleInfo{
-        data: vec![0; 1214],
+        data: vec![0; 1218],
         pts: 65,
         dts: 65
       },
       SampleInfo{
-        data: vec![0; 1184],
+        data: vec![0; 1188],
         pts: 66,
         dts: 66
       },
       SampleInfo{
-        data: vec![0; 1317],
+        data: vec![0; 1321],
         pts: 67,
         dts: 67
       },
       SampleInfo{
-        data: vec![0; 1315],
+        data: vec![0; 1319],
         pts: 68,
         dts: 68
       },
       SampleInfo{
-        data: vec![0; 1210],
+        data: vec![0; 1214],
         pts: 69,
         dts: 69
       },
       SampleInfo{
-        data: vec![0; 1286],
+        data: vec![0; 1290],
         pts: 70,
         dts: 70
       },
       SampleInfo{
-        data: vec![0; 1182],
+        data: vec![0; 1186],
         pts: 71,
         dts: 71
       },
       SampleInfo{
-        data: vec![0; 1109],
+        data: vec![0; 1113],
         pts: 72,
         dts: 72
       },
       SampleInfo{
-        data: vec![0; 1320],
+        data: vec![0; 1324],
         pts: 73,
         dts: 73
       },
       SampleInfo{
-        data: vec![0; 1258],
+        data: vec![0; 1262],
         pts: 74,
         dts: 74
       },
       SampleInfo{
-        data: vec![0; 1126],
+        data: vec![0; 1130],
         pts: 75,
         dts: 75
       },
       SampleInfo{
-        data: vec![0; 1238],
+        data: vec![0; 1242],
         pts: 76,
         dts: 76
       },
       SampleInfo{
-        data: vec![0; 1264],
+        data: vec![0; 1268],
         pts: 77,
         dts: 77
       },
       SampleInfo{
-        data: vec![0; 1248],
+        data: vec![0; 1252],
         pts: 78,
         dts: 78
       },
       SampleInfo{
-        data: vec![0; 1068],
+        data: vec![0; 1072],
         pts: 79,
         dts: 79
       },
       SampleInfo{
-        data: vec![0; 1262],
+        data: vec![0; 1266],
         pts: 80,
         dts: 80
       },
       SampleInfo{
-        data: vec![0; 1123],
+        data: vec![0; 1127],
         pts: 81,
         dts: 81
       },
       SampleInfo{
-        data: vec![0; 1129],
+        data: vec![0; 1133],
         pts: 82,
         dts: 82
       },
       SampleInfo{
-        data: vec![0; 1354],
+        data: vec![0; 1358],
         pts: 83,
         dts: 83
       },
       SampleInfo{
-        data: vec![0; 1260],
+        data: vec![0; 1264],
         pts: 84,
         dts: 84
       },
       SampleInfo{
-        data: vec![0; 1390],
+        data: vec![0; 1394],
         pts: 85,
         dts: 85
       },
       SampleInfo{
-        data: vec![0; 1191],
+        data: vec![0; 1195],
         pts: 86,
         dts: 86
       },
       SampleInfo{
-        data: vec![0; 1277],
+        data: vec![0; 1281],
         pts: 87,
         dts: 87
       },
       SampleInfo{
-        data: vec![0; 1250],
+        data: vec![0; 1254],
         pts: 88,
         dts: 88
       },
       SampleInfo{
-        data: vec![0; 1282],
+        data: vec![0; 1286],
         pts: 89,
         dts: 89
       },

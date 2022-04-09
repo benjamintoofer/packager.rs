@@ -4,8 +4,7 @@ use crate::container::remux;
 use crate::container::isobmff::boxes::mfhd::MFHDBuilder;
 use crate::container::isobmff::boxes::traf::TRAFBuilder;
 
-// MovieFragmentBox 14496-12; 8.8.4
-
+/// MovieFragmentBox 14496-12; 8.8.4
 pub struct MOOFBuilder {
   traf_builder: Option<TRAFBuilder>
 }
@@ -102,17 +101,26 @@ mod tests {
       SampleInfo{
         pts: 1,
         dts: 1,
-        data: vec![0x00,0x01,0x02]
+        data: vec![
+          0x00, 0x00, 0x00, 0x03,
+          0x00,0x01,0x02
+        ]
       },
       SampleInfo{
         pts: 2,
         dts: 2,
-        data: vec![0x03,0x04]
+        data: vec![
+          0x00, 0x00, 0x00, 0x02,
+          0x03,0x04
+        ]
       },
       SampleInfo{
         pts: 3,
         dts: 3,
-        data: vec![0x05,0x06,0x07,0x08]
+        data: vec![
+          0x00, 0x00, 0x00, 0x04,
+          0x05,0x06,0x07,0x08
+        ]
       }
     ];
     
