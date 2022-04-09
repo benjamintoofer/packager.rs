@@ -22,12 +22,14 @@ impl Debug for NalRep {
 
 impl NalRep {
   /// Generate a nal unit based off of the nal bytestream
-  fn from_annex_b(&self, nal_header_size: usize) -> Vec<u8>{
+  // NOTE (benjamintoofer@gmail.com): This is wrong. Need to dynamically set the size array based on the
+  // nal_header_size.
+  pub fn from_annex_b(&self, nal_header_size: usize) -> Vec<u8>{
     let nal_size = self.nal_unit.len() + nal_header_size;
     let nal_size_array = util::transform_u32_to_u8_array(nal_size as u32).to_vec();
     [
       vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
-      self.nal_unit
+      self.nal_unit.to_owned()
     ].concat()
   }
   /// Generate a nal bytestream

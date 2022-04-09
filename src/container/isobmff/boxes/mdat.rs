@@ -28,24 +28,6 @@ impl MDATBuilder {
   }
 
   pub fn build(self) -> Result<Vec<u8>, CustomError> {
-    // let all_nal_size: usize = self.nal_units
-    //   .iter()
-    //   .map(|nal_unit|nal_unit.nal_unit.len() + 4)
-    //   .sum();
-    // let mut nal_stream: Vec<u8> = vec![0; all_nal_size];
-    // let mut index = 0usize;
-    // for nal_unit in self.nal_units {
-    //   let nal_size: u32 = nal_unit.nal_unit.len() as u32;
-    //   let nal_size_array = util::transform_u32_to_u8_array(nal_size).to_vec();
-    //   let data = [
-    //     vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
-    //     nal_unit.nal_unit
-    //   ].concat();
-    //   let start = index;
-    //   let end = start + data.len();
-    //   nal_stream.splice(start..end, data.into_iter());
-    //   index = end;
-    // }
     let size = 
       8 + // header
       self.media_data.len();
@@ -79,27 +61,27 @@ impl MDATBuilder {
     sample_stream
   }
 
-  pub fn convert_nal_units(nal_units: Vec<NalRep>) -> Vec<u8> {
-    let all_nal_size: usize = nal_units
-      .iter()
-      .map(|nal_unit|nal_unit.nal_unit.len() + 4)
-      .sum();
-    let mut nal_stream: Vec<u8> = vec![0; all_nal_size];
-    let mut index = 0usize;
-    for nal_unit in nal_units {
-      let nal_size: u32 = nal_unit.nal_unit.len() as u32;
-      let nal_size_array = util::transform_u32_to_u8_array(nal_size).to_vec();
-      let data = [
-        vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
-        nal_unit.nal_unit
-      ].concat();
-      let start = index;
-      let end = start + data.len();
-      nal_stream.splice(start..end, data.into_iter());
-      index = end;
-    }
-    nal_stream
-  }
+  // pub fn convert_nal_units(nal_units: Vec<NalRep>) -> Vec<u8> {
+  //   let all_nal_size: usize = nal_units
+  //     .iter()
+  //     .map(|nal_unit|nal_unit.nal_unit.len() + 4)
+  //     .sum();
+  //   let mut nal_stream: Vec<u8> = vec![0; all_nal_size];
+  //   let mut index = 0usize;
+  //   for nal_unit in nal_units {
+  //     let nal_size: u32 = nal_unit.nal_unit.len() as u32;
+  //     let nal_size_array = util::transform_u32_to_u8_array(nal_size).to_vec();
+  //     let data = [
+  //       vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
+  //       nal_unit.nal_unit
+  //     ].concat();
+  //     let start = index;
+  //     let end = start + data.len();
+  //     nal_stream.splice(start..end, data.into_iter());
+  //     index = end;
+  //   }
+  //   nal_stream
+  // }
 
   pub fn convert_adts_frames(adts_frames: Vec<ADTSFrame>) -> Vec<u8> {
     let all_adts_size: usize = adts_frames
@@ -138,26 +120,41 @@ mod tests {
       0x05, 0x06, 0x07, 0x08,
     ];
 
-    let nal_units = vec![
-      NalRep{
+    let samples = vec![
+      SampleInfo{
         pts: 1,
         dts: 1,
-        nal_unit: vec![0x00,0x01,0x02]
+        data: vec![
+          // nal unit header
+          0x00, 0x00, 0x00, 0x03,
+          // media data
+          0x00,0x01,0x02
+        ]
       },
-      NalRep{
+      SampleInfo{
         pts: 2,
         dts: 2,
-        nal_unit: vec![0x03,0x04]
+        data: vec![
+          // nal unit header
+          0x00, 0x00, 0x00, 0x02,
+          // media data
+          0x03,0x04
+        ]
       },
-      NalRep{
+      SampleInfo{
         pts: 3,
         dts: 3,
-        nal_unit: vec![0x05,0x06,0x07,0x08]
+        data: vec![
+          // nal unit header
+          0x00, 0x00, 0x00, 0x04,
+          // media data
+          0x05,0x06,0x07,0x08
+        ]
       }
     ];
     
     let mdat = MDATBuilder::create_builder()
-      .media_data(MDATBuilder::convert_nal_units(nal_units))
+      .media_data(MDATBuilder::merge_samples(samples))
       .build()
       .unwrap();
     assert_eq!(mdat, expected_mdat);

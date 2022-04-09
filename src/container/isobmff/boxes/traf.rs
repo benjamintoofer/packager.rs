@@ -79,7 +79,7 @@ impl TRAFBuilder {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::container::isobmff::nal::NalRep;
+  use crate::container::writer::mp4_writer::SampleInfo;
 
   #[test]
   fn test_build_traf() {
@@ -114,21 +114,21 @@ mod tests {
       0x00, 0x00, 0x00, 0x08,
     ];
 
-    let nal_units = vec![
-      NalRep{
+    let samples = vec![
+      SampleInfo{
         pts: 1,
         dts: 1,
-        nal_unit: vec![0x00,0x01,0x02]
+        data: vec![0x00,0x01,0x02]
       },
-      NalRep{
+      SampleInfo{
         pts: 2,
         dts: 2,
-        nal_unit: vec![0x03,0x04]
+        data: vec![0x03,0x04]
       },
-      NalRep{
+      SampleInfo{
         pts: 3,
         dts: 3,
-        nal_unit: vec![0x05,0x06,0x07,0x08]
+        data: vec![0x05,0x06,0x07,0x08]
       }
     ];
     
@@ -147,7 +147,7 @@ mod tests {
           .data_offset(100)
           .first_sample_flags(0x2000000)
           .flags(0x0205)
-          .samples(nal_units)
+          .samples(samples)
       )
       .build()
       .unwrap();

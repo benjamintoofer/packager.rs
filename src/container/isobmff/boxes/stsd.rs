@@ -168,7 +168,7 @@ impl STSDBuilder {
       // entry count
       0x00, 0x00, 0x00, 0x01,
       ],
-      self.sample_entry,
+      self.sample_entry.to_owned(),
     ].concat())
   }
 }

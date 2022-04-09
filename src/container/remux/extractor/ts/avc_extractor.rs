@@ -118,7 +118,7 @@ impl TSExtractor for AVCExtractor {
       dts: self.current_dts,
     });
     if let Some(cb) = &self.media_callback {
-      cb(AVCExtractor::convert_nal_units_to_sample_infos(self.media_nal));
+      cb(AVCExtractor::convert_nal_units_to_sample_infos(self.media_nal.to_owned()));
     }
 
     Ok(())
@@ -175,7 +175,7 @@ impl AVCExtractor {
         let nal_size_array = util::transform_u32_to_u8_array(nal_size).to_vec();
         let sample = [
           vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
-          nu.nal_unit
+          nu.nal_unit.to_owned()
         ].concat();
         return SampleInfo{
           data: sample,
