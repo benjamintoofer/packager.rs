@@ -1,6 +1,6 @@
-use super::{sample_entry::{SampleEntry}};
+use super::{audio_sample_entry::AudioSampleEntryBuilder, sample_entry::{SampleEntry, SampleEntryBuilder}};
 use super::audio_sample_entry::AudioSampleEntry;
-use crate::container::isobmff::descriptors::es_descriptor::ESDescriptor;
+use crate::container::isobmff::{BoxBuilder, descriptors::es_descriptor::{ESDescriptor, ESDescriptorBuidler}};
 use crate::container::isobmff::boxes::iso_box::find_box;
 use crate::container::isobmff::descriptors::find_descriptor;
 use crate::container::isobmff::descriptors::DescriptorTags;
@@ -29,4 +29,41 @@ impl MP4ASampleEntry {
       es_descriptor
     }
   }
+}
+
+pub struct MP4ASampleEntryBuilder {
+  pub sample_entry_builder: Option<SampleEntryBuilder>,
+  audio_sample_entry_builder: Option<AudioSampleEntryBuilder>,
+  es_descriptor_builder: Option<ESDescriptorBuidler>,
+}
+
+impl MP4ASampleEntryBuilder {
+  pub fn create_builder() -> MP4ASampleEntryBuilder {
+    return MP4ASampleEntryBuilder {
+      sample_entry_builder: None,
+      audio_sample_entry_builder: None,
+      es_descriptor_builder: None,
+    }
+  }
+
+  pub fn sample_entry(mut self, sample_entry_builder: SampleEntryBuilder) -> MP4ASampleEntryBuilder {
+    self.sample_entry_builder = Some(sample_entry_builder);
+    self
+  }
+
+  pub fn audio_sample_entry(mut self, audio_sample_entry_builder: AudioSampleEntryBuilder) -> MP4ASampleEntryBuilder {
+    self.audio_sample_entry_builder = Some(audio_sample_entry_builder);
+    self
+  }
+
+  pub fn esds(mut self, esds_builder: ESDescriptorBuidler) -> MP4ASampleEntryBuilder {
+    self.es_descriptor_builder = Some(esds_builder);
+    self
+  }
+}
+
+impl BoxBuilder for MP4ASampleEntryBuilder {
+    fn build(&self) -> Result<Vec<u8>, crate::error::CustomError> {
+        todo!()
+    }
 }

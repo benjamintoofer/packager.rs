@@ -79,8 +79,8 @@ fn main() {
   // let file_path = "/Users/benjamintoofer/Desktop/seg_2_complete_v.ts";
   // let file_path = "/Users/benjamintoofer/Desktop/testing/tos/segment-2.ts";
   // let file_path = "/Users/benjamintoofer/Desktop/test_remux_ac3.ts";
-  let file_path = "/Users/benjamintoofer/Desktop/test_remux_eac3.ts";
-  // let file_path = "/Users/benjamintoofer/Documents/packager_content/content_samples/output_audio.ts";
+  // let file_path = "/Users/benjamintoofer/Desktop/test_remux_eac3.ts";
+  let file_path = "/Users/benjamintoofer/Documents/packager_content/content_samples/output_audio.ts";
   // let file_path = "/Users/benjamintoofer/Documents/packager_content/other_content/tos_ac3_ts/media-1/segment-1.ts";
   // let file_path = "/Users/benjamintoofer/Documents/packager_content/other_content/tos_eac3_ts/media-1/segment-1.ts";
   tranmux_test(file_path)

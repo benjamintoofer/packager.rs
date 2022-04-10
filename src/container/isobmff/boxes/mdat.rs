@@ -1,6 +1,5 @@
 use crate::{container::{transport_stream::adts::ADTSFrame, writer::mp4_writer::SampleInfo}, util};
 use crate::error::CustomError;
-use crate::container::isobmff::nal::NalRep;
 
 // MediaDataBox 14496-12; 8.1.1
 

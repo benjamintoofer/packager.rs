@@ -8,7 +8,7 @@ pub struct ISO639 {}
 impl ISO639 {
   pub fn adjust_iso_639_2_to_string(data: &[u8; 2]) -> Result<String, CustomError> {
     let mut bit_reader = BitReader::create_bit_reader(data);
-    bit_reader.read_bits(1);
+    bit_reader.read_bits(1)?;
     let mut characters:[u8; 3] = [0x00, 0x00, 0x00];
     characters[0] = bit_reader.read_bits(5)? as u8 + 0x60;
     characters[1] = bit_reader.read_bits(5)? as u8 + 0x60;

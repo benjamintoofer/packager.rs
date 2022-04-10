@@ -1,7 +1,5 @@
-use std::{fs, process::Command};
+use std::{process::Command};
 use std::thread;
-
-use crate::media::TrackType;
 
 use super::{VideoResolution, AudioSampleRates};
 use regex::Regex;
