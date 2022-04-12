@@ -4,6 +4,7 @@ pub trait MinorError {
   fn code(&self) -> u8;
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum MajorCode {
   ISOBMFF           = 0,

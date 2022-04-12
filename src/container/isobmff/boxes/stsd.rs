@@ -1,9 +1,8 @@
 use std::{str, vec};
 use std::convert::TryFrom;
 
-use crate::{container::isobmff::{BoxBuilder}, error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
+use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::util;
-use crate::container::remux;
 
 static CLASS: &str = "STSD";
 
@@ -170,6 +169,7 @@ impl STSDBuilder {
 mod tests {
 
   use super::*;
+  use crate::container::isobmff::BoxBuilder;
 
   #[test]
   fn test_parse_stsd() {
