@@ -45,6 +45,51 @@ impl AACAudioSpecificConfig {
   }
 }
 
+pub struct AACAudioSpecificConfigBuilder {
+  channel_count: u32,
+  sampling_frequency_index: u32
+}
+
+impl AACAudioSpecificConfigBuilder {
+
+  pub fn create_builder() -> AACAudioSpecificConfigBuilder {
+    return AACAudioSpecificConfigBuilder {
+      channel_count: 0,
+      sampling_frequency_index: 0,
+    }
+  }
+
+  pub fn channel_count(mut self, channel_count: u32) -> AACAudioSpecificConfigBuilder {
+    self.channel_count = channel_count;
+    self
+  }
+
+  pub fn sampling_frequency_index(mut self, sampling_frequency_index: u32) -> AACAudioSpecificConfigBuilder {
+    self.sampling_frequency_index = sampling_frequency_index;
+    self
+  }
+  /**
+    audioObjectType = 2;          5 bits
+    samplingFrequencyIndex;       4 bits
+    channelConfiguration (1 | 2)  4 bits
+    GASpecificConfig              3 bits
+  */
+
+  pub fn build(&self) -> Vec<u8> {
+    let sample_and_channel:u32 = (self.sampling_frequency_index << 4) | self.channel_count;
+    let mut result = 0x1000u32;
+    result = result | (sample_and_channel << 3);
+    let value = util::transform_u32_to_u8_array(result);
+    vec![
+      // DecSpecificInfoTag
+      0x05,
+      // length
+      0x80, 0x80, 0x80, 0x02,
+      value[1], value[0],
+    ]
+  }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -63,5 +108,19 @@ mod tests {
       channel_configuration: 2,
     };
     assert_eq!(AACAudioSpecificConfig::parse(&audio_specific_config).unwrap(), expected_config);
+  }
+
+  #[test]
+  fn test_audio_specific_config_builder() {
+    let expected_audio_specific_config: [u8; 7] = [
+      0x05,
+      0x80, 0x80, 0x80, 0x02,
+      0x12, 0x30
+    ]; 
+    let actual_audio_specific_config = AACAudioSpecificConfigBuilder::create_builder()
+      .channel_count(6)
+      .sampling_frequency_index(4)
+      .build();
+    assert_eq!(actual_audio_specific_config, expected_audio_specific_config);
   }
 }

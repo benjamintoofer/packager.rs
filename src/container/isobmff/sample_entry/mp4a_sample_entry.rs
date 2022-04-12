@@ -4,6 +4,9 @@ use crate::container::isobmff::{BoxBuilder, descriptors::es_descriptor::{ESDescr
 use crate::container::isobmff::boxes::iso_box::find_box;
 use crate::container::isobmff::descriptors::find_descriptor;
 use crate::container::isobmff::descriptors::DescriptorTags;
+use crate::container::remux;
+use crate::util;
+use crate::error::CustomError;
 
 #[derive(Debug)]
 pub struct MP4ASampleEntry {
@@ -63,7 +66,36 @@ impl MP4ASampleEntryBuilder {
 }
 
 impl BoxBuilder for MP4ASampleEntryBuilder {
-    fn build(&self) -> Result<Vec<u8>, crate::error::CustomError> {
-        todo!()
-    }
+  fn build(&self) -> Result<Vec<u8>, CustomError> {
+    let sample_entry = self.sample_entry_builder.as_ref()
+      .ok_or_else(||remux::generate_error(String::from("Missing sample_entry_builder for MP4ASampleEntryBuilder")))?
+      .build();
+    let audio_sample_entry = self.audio_sample_entry_builder.as_ref()
+      .ok_or_else(||remux::generate_error(String::from("Missing audio_sample_entry_builder for MP4ASampleEntryBuilder")))?
+      .build();
+    let esds = self.es_descriptor_builder.as_ref()
+      .ok_or_else(||remux::generate_error(String::from("Missing avcC_builder for MP4ASampleEntryBuilder")))?
+      .build()?;
+    let size = 
+      8 + // header
+      sample_entry.len() +
+      audio_sample_entry.len() +
+      esds.len();
+    let size_array = util::transform_usize_to_u8_array(size);
+
+    let mp4a: Vec<u8> = [
+      vec![
+        // size
+        size_array[3], size_array[2], size_array[1], size_array[0],
+        // mp4a
+        0x61, 0x76, 0x63, 0x31,
+      ],
+      sample_entry,
+      audio_sample_entry,
+      esds,
+    ].concat();
+
+    Ok(mp4a)
+
+  }
 }

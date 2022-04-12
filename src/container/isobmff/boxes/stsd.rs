@@ -125,33 +125,26 @@ impl<'a> STSD<'a> {
 }
 
 pub struct STSDBuilder {
-  // sample_entry: Option<Box<dyn BoxBuilder>>
   sample_entry: Vec<u8>
 }
 
 impl STSDBuilder {
   pub fn create_builder() -> STSDBuilder {
     STSDBuilder{
-      // sample_entry: None
       sample_entry: vec![],
     }
   }
 
   pub fn sample_entry(mut self, sample_entry: Vec<u8>) -> STSDBuilder {
-    // self.sample_entry = Some(sample_entry);
     self.sample_entry = sample_entry;
     self
   }
 
   pub fn build(&self) -> Result<Vec<u8>, CustomError> {
-    // let sample_entry = self.sample_entry.as_ref()
-    //   .ok_or_else(||remux::generate_error(String::from("Missing sample_entry for STSDBuilder")))?
-    //   .build()?;
 
     let size = 
       12 + // header
       4 +
-      // sample_entry.len();
       self.sample_entry.len();
     let size_array = util::transform_usize_to_u8_array(size);
 
