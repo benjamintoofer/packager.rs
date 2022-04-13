@@ -2,7 +2,7 @@
 // "Independent and Disposable Samples Box"
 use std::str;
 
-use crate::iso_box::{IsoBox, IsoFullBox, find_box};
+use crate::{container::writer::mp4_writer::SampleInfo, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}};
 use crate::container::isobmff::nal::NalRep;
 use crate::util;
@@ -178,7 +178,7 @@ pub struct TRUNBuilder {
   flags: usize,
   data_offset: usize,
   first_sample_flags: Option<usize>,
-  samples: Vec<NalRep>,
+  samples: Vec<SampleInfo>,
 }
 
 impl TRUNBuilder {
@@ -192,7 +192,7 @@ impl TRUNBuilder {
     }
   }
 
-  pub fn samples(mut self, samples: Vec<NalRep>) -> TRUNBuilder {
+  pub fn samples(mut self, samples: Vec<SampleInfo>) -> TRUNBuilder {
     self.samples = samples;
     self
   }
@@ -288,7 +288,7 @@ impl TRUNBuilder {
     calc_size
   }
 
-  fn create_sample_data(samples: &Vec<NalRep>, sample_size: usize, flags: usize, version: usize) -> Vec<u8> {
+  fn create_sample_data(samples: &Vec<SampleInfo>, sample_size: usize, flags: usize, version: usize) -> Vec<u8> {
     let total_sample_size = samples.len() * sample_size;
     let mut data: Vec<u8> = vec![0; total_sample_size];
     let mut offset = 0usize;
@@ -302,7 +302,7 @@ impl TRUNBuilder {
     data
   }
 
-  pub fn create_sample(sample: &NalRep, sample_size: usize, flags: usize, version: usize, duration: usize, sample_flag: usize) -> Vec<u8>{
+  pub fn create_sample(sample: &SampleInfo, sample_size: usize, flags: usize, version: usize, duration: usize, sample_flag: usize) -> Vec<u8>{
     let mut sample_data = vec![0u8; sample_size];
     let mut offset = 0usize;
     if flags & 0x000100 != 0{ // sample-duration-present
@@ -313,7 +313,7 @@ impl TRUNBuilder {
       offset = end;
     }
     if flags & 0x000200 != 0 { // sample-size-present
-      let size_array = util::transform_usize_to_u8_array(sample.nal_unit.len() + 4);
+      let size_array = util::transform_usize_to_u8_array(sample.data.len());
       let end = offset + 4;
       sample_data
         .splice(offset..end, vec![size_array[3], size_array[2], size_array[1], size_array[0]]);
@@ -533,466 +533,466 @@ mod tests {
 
   #[test]
   fn test_create_sample() {
-    let nal_rep = NalRep{
-      nal_unit: vec![0x00, 0x01, 0x02, 0x03, 0x04],
+    let sample = SampleInfo{
+      data: vec![0x00, 0x01, 0x02, 0x03, 0x04],
       pts: 0,
       dts: 0,
     };
     let sample_size = 16;
     let flags = 0x000F00;
-    TRUNBuilder::create_sample(&nal_rep, sample_size, flags, 0, 0, 0);
+    TRUNBuilder::create_sample(&sample, sample_size, flags, 0, 0, 0);
     // TODO (benjamintoofer@gmail.com): Finish this unit test
   }
 
-  fn generate_test_nal_units() -> Vec<NalRep> {
+  fn generate_test_nal_units() -> Vec<SampleInfo> {
     vec![
-       NalRep{
-        nal_unit: vec![0; 14146],
+       SampleInfo{
+        data: vec![0; 14150],
         pts: 0,
         dts: 0,
       },
-      NalRep{
-        nal_unit: vec![0; 487],
+      SampleInfo{
+        data: vec![0; 491],
         pts: 1,
         dts: 1,
       },
-      NalRep{
-        nal_unit: vec![0; 724],
+      SampleInfo{
+        data: vec![0; 728],
         pts: 2,
         dts: 2,
       },
-      NalRep{
-        nal_unit: vec![0; 755],
+      SampleInfo{
+        data: vec![0; 759],
         pts: 3,
         dts: 3,
       },
-      NalRep{
-        nal_unit: vec![0; 1023],
+      SampleInfo{
+        data: vec![0; 1027],
         pts: 4,
         dts: 4,
       },
-      NalRep{
-        nal_unit: vec![0; 748],
+      SampleInfo{
+        data: vec![0; 752],
         pts: 5,
         dts: 5,
       },
-      NalRep{
-        nal_unit: vec![0; 919],
+      SampleInfo{
+        data: vec![0; 923],
         pts: 6,
         dts: 6,
       },
-      NalRep{
-        nal_unit: vec![0; 958],
+      SampleInfo{
+        data: vec![0; 962],
         pts: 7,
         dts: 7,
       },
-      NalRep{
-        nal_unit: vec![0; 1017],
+      SampleInfo{
+        data: vec![0; 1021],
         pts: 8,
         dts: 8,
       },
-      NalRep{
-        nal_unit: vec![0; 1065],
+      SampleInfo{
+        data: vec![0; 1069],
         pts: 9,
         dts: 9,
       },
-      NalRep{
-        nal_unit: vec![0; 1034],
+      SampleInfo{
+        data: vec![0; 1038],
         pts: 10,
         dts: 10
       },
-      NalRep{
-        nal_unit: vec![0; 987],
+      SampleInfo{
+        data: vec![0; 991],
         pts: 11,
         dts: 11
       },
-      NalRep{
-        nal_unit: vec![0; 946],
+      SampleInfo{
+        data: vec![0; 950],
         pts: 12,
         dts: 12
       },
-      NalRep{
-        nal_unit: vec![0; 979],
+      SampleInfo{
+        data: vec![0; 983],
         pts: 13,
         dts: 13
       },
-      NalRep{
-        nal_unit: vec![0; 1045],
+      SampleInfo{
+        data: vec![0; 1049],
         pts: 14,
         dts: 14
       },
-      NalRep{
-        nal_unit: vec![0; 1102],
+      SampleInfo{
+        data: vec![0; 1106],
         pts: 15,
         dts: 15
       },
-      NalRep{
-        nal_unit: vec![0; 1220],
+      SampleInfo{
+        data: vec![0; 1224],
         pts: 16,
         dts: 16
       },
-      NalRep{
-        nal_unit: vec![0; 1177],
+      SampleInfo{
+        data: vec![0; 1181],
         pts: 17,
         dts: 17
       },
-      NalRep{
-        nal_unit: vec![0; 1211],
+      SampleInfo{
+        data: vec![0; 1215],
         pts: 18,
         dts: 18
       },
-      NalRep{
-        nal_unit: vec![0; 1115],
+      SampleInfo{
+        data: vec![0; 1119],
         pts: 19,
         dts: 19
       },
-      NalRep{
-        nal_unit: vec![0; 1168],
+      SampleInfo{
+        data: vec![0; 1172],
         pts: 20,
         dts: 20
       },
-      NalRep{
-        nal_unit: vec![0; 1255],
+      SampleInfo{
+        data: vec![0; 1259],
         pts: 21,
         dts: 21
       },
-      NalRep{
-        nal_unit: vec![0; 1314],
+      SampleInfo{
+        data: vec![0; 1318],
         pts: 22,
         dts: 22
       },
-      NalRep{
-        nal_unit: vec![0; 1282],
+      SampleInfo{
+        data: vec![0; 1286],
         pts: 23,
         dts: 23
       },
-      NalRep{
-        nal_unit: vec![0; 1248],
+      SampleInfo{
+        data: vec![0; 1252],
         pts: 24,
         dts: 24
       },
-      NalRep{
-        nal_unit: vec![0; 1108],
+      SampleInfo{
+        data: vec![0; 1112],
         pts: 25,
         dts: 25
       },
-      NalRep{
-        nal_unit: vec![0; 1197],
+      SampleInfo{
+        data: vec![0; 1201],
         pts: 26,
         dts: 26
       },
-      NalRep{
-        nal_unit: vec![0; 1151],
+      SampleInfo{
+        data: vec![0; 1155],
         pts: 27,
         dts: 27
       },
-      NalRep{
-        nal_unit: vec![0; 1201],
+      SampleInfo{
+        data: vec![0; 1205],
         pts: 28,
         dts: 28
       },
-      NalRep{
-        nal_unit: vec![0; 1194],
+      SampleInfo{
+        data: vec![0; 1198],
         pts: 29,
         dts: 29
       },
-      NalRep{
-        nal_unit: vec![0; 1339],
+      SampleInfo{
+        data: vec![0; 1343],
         pts: 30,
         dts: 30
       },
-      NalRep{
-        nal_unit: vec![0; 1160],
+      SampleInfo{
+        data: vec![0; 1164],
         pts: 31,
         dts: 31
       },
-      NalRep{
-        nal_unit: vec![0; 1331],
+      SampleInfo{
+        data: vec![0; 1335],
         pts: 32,
         dts: 32
       },
-      NalRep{
-        nal_unit: vec![0; 1520],
+      SampleInfo{
+        data: vec![0; 1524],
         pts: 33,
         dts: 33
       },
-      NalRep{
-        nal_unit: vec![0; 1391],
+      SampleInfo{
+        data: vec![0; 1395],
         pts: 34,
         dts: 34
       },
-      NalRep{
-        nal_unit: vec![0; 1264],
+      SampleInfo{
+        data: vec![0; 1268],
         pts: 35,
         dts: 35
       },
-      NalRep{
-        nal_unit: vec![0; 1368],
+      SampleInfo{
+        data: vec![0; 1372],
         pts: 36,
         dts: 36
       },
-      NalRep{
-        nal_unit: vec![0; 1178],
+      SampleInfo{
+        data: vec![0; 1182],
         pts: 37,
         dts: 37
       },
-      NalRep{
-        nal_unit: vec![0; 1277],
+      SampleInfo{
+        data: vec![0; 1281],
         pts: 38,
         dts: 38
       },
-      NalRep{
-        nal_unit: vec![0; 1195],
+      SampleInfo{
+        data: vec![0; 1199],
         pts: 39,
         dts: 39
       },
-      NalRep{
-        nal_unit: vec![0; 1308],
+      SampleInfo{
+        data: vec![0; 1312],
         pts: 40,
         dts: 40
       },
-      NalRep{
-        nal_unit: vec![0; 1242],
+      SampleInfo{
+        data: vec![0; 1246],
         pts: 41,
         dts: 41
       },
-      NalRep{
-        nal_unit: vec![0; 1437],
+      SampleInfo{
+        data: vec![0; 1441],
         pts: 42,
         dts: 42
       },
-      NalRep{
-        nal_unit: vec![0; 1315],
+      SampleInfo{
+        data: vec![0; 1319],
         pts: 43,
         dts: 43
       },
-      NalRep{
-        nal_unit: vec![0; 1226],
+      SampleInfo{
+        data: vec![0; 1230],
         pts: 44,
         dts: 44
       },
-      NalRep{
-        nal_unit: vec![0; 1257],
+      SampleInfo{
+        data: vec![0; 1261],
         pts: 45,
         dts: 45
       },
-      NalRep{
-        nal_unit: vec![0; 1241],
+      SampleInfo{
+        data: vec![0; 1245],
         pts: 46,
         dts: 46
       },
-      NalRep{
-        nal_unit: vec![0; 1245],
+      SampleInfo{
+        data: vec![0; 1249],
         pts: 47,
         dts: 47
       },
-      NalRep{
-        nal_unit: vec![0; 1432],
+      SampleInfo{
+        data: vec![0; 1436],
         pts: 48,
         dts: 48
       },
-      NalRep{
-        nal_unit: vec![0; 1303],
+      SampleInfo{
+        data: vec![0; 1307],
         pts: 49,
         dts: 49
       },
-      NalRep{
-        nal_unit: vec![0; 1267],
+      SampleInfo{
+        data: vec![0; 1271],
         pts: 50,
         dts: 50
       },
-      NalRep{
-        nal_unit: vec![0; 1207],
+      SampleInfo{
+        data: vec![0; 1211],
         pts: 51,
         dts: 51
       },
-      NalRep{
-        nal_unit: vec![0; 1155],
+      SampleInfo{
+        data: vec![0; 1159],
         pts: 52,
         dts: 52
       },
-      NalRep{
-        nal_unit: vec![0; 1211],
+      SampleInfo{
+        data: vec![0; 1215],
         pts: 53,
         dts: 53
       },
-      NalRep{
-        nal_unit: vec![0; 1259],
+      SampleInfo{
+        data: vec![0; 1263],
         pts: 54,
         dts: 54
       },
-      NalRep{
-        nal_unit: vec![0; 1245],
+      SampleInfo{
+        data: vec![0; 1249],
         pts: 55,
         dts: 55
       },
-      NalRep{
-        nal_unit: vec![0; 1212],
+      SampleInfo{
+        data: vec![0; 1216],
         pts: 56,
         dts: 56
       },
-      NalRep{
-        nal_unit: vec![0; 1283],
+      SampleInfo{
+        data: vec![0; 1287],
         pts: 57,
         dts: 57
       },
-      NalRep{
-        nal_unit: vec![0; 1303],
+      SampleInfo{
+        data: vec![0; 1307],
         pts: 58,
         dts: 58
       },
-      NalRep{
-        nal_unit: vec![0; 1237],
+      SampleInfo{
+        data: vec![0; 1241],
         pts: 59,
         dts: 59
       },
-      NalRep{
-        nal_unit: vec![0; 1278],
+      SampleInfo{
+        data: vec![0; 1282],
         pts: 60,
         dts: 60
       },
-      NalRep{
-        nal_unit: vec![0; 1114],
+      SampleInfo{
+        data: vec![0; 1118],
         pts: 61,
         dts: 61
       },
-      NalRep{
-        nal_unit: vec![0; 1236],
+      SampleInfo{
+        data: vec![0; 1240],
         pts: 62,
         dts: 62
       },
-      NalRep{
-        nal_unit: vec![0; 1194],
+      SampleInfo{
+        data: vec![0; 1198],
         pts: 63,
         dts: 63
       },
-      NalRep{
-        nal_unit: vec![0; 1270],
+      SampleInfo{
+        data: vec![0; 1274],
         pts: 64,
         dts: 64
       },
-      NalRep{
-        nal_unit: vec![0; 1214],
+      SampleInfo{
+        data: vec![0; 1218],
         pts: 65,
         dts: 65
       },
-      NalRep{
-        nal_unit: vec![0; 1184],
+      SampleInfo{
+        data: vec![0; 1188],
         pts: 66,
         dts: 66
       },
-      NalRep{
-        nal_unit: vec![0; 1317],
+      SampleInfo{
+        data: vec![0; 1321],
         pts: 67,
         dts: 67
       },
-      NalRep{
-        nal_unit: vec![0; 1315],
+      SampleInfo{
+        data: vec![0; 1319],
         pts: 68,
         dts: 68
       },
-      NalRep{
-        nal_unit: vec![0; 1210],
+      SampleInfo{
+        data: vec![0; 1214],
         pts: 69,
         dts: 69
       },
-      NalRep{
-        nal_unit: vec![0; 1286],
+      SampleInfo{
+        data: vec![0; 1290],
         pts: 70,
         dts: 70
       },
-      NalRep{
-        nal_unit: vec![0; 1182],
+      SampleInfo{
+        data: vec![0; 1186],
         pts: 71,
         dts: 71
       },
-      NalRep{
-        nal_unit: vec![0; 1109],
+      SampleInfo{
+        data: vec![0; 1113],
         pts: 72,
         dts: 72
       },
-      NalRep{
-        nal_unit: vec![0; 1320],
+      SampleInfo{
+        data: vec![0; 1324],
         pts: 73,
         dts: 73
       },
-      NalRep{
-        nal_unit: vec![0; 1258],
+      SampleInfo{
+        data: vec![0; 1262],
         pts: 74,
         dts: 74
       },
-      NalRep{
-        nal_unit: vec![0; 1126],
+      SampleInfo{
+        data: vec![0; 1130],
         pts: 75,
         dts: 75
       },
-      NalRep{
-        nal_unit: vec![0; 1238],
+      SampleInfo{
+        data: vec![0; 1242],
         pts: 76,
         dts: 76
       },
-      NalRep{
-        nal_unit: vec![0; 1264],
+      SampleInfo{
+        data: vec![0; 1268],
         pts: 77,
         dts: 77
       },
-      NalRep{
-        nal_unit: vec![0; 1248],
+      SampleInfo{
+        data: vec![0; 1252],
         pts: 78,
         dts: 78
       },
-      NalRep{
-        nal_unit: vec![0; 1068],
+      SampleInfo{
+        data: vec![0; 1072],
         pts: 79,
         dts: 79
       },
-      NalRep{
-        nal_unit: vec![0; 1262],
+      SampleInfo{
+        data: vec![0; 1266],
         pts: 80,
         dts: 80
       },
-      NalRep{
-        nal_unit: vec![0; 1123],
+      SampleInfo{
+        data: vec![0; 1127],
         pts: 81,
         dts: 81
       },
-      NalRep{
-        nal_unit: vec![0; 1129],
+      SampleInfo{
+        data: vec![0; 1133],
         pts: 82,
         dts: 82
       },
-      NalRep{
-        nal_unit: vec![0; 1354],
+      SampleInfo{
+        data: vec![0; 1358],
         pts: 83,
         dts: 83
       },
-      NalRep{
-        nal_unit: vec![0; 1260],
+      SampleInfo{
+        data: vec![0; 1264],
         pts: 84,
         dts: 84
       },
-      NalRep{
-        nal_unit: vec![0; 1390],
+      SampleInfo{
+        data: vec![0; 1394],
         pts: 85,
         dts: 85
       },
-      NalRep{
-        nal_unit: vec![0; 1191],
+      SampleInfo{
+        data: vec![0; 1195],
         pts: 86,
         dts: 86
       },
-      NalRep{
-        nal_unit: vec![0; 1277],
+      SampleInfo{
+        data: vec![0; 1281],
         pts: 87,
         dts: 87
       },
-      NalRep{
-        nal_unit: vec![0; 1250],
+      SampleInfo{
+        data: vec![0; 1254],
         pts: 88,
         dts: 88
       },
-      NalRep{
-        nal_unit: vec![0; 1282],
+      SampleInfo{
+        data: vec![0; 1286],
         pts: 89,
         dts: 89
       },

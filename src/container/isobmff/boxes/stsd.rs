@@ -1,9 +1,8 @@
-use std::str;
+use std::{str, vec};
 use std::convert::TryFrom;
 
-use crate::{container::isobmff::{BoxBuilder}, error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
+use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::util;
-use crate::container::remux;
 
 static CLASS: &str = "STSD";
 
@@ -125,30 +124,27 @@ impl<'a> STSD<'a> {
 }
 
 pub struct STSDBuilder {
-  sample_entry: Option<Box<dyn BoxBuilder>>
+  sample_entry: Vec<u8>
 }
 
 impl STSDBuilder {
   pub fn create_builder() -> STSDBuilder {
     STSDBuilder{
-      sample_entry: None
+      sample_entry: vec![],
     }
   }
 
-  pub fn sample_entry(mut self, sample_entry: Box<dyn BoxBuilder>) -> STSDBuilder {
-    self.sample_entry = Some(sample_entry);
+  pub fn sample_entry(mut self, sample_entry: Vec<u8>) -> STSDBuilder {
+    self.sample_entry = sample_entry;
     self
   }
 
   pub fn build(&self) -> Result<Vec<u8>, CustomError> {
-    let sample_entry = self.sample_entry.as_ref()
-      .ok_or_else(||remux::generate_error(String::from("Missing sample_entry for STSDBuilder")))?
-      .build()?;
 
     let size = 
       12 + // header
       4 +
-      sample_entry.len();
+      self.sample_entry.len();
     let size_array = util::transform_usize_to_u8_array(size);
 
     Ok([
@@ -164,7 +160,7 @@ impl STSDBuilder {
       // entry count
       0x00, 0x00, 0x00, 0x01,
       ],
-      sample_entry,
+      self.sample_entry.to_owned(),
     ].concat())
   }
 }
@@ -173,6 +169,7 @@ impl STSDBuilder {
 mod tests {
 
   use super::*;
+  use crate::container::isobmff::BoxBuilder;
 
   #[test]
   fn test_parse_stsd() {
@@ -220,7 +217,7 @@ mod tests {
     ];
     let handler = Box::new(MockHandler{});
     let stsd = STSDBuilder::create_builder()
-      .sample_entry(handler)
+      .sample_entry(handler.build().unwrap())
       .build()
       .unwrap();
 

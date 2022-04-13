@@ -4,8 +4,7 @@ use crate::container::remux;
 use crate::container::isobmff::boxes::mfhd::MFHDBuilder;
 use crate::container::isobmff::boxes::traf::TRAFBuilder;
 
-// MovieFragmentBox 14496-12; 8.8.4
-
+/// MovieFragmentBox 14496-12; 8.8.4
 pub struct MOOFBuilder {
   traf_builder: Option<TRAFBuilder>
 }
@@ -55,7 +54,7 @@ mod tests {
   use crate::container::isobmff::boxes::tfhd::TFHDBuilder;
   use crate::container::isobmff::boxes::tfdt::TFDTBuilder;
   use crate::container::isobmff::boxes::trun::TRUNBuilder;
-  use crate::container::isobmff::nal::NalRep;
+  use crate::container::writer::mp4_writer::SampleInfo;
 
   #[test]
   fn test_build_moof() {
@@ -98,21 +97,30 @@ mod tests {
       0x00, 0x00, 0x00, 0x08,
     ];
 
-    let nal_units = vec![
-      NalRep{
+    let samples = vec![
+      SampleInfo{
         pts: 1,
         dts: 1,
-        nal_unit: vec![0x00,0x01,0x02]
+        data: vec![
+          0x00, 0x00, 0x00, 0x03,
+          0x00,0x01,0x02
+        ]
       },
-      NalRep{
+      SampleInfo{
         pts: 2,
         dts: 2,
-        nal_unit: vec![0x03,0x04]
+        data: vec![
+          0x00, 0x00, 0x00, 0x02,
+          0x03,0x04
+        ]
       },
-      NalRep{
+      SampleInfo{
         pts: 3,
         dts: 3,
-        nal_unit: vec![0x05,0x06,0x07,0x08]
+        data: vec![
+          0x00, 0x00, 0x00, 0x04,
+          0x05,0x06,0x07,0x08
+        ]
       }
     ];
     
@@ -133,7 +141,7 @@ mod tests {
               .flags(0x0205)
               .first_sample_flags(0x2000000)
               .data_offset(100)
-              .samples(nal_units)
+              .samples(samples)
           )
       )
       .build()

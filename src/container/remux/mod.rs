@@ -1,57 +1,77 @@
-use crate::container::isobmff::nal::{nal_unit::NALUnit, NALType};
 use crate::container::transport_stream::{
     pes_packet, program_association_table::ProgramAssociationTable,
     program_map_table::ProgramMapTable, ts_packet,
 };
 use crate::container::writer::mp4_writer::Mp4Writer;
 use crate::error::CustomError;
-use crate::container::isobmff::nal::NalRep;
+use crate::container::isobmff::HandlerType;
+use crate::container::remux::extractor::{TSExtractor,get_ts_extractor};
+use crate::error::{construct_error, error_code::{RemuxMinorCode, MajorCode}};
 
+use core::panic;
 use std::{fs::File, io::Write};
+
+pub mod extractor;
 
 static SYNC_BYTE: u8 = 0x47;
 static TS_PACKET_SIZE: usize = 188;
 
 pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError> {
-    let mut avc_extractor = AVCExtracter {
-        sps_nal: vec![],
-        pps_nal: vec![],
-        media_nal: vec![],
-        bucket: vec![],
-        init_callback: None,
-        media_callback: None,
-        all_same_timestamps: true,
-        signed_comp_offset: false,
-        current_pts: 0,
-        current_dts: 0,
-    };
-    let packets: Vec<ts_packet::TransportPacket> = Vec::new();
-    let mut accumulated_pes_payload: Vec<u8> = Vec::new();
-    let minimum_decode_time: u64 = u64::MAX;
-    let mut index = 0usize;
+  let mut video_ts_extractor: Option<Box<dyn TSExtractor>> = None;
+  let mut audio_ts_extractor: Option<Box<dyn TSExtractor>> = None;
+  // let mut aac_extractor = AACExtractor::create();
+  let mut index = 0usize;
 
-    let mut pat: ProgramAssociationTable;
-    let mut pmt: ProgramMapTable;
+  let mut pat: ProgramAssociationTable;
+  let mut pmt: ProgramMapTable;
 
-    let mut program_map_pid: u16 = u16::max_value();
-    let mut video_elem_pid = u16::max_value();
-    let mut audio_elem_pid = u16::max_value();
+  let mut program_map_pid: u16 = u16::max_value();
+  let mut video_elem_pid = u16::max_value();
+  let mut audio_elem_pid = u16::max_value();
 
-    let mut counter = 0;
-    let mut total_video_frames = 0;
+  // AAC
+  // aac_extractor.listen_for_init_data(|adts_frame| {
+  //   let init_segment = Mp4Writer::create_mp4_writer()
+  //     // .timescale(timescale)
+  //     .build_init_segment();
+  // });
 
-    avc_extractor.listen_for_init_data(|sps, pps| {
-        println!("SPS DATA: {:02X?}", sps);
-        println!("PPS DATA: {:?}", pps);
-        let init_segment = Mp4Writer::create_mp4_writer()
-          .timescale(90000)
-          .sps(sps)
-          .pps(pps)
-          .build_init_segment();
+  // aac_extractor.listen_for_media_data(|adts_frame| {
+  //   let init_segment = Mp4Writer::create_mp4_writer()
+  //     // .timescale(timescale)
+  //     .build_init_segment();
+  // });
 
-        match init_segment {
+  while index < ts_file.len() {
+    if ts_file[index] != SYNC_BYTE {
+      // Out of sync so find the next sync point
+      index = index + 1;
+      continue;
+    }
+    let packet = ts_packet::TransportPacket::parse(ts_file[index..(index + TS_PACKET_SIZE)].as_ref())?;
+    // ProgramAssociationTable
+    if packet.pid == 0 {
+      pat = ProgramAssociationTable::parse(packet.data, packet.payload_unit_start_indicator)
+        .unwrap();
+      program_map_pid = pat.program_map_pid;
+    }
+
+    // ProgramMapTable
+    if packet.pid == program_map_pid {
+      pmt = ProgramMapTable::parse(packet.data, packet.payload_unit_start_indicator).unwrap();
+      // Video
+      if let Some(stream_info) = pmt.video_stream_info {
+        video_elem_pid = stream_info.pid;
+        let mut vid_extractor = get_ts_extractor(stream_info.stream_type)?;
+        vid_extractor.listen_for_init_data(|sample_entry_data|{
+          let init_segment = Mp4Writer::create_mp4_writer()
+            .timescale(90000)
+            .handler(HandlerType::VIDE)
+            .build_init_segment(sample_entry_data);
+          
+          match init_segment {
             Ok(x) => {
-              let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_init.mp4").unwrap();
+              let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_video_init.mp4").unwrap();
               match file.write_all(&x) {
                   Ok(_) => {println!("FINISHED WRITING SEGMENT!!!")}
                   Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
@@ -60,222 +80,88 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
             Err(err) => {
               println!("{:?}", err);
             }
-        }
-    });
-    avc_extractor.listen_for_media_data(|media| {
-      println!("LISTEN MEDIA DATA");
-      let media_segment = Mp4Writer::create_mp4_writer()
-          .timescale(90000)
-          .nals(media.clone())
-          .build_media_segment();
+          }
+        });
 
-      match media_segment {
+        vid_extractor.listen_for_media_data(|media_data|{
+           let media_segment = Mp4Writer::create_mp4_writer()
+            .timescale(90000)
+            .samples(media_data)
+            .build_media_segment();
+        });
+        video_ts_extractor = Some(vid_extractor);
+      }
+      // Audio
+      if let Some(stream_info) = pmt.audio_stream_info {
+        audio_elem_pid = stream_info.pid;
+        let mut audio_extractor = get_ts_extractor(stream_info.stream_type)?;
+        audio_extractor.listen_for_init_data(|sample_entry_data|{
+          let init_segment = Mp4Writer::create_mp4_writer()
+            .timescale(90000)
+            .handler(HandlerType::SOUN)
+            .build_init_segment(sample_entry_data);
+          
+          match init_segment {
             Ok(x) => {
-              let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_media.mp4").unwrap();
+              let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_audio_init.mp4").unwrap();
               match file.write_all(&x) {
-                  Ok(_) => {println!("FINISHED WRITING MEDIA SEGMENT!!!")}
-                  Err(_) => {println!("FUCKED UP WRITING MEDIA SEGMENT")}
+                  Ok(_) => {println!("FINISHED WRITING SEGMENT!!!")}
+                  Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
               }
             }
             Err(err) => {
               println!("{:?}", err);
             }
-        }
-    });
-
-    while index < ts_file.len() {
-      if ts_file[index] != SYNC_BYTE {
-        // Out of sync so find the next sync point
-        index = index + 1;
-        continue;
+          }
+        });
+        audio_ts_extractor = Some(audio_extractor);
       }
-      let packet = ts_packet::TransportPacket::parse(ts_file[index..(index + TS_PACKET_SIZE)].as_ref())?;
-      // ProgramAssociationTable
-      if packet.pid == 0 {
-        pat = ProgramAssociationTable::parse(packet.data, packet.payload_unit_start_indicator)
-          .unwrap();
-        program_map_pid = pat.program_map_pid;
-      }
-
-      // ProgramMapTable
-      if packet.pid == program_map_pid {
-        pmt = ProgramMapTable::parse(packet.data, packet.payload_unit_start_indicator).unwrap();
-        // Video
-        if let Some(stream_info) = pmt.video_stream_info {
-          video_elem_pid = stream_info.pid;
-        }
-        // Audio
-        if let Some(stream_info) = pmt.audio_stream_info {
-          audio_elem_pid = stream_info.pid;
-        }
-      }
-
-      // Video PES
-      if packet.pid == video_elem_pid {
-        counter = counter + 1;
-        let pes = pes_packet::PESPacket::parse(packet.data)?;
-        avc_extractor.accumulate_pes_payload(pes);
-      }
-
-      // Audio PES
-      if packet.pid == audio_elem_pid {
-          println!("AUDIO PID");
-      }
-
-      index = index + TS_PACKET_SIZE;
     }
-    avc_extractor.flush_final_media();
-    println!("TOTAL VIDEO PACKETS {}", counter);
-    Ok((vec![], vec![]))
+
+    // Video PES
+    if packet.pid == video_elem_pid {
+      // let pes = pes_packet::PESPacket::parse(packet.data)?;
+      // avc_extractor.accumulate_pes_payload(pes)?;
+    }
+
+    // Audio PES
+    if packet.pid == audio_elem_pid {
+      // match pmt.audio_stream_info.unwrap().stream_type {
+
+      // }
+      let pes = pes_packet::PESPacket::parse(packet.data)?;
+      // println!("AUDIO PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
+      // println!("PES DATA: {:02X?}", pes.payload_data);
+      // panic!("DONE");
+      // if let Some(mut audio_extractor) = audio_ts_extractor.as_ref() {
+      //   audio_extractor.accumulate_pes_payload(pes)?;
+      // }
+      audio_ts_extractor
+        .as_mut()
+        .and_then(|x| {
+          x.accumulate_pes_payload(pes).ok()
+          // Some(())
+        });
+    }
+
+    index = index + TS_PACKET_SIZE;
+  }
+  // avc_extractor.flush_final_media();
+  if let Some(mut extractor) = video_ts_extractor {
+    extractor.flush_final_media()?;
+  }
+
+  if let Some(mut extractor) = audio_ts_extractor {
+    extractor.flush_final_media()?;
+  }
+  // aac_extractor.flush_final_media()?;
+  Ok((vec![], vec![]))
 }
 
 pub fn remux_ts_to_mp4_media_only(ts_file: &[u8]) -> Result<Vec<u8>, CustomError> {
     // TODO
     Ok(vec![])
 }
-
-struct AVCExtracter<IF, MF>
-where
-  IF: Fn(&Vec<u8>, &Vec<u8>),
-  MF: Fn(&Vec<NalRep>),
-{
-  sps_nal: Vec<u8>,
-  pps_nal: Vec<u8>,
-  media_nal: Vec<NalRep>,
-  bucket: Vec<u8>,
-  init_callback: Option<IF>,
-  media_callback: Option<MF>,
-  signed_comp_offset: bool,
-  all_same_timestamps: bool,
-  current_pts: u64,
-  current_dts: u64,
-}
-
-impl<IF, MF> AVCExtracter<IF, MF>
-where
-  IF: Fn(&Vec<u8>, &Vec<u8>),
-  MF: Fn(&Vec<NalRep>),
-{
-  fn is_all_same_timestamps(self) -> bool {
-    self.all_same_timestamps
-  }
-
-  fn is_signed_comp_offset(self) -> bool {
-    self.signed_comp_offset
-  }
-
-  fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) {
-    let mut index: usize = 0;
-    let mut nal_start_index = index;
-    let pes_payload = pes.payload_data;
-
-    loop {
-      if (index + 4) >= pes_payload.len() { // If the next 4 bytes is greater than the total payload, add it to the bucket for the next pes payload
-          let mut leftover: Vec<u8> = pes_payload[nal_start_index..pes_payload.len()].to_vec();
-          self.bucket.append(&mut leftover);
-          break;
-      }
-      let boundary = NALUnit::find_boundary(index, pes_payload);
-      if boundary == -1 { // If no nal boundary is found, increment the index and continue searching for the next boundary
-          index += 1;
-          continue;
-      }
-      let mut nal_unit: Vec<u8> = vec![];
-      if !self.bucket.is_empty() {
-        nal_unit = self.bucket.clone();
-        self.bucket.clear();
-      }
-
-      if nal_start_index != index {
-        let mut part_payload: Vec<u8> = pes_payload[nal_start_index..index].to_vec();
-        nal_unit.append(&mut part_payload);
-      }
-
-      if !nal_unit.is_empty() {
-        let nal_unit_value = nal_unit[0] & 0x1F;
-        let nal_type = match NALType::get_type(nal_unit_value) {
-          Ok(nal_type) => nal_type,
-          Err(err) => {
-            println!("ERROR!!");
-            println!("{}", err.to_string());
-            continue;
-          }
-        };
-
-        self.handle_nal_unit(nal_type, &nal_unit);
-        // Have the data to create the init segment
-        if self.sps_nal.len() > 0 && self.pps_nal.len() > 0 {
-            if let Some(cb) = &self.init_callback {
-                let sps = self.sps_nal[0..].to_vec();
-                let pps = self.pps_nal[0..].to_vec();
-                self.sps_nal.clear();
-                self.pps_nal.clear();
-                cb(&sps, &pps);
-            }
-        }
-      }
-      index += boundary as usize;
-      nal_start_index = index;
-    }
-
-    if let Some(pts) = pes.pts {
-      // Can assume dts is there because the pes parser will set it if its not there
-      let dts = pes.dts.unwrap();
-      // Set the flag that the composition offset will be negative. Will set the version in trun to 1
-      if dts > pts {
-        self.signed_comp_offset = true;
-      }
-
-      // Determine if we'll need to set the compoisiton offset in the trun
-      if pts > dts {
-        self.all_same_timestamps = false;
-      }
-
-      self.current_pts = pts;
-      self.current_dts = dts;
-    }
-  }
-
-  fn listen_for_init_data(&mut self, callback: IF) -> &Self {
-      self.init_callback = Some(callback);
-      return self;
-  }
-
-  fn listen_for_media_data(&mut self, callback: MF) -> &Self {
-      self.media_callback = Some(callback);
-      return self;
-  }
-
-  fn handle_nal_unit(&mut self, nal_type: NALType, nal_unit: &[u8]) {
-    match nal_type {
-      NALType::SPS => {
-        self.sps_nal = nal_unit.to_vec();
-      }
-      NALType::PPS => self.pps_nal = nal_unit.to_vec(),
-      NALType::AUD => {}
-      _ => {
-        self.media_nal.push(NalRep{
-          nal_unit: nal_unit.to_vec(),
-          pts: self.current_pts,
-          dts: self.current_dts,
-        })
-      }
-    }
-  }
-
-  fn flush_final_media(&mut self) {
-    self.media_nal.push(NalRep{
-          nal_unit: self.bucket.to_vec(),
-          pts: self.current_pts,
-          dts: self.current_dts,
-        });
-    if let Some(cb) = &self.media_callback {
-      cb(&self.media_nal);
-    }
-  }
-}
-
-use crate::error::{construct_error, error_code::{RemuxMinorCode, MajorCode}};
 
 pub fn generate_error(message: String) -> CustomError {
   return  construct_error(
@@ -284,4 +170,23 @@ pub fn generate_error(message: String) -> CustomError {
     message,
     file!(), 
     line!());
+}
+
+pub fn map_sample_frequency_index(index: u8) -> u32 {
+  match index {
+    0x0 => 96000,
+    0x1 => 88200,
+    0x2 => 64000,
+    0x3 => 48000,
+    0x4 => 44100,
+    0x5 => 32000,
+    0x6 => 24000,
+    0x7 => 22050,
+    0x8 => 16000,
+    0x9 => 12000,
+    0xA => 11025,
+    0xB => 8000,
+    0xC => 7350,
+    _ => 0
+  }
 }

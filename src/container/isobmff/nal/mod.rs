@@ -1,6 +1,6 @@
 pub mod nal_unit;
 
-use crate::error::{CustomError, construct_error, error_code::NalMinorCode};
+use crate::{error::{CustomError, construct_error, error_code::NalMinorCode}, util};
 use std::fmt::Debug;
 
 #[derive(Clone)]
@@ -18,6 +18,24 @@ impl Debug for NalRep {
         .key(&"nal_unit: ").value(&self.nal_unit.len())
         .finish()
     }
+}
+
+impl NalRep {
+  /// Generate a nal unit based off of the nal bytestream
+  // NOTE (benjamintoofer@gmail.com): This is wrong. Need to dynamically set the size array based on the
+  // nal_header_size.
+  pub fn from_annex_b(&self, nal_header_size: usize) -> Vec<u8>{
+    let nal_size = self.nal_unit.len() + nal_header_size;
+    let nal_size_array = util::transform_u32_to_u8_array(nal_size as u32).to_vec();
+    [
+      vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
+      self.nal_unit.to_owned()
+    ].concat()
+  }
+  /// Generate a nal bytestream
+  fn to_annex_b() -> Vec<u8> {
+    todo!("Implement the NalRep.to_annex_b")
+  }
 }
 
 // ffmpeg -i in.264 -c copy -bsf:v trace_headers -f null - 2> NALUS.txt

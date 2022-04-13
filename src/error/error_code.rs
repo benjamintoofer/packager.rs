@@ -4,6 +4,7 @@ pub trait MinorError {
   fn code(&self) -> u8;
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum MajorCode {
   ISOBMFF           = 0,
@@ -24,7 +25,8 @@ pub enum ISOBMFFMinorCode {
 #[allow(non_camel_case_types)]
 #[derive(Debug, Eq, PartialEq)]
 pub enum TransportStreamMinorCode {
-  PARSE_TS_ERROR  = 0,
+  PARSE_TS_ERROR           = 0,
+  UNSUPPORTED_ADTS_PARSING = 1,
 }
 
 #[allow(non_camel_case_types)]
@@ -53,6 +55,7 @@ pub enum NalMinorCode {
 #[derive(Debug, Eq, PartialEq)]
 pub enum RemuxMinorCode {
   MISSING_BUILDER_DEPENDENCY_ERROR = 0,
+  UNKNOWN_STREAM_TYPE =  1,
 }
 
 impl MinorError for ISOBMFFMinorCode {
@@ -75,12 +78,14 @@ impl MinorError for TransportStreamMinorCode {
     fn message(&self) -> String {
       match self {
           TransportStreamMinorCode::PARSE_TS_ERROR => { "Unable to parse transport stream".to_string() }
+          TransportStreamMinorCode::UNSUPPORTED_ADTS_PARSING => { "Unable to parse audio data transport stream".to_string() }
       }
     }
 
     fn code(&self) -> u8 {
       match self {
           TransportStreamMinorCode::PARSE_TS_ERROR => { TransportStreamMinorCode::PARSE_TS_ERROR as u8 }
+          TransportStreamMinorCode::UNSUPPORTED_ADTS_PARSING => {TransportStreamMinorCode::UNSUPPORTED_ADTS_PARSING as u8 }
       }
     }
 }
@@ -134,12 +139,14 @@ impl MinorError for RemuxMinorCode {
   fn message(&self) -> String {
     match self {
       RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR => { "Missing a dependency required for the builder".to_string() }
+      RemuxMinorCode::UNKNOWN_STREAM_TYPE => { "Uknown elementary stream type".to_string() }
     }
   }
 
   fn code(&self) -> u8 {
     match self {
       RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR => { RemuxMinorCode::MISSING_BUILDER_DEPENDENCY_ERROR as u8 }
+      RemuxMinorCode::UNKNOWN_STREAM_TYPE => { RemuxMinorCode::UNKNOWN_STREAM_TYPE as u8 }
     }
   }
 }

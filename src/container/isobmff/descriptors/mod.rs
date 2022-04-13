@@ -1,6 +1,8 @@
 pub mod es_descriptor;
 pub mod dec_config_descriptor;
 pub mod aac_audio_specific_config;
+pub mod sl_config_descriptor;
+
 #[allow(non_camel_case_types)]
 pub enum DescriptorTags {
   FORBIDDEN,
@@ -8,7 +10,8 @@ pub enum DescriptorTags {
   INITIAL_OBJ_DESC,
   ES_DESC,
   DECODER_CONFIG_DESC,
-  DEC_SPECIFIC_INFO, 
+  DEC_SPECIFIC_INFO,
+  SL_CONNFIG_DESC
   // NOTE (benjamintoofer@gmail.com): There are more tags. Add if necessary.
 }
 
@@ -21,6 +24,7 @@ impl DescriptorTags {
         DescriptorTags::ES_DESC => {3u8}
         DescriptorTags::DECODER_CONFIG_DESC => {4u8}
         DescriptorTags::DEC_SPECIFIC_INFO => {5u8}
+        DescriptorTags::SL_CONNFIG_DESC => {6u8}
     }
   }
 }
@@ -52,4 +56,19 @@ pub fn get_expandable_size(data: &[u8], offset: &mut usize) -> u32 {
   }
 
   size_of_instance
+}
+
+#[cfg(test)]
+mod tests {
+
+  use super::*;
+
+  #[test]
+  fn test_get_expandable_size() {
+    let expandable_size_length: [u8; 4] = [
+      0x80, 0x80, 0x80, 0x25
+    ];
+    let length = get_expandable_size(&expandable_size_length, &mut 0);
+    assert_eq!(length, 37);
+  }
 }

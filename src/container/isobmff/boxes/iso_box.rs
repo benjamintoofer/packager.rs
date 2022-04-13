@@ -94,7 +94,8 @@ pub fn get_box<'a>(search_box: &str, offset: usize, current_box_data: &'a [u8]) 
         Box::new(ISOBMFFMinorCode::UNABLE_TO_FIND_BOX_ERROR),
         format!("{}: Unable to find box", search_box),
         file!(),
-        line!()))
+        line!())
+      )
     }
 }
 
