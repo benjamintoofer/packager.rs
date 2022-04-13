@@ -1,5 +1,7 @@
-use crate::{container::{isobmff::{boxes::{ftyp::FTYPBuilder, hdlr::HDLRBuilder, mdat::MDATBuilder, mdhd::MDHDBuilder, mdia::MDIABuilder, minf::MINFBuilder, moof::MOOFBuilder, moov::MOOVBuilder, mvex::MVEXBuilder, mvhd::MVHDBuilder, stbl::STBLBuilder, stsd::STSDBuilder, tfdt::TFDTBuilder, tfhd::TFHDBuilder, tkhd::TKHDBuilder, traf::TRAFBuilder, trak::TRAKBuilder, trex::TREXBuilder, trun::TRUNBuilder, vmhd::VMHDBuilder}}}, error::CustomError};
+use crate::{container::{isobmff::{boxes::{ftyp::FTYPBuilder, hdlr::HDLRBuilder, mdat::MDATBuilder, mdhd::MDHDBuilder, mdia::MDIABuilder, minf::MINFBuilder, moof::MOOFBuilder, moov::MOOVBuilder, mvex::MVEXBuilder, mvhd::MVHDBuilder, stbl::STBLBuilder, stsd::STSDBuilder, tfdt::TFDTBuilder, tfhd::TFHDBuilder, tkhd::TKHDBuilder, traf::TRAFBuilder, trak::TRAKBuilder, trex::TREXBuilder, trun::TRUNBuilder, vmhd::VMHDBuilder, smhd::SMHDBuilder}}}, error::CustomError};
 use crate::container::isobmff::HandlerType;
+use crate::error::{construct_error, error_code::{MajorCode, TransportStreamMinorCode}};
+use crate::container::isobmff::BoxBuilder;
 
 #[derive(Clone)]
 pub struct SampleInfo {
@@ -12,6 +14,7 @@ pub struct Mp4Writer{
   width: usize,
   height: usize,
   timescale: usize,
+  handler_type: Option<HandlerType>
 }
 
 impl Mp4Writer {
@@ -22,6 +25,7 @@ impl Mp4Writer {
       width: 0,
       height: 0,
       samples: vec![],
+      handler_type: None
     }
   }
 }
@@ -48,7 +52,24 @@ impl Mp4Writer {
     self
   }
 
+  pub fn handler(mut self, handler_type: HandlerType) -> Mp4Writer {
+    self.handler_type = Some(handler_type);
+    self
+  }
+
   pub fn build_init_segment(self, sample_entry: Vec<u8>) -> Result<Vec<u8>, CustomError> {
+    let handler_type = self.handler_type.ok_or_else(||construct_error(
+      MajorCode::REMUX,
+      Box::new(TransportStreamMinorCode::PARSE_TS_ERROR),
+      "Handler type not set".to_string(),
+      file!(),
+      line!()))?;
+    let media_header: Box<BoxBuilder> = match handler_type {
+      HandlerType::VIDE => Box::new(VMHDBuilder::create_builder()),
+      HandlerType::SOUN => Box::new(SMHDBuilder::create_builder()),
+      _ => Box::new(VMHDBuilder::create_builder())
+    };
+
     Ok([
       FTYPBuilder::create_builder().build(),
       MOOVBuilder::create_builder()
@@ -72,11 +93,11 @@ impl Mp4Writer {
                 )
                 .hdlr(
                   HDLRBuilder::create_builder()
-                    .handler_type(HandlerType::VIDE) //CHANGE THIS
+                    .handler_type(handler_type) //CHANGE THIS
                 )
                 .minf(
                   MINFBuilder::create_builder()
-                    .media_header(Box::new(VMHDBuilder::create_builder()))
+                    .media_header(media_header)
                     .stbl(
                       STBLBuilder::create_builder()
                         .stsd(

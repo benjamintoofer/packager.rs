@@ -88,7 +88,7 @@ impl BoxBuilder for MP4ASampleEntryBuilder {
         // size
         size_array[3], size_array[2], size_array[1], size_array[0],
         // mp4a
-        0x61, 0x76, 0x63, 0x31,
+        0x6D, 0x70, 0x34, 0x61,
       ],
       sample_entry,
       audio_sample_entry,
@@ -96,6 +96,79 @@ impl BoxBuilder for MP4ASampleEntryBuilder {
     ].concat();
 
     Ok(mp4a)
+  }
+}
 
+#[cfg(test)]
+mod tests {
+
+  use super::*;
+  use crate::container::isobmff::descriptors::aac_audio_specific_config::AACAudioSpecificConfigBuilder;
+  use crate::container::isobmff::descriptors::dec_config_descriptor::DecoderConfigDescriptorBuilder;
+
+  #[test]
+  fn test_mp4a_sample_entry_builder() {
+    let expected_mp4a_sample_entry: [u8; 87] = [
+      // mp4a
+      0x00, 0x00, 0x00, 0x57,
+      0x6D, 0x70, 0x34, 0x61,
+      // sample entry
+      0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x01,
+      // audio sample entry
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x06,
+      0x00, 0x10,
+      0x00, 0x00,
+      0x00, 0x00,
+      0x00, 0x00, 0xAC, 0x44,
+      // esds
+      0x00, 0x00, 0x00, 0x33,
+      0x65, 0x73, 0x64, 0x73,
+      0x00, 0x00, 0x00, 0x00,
+      0x03,
+      0x80, 0x80, 0x80, 0x1F,
+      0x00, 0x00,
+      0x00,
+      0x04,
+      0x80, 0x80, 0x80, 0x14,
+      0x40,
+      0x15,
+      0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x00,
+      0x05,
+      0x80, 0x80, 0x80, 0x02,
+      0x12, 0x30,
+      // SLConfigDescriptor
+      0x06,
+      0x80, 0x80, 0x80, 0x01,
+      0x02
+    ]; 
+    let actual_mp4a_sample_entry = MP4ASampleEntryBuilder::create_builder()
+      .sample_entry(
+        SampleEntryBuilder::create_builder()
+      )
+      .audio_sample_entry(
+        AudioSampleEntryBuilder::create_builder()
+          .channel_count(6)
+          .sample_rate(44100)
+      )
+      .esds(
+        ESDescriptorBuidler::create_builder()
+          .dec_conf_desc(
+            DecoderConfigDescriptorBuilder::create_builder()
+              .aac_audio_specific_config(
+                AACAudioSpecificConfigBuilder::create_builder()
+                  .channel_count(6)
+                  .sampling_frequency_index(4)
+              )
+          )
+      )
+      .build()
+      .unwrap();
+    
+    assert_eq!(actual_mp4a_sample_entry, expected_mp4a_sample_entry);
   }
 }

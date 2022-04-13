@@ -3,17 +3,17 @@ use crate::util::bit_reader::BitReader;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct ADTSHeader {
-  id_version: u8,
-  profile: u8,
-  sampling_frequency_index: u8,
-  channel_configuration: u8,
-  frame_length: u16,
-  crc: Option<u16>
+  pub id_version: u8,
+  pub profile: u8,
+  pub sampling_frequency_index: u8,
+  pub channel_configuration: u8,
+  pub frame_length: u16,
+  pub crc: Option<u16>
 }
 
 #[derive(Debug)]
 pub struct ADTSFrame {
-  header: ADTSHeader,
+  pub header: ADTSHeader,
   pub data: Vec<u8>,
 }
 

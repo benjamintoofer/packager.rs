@@ -4,22 +4,15 @@ use crate::error::CustomError;
 // MediaDataBox 14496-12; 8.1.1
 
 pub struct MDATBuilder {
-  // nal_units: Vec<NalRep>
   media_data: Vec<u8>
 }
 
 impl MDATBuilder {
   pub fn create_builder() -> MDATBuilder {
     MDATBuilder{
-      // nal_units: vec![],
       media_data: vec![],
     }
   }
-
-  // pub fn nal_units(mut self, nal_units: Vec<NalRep>) -> MDATBuilder {
-  //   self.nal_units = nal_units;
-  //   self
-  // }
 
   pub fn media_data(mut self, media_data: Vec<u8>) -> MDATBuilder {
     self.media_data = media_data;
@@ -59,28 +52,6 @@ impl MDATBuilder {
     }
     sample_stream
   }
-
-  // pub fn convert_nal_units(nal_units: Vec<NalRep>) -> Vec<u8> {
-  //   let all_nal_size: usize = nal_units
-  //     .iter()
-  //     .map(|nal_unit|nal_unit.nal_unit.len() + 4)
-  //     .sum();
-  //   let mut nal_stream: Vec<u8> = vec![0; all_nal_size];
-  //   let mut index = 0usize;
-  //   for nal_unit in nal_units {
-  //     let nal_size: u32 = nal_unit.nal_unit.len() as u32;
-  //     let nal_size_array = util::transform_u32_to_u8_array(nal_size).to_vec();
-  //     let data = [
-  //       vec![nal_size_array[3],nal_size_array[2],nal_size_array[1],nal_size_array[0]],
-  //       nal_unit.nal_unit
-  //     ].concat();
-  //     let start = index;
-  //     let end = start + data.len();
-  //     nal_stream.splice(start..end, data.into_iter());
-  //     index = end;
-  //   }
-  //   nal_stream
-  // }
 
   pub fn convert_adts_frames(adts_frames: Vec<ADTSFrame>) -> Vec<u8> {
     let all_adts_size: usize = adts_frames

@@ -4,6 +4,7 @@ use crate::container::transport_stream::{
 };
 use crate::container::writer::mp4_writer::Mp4Writer;
 use crate::error::CustomError;
+use crate::container::isobmff::HandlerType;
 use crate::container::remux::extractor::{TSExtractor,get_ts_extractor};
 use crate::error::{construct_error, error_code::{RemuxMinorCode, MajorCode}};
 
@@ -65,6 +66,7 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
         vid_extractor.listen_for_init_data(|sample_entry_data|{
           let init_segment = Mp4Writer::create_mp4_writer()
             .timescale(90000)
+            .handler(HandlerType::VIDE)
             .build_init_segment(sample_entry_data);
           
           match init_segment {
@@ -96,6 +98,7 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
         audio_extractor.listen_for_init_data(|sample_entry_data|{
           let init_segment = Mp4Writer::create_mp4_writer()
             .timescale(90000)
+            .handler(HandlerType::SOUN)
             .build_init_segment(sample_entry_data);
           
           match init_segment {
@@ -127,10 +130,18 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
 
       // }
       let pes = pes_packet::PESPacket::parse(packet.data)?;
-      println!("AUDIO PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
-      println!("PES DATA: {:02X?}", pes.payload_data);
-      panic!("DONE");
-      // aac_extractor.accumulate_pes_payload(pes)?;
+      // println!("AUDIO PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
+      // println!("PES DATA: {:02X?}", pes.payload_data);
+      // panic!("DONE");
+      // if let Some(mut audio_extractor) = audio_ts_extractor.as_ref() {
+      //   audio_extractor.accumulate_pes_payload(pes)?;
+      // }
+      audio_ts_extractor
+        .as_mut()
+        .and_then(|x| {
+          x.accumulate_pes_payload(pes).ok()
+          // Some(())
+        });
     }
 
     index = index + TS_PACKET_SIZE;
@@ -159,4 +170,23 @@ pub fn generate_error(message: String) -> CustomError {
     message,
     file!(), 
     line!());
+}
+
+pub fn map_sample_frequency_index(index: u8) -> u32 {
+  match index {
+    0x0 => 96000,
+    0x1 => 88200,
+    0x2 => 64000,
+    0x3 => 48000,
+    0x4 => 44100,
+    0x5 => 32000,
+    0x6 => 24000,
+    0x7 => 22050,
+    0x8 => 16000,
+    0x9 => 12000,
+    0xA => 11025,
+    0xB => 8000,
+    0xC => 7350,
+    _ => 0
+  }
 }
