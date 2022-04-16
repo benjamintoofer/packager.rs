@@ -24,7 +24,7 @@ impl MP4ASampleEntry {
       .map(|es_data| ESDescriptor::parse(es_data))
       .expect("Cannot parse ESDescriptor");
 
-      // TODO (benjamintoofer@gmail.com): Add proper error handling around this.
+    // TODO (benjamintoofer@gmail.com): Add proper error handling around this.
 
     MP4ASampleEntry {
       sample_entry,

@@ -49,13 +49,12 @@ impl<'a> PESPacket<'a> {
     let pes_packet_length = util::get_u16(payload, offset)?;
     // Skip 1 byte + 2 bytes for packet length
     offset += 3;
-    println!("STEAM ID :: {}", stream_id);
+
     if
       (stream_id) == 0b10111101 || // Checking if private_stream_1 for E-AC-3 or AC-3
       (stream_id >> 4) == 0b1110 || // Checking if ISO/IEC 13818-3 or ISO/IEC 11172-3 or ISO/IEC 13818-7 or ISO/IEC 14496-3 audio stream number x xxxx
       (stream_id >> 5) == 0b110 // Checking if ITU-T Rec. H.262 | ISO/IEC 13818-2 or ISO/IEC 11172-2 or ISO/IEC 14496-2 video stream number xxxx
     {
-      println!("IM IN HERE");
       let pts_dts_flags = util::get_u8(payload, offset)?;
       offset += 1;
       let pes_header_data_length = util::get_u8(payload, offset)?;
