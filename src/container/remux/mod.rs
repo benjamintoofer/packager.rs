@@ -1,3 +1,4 @@
+use std::{fs::File, io::Write};
 use crate::container::transport_stream::{
     pes_packet, program_association_table::ProgramAssociationTable,
     program_map_table::ProgramMapTable, ts_packet,
@@ -7,11 +8,8 @@ use crate::error::CustomError;
 use crate::container::isobmff::HandlerType;
 use crate::container::remux::extractor::{TSExtractor,get_ts_extractor};
 use crate::error::{construct_error, error_code::{RemuxMinorCode, MajorCode}};
+use crate::container::transport_stream::elementary_stream_type::ElementaryStreamType;
 
-use core::panic;
-use std::{fs::File, io::Write};
-
-use super::transport_stream::elementary_stream_type::ElementaryStreamType;
 
 pub mod extractor;
 
@@ -78,18 +76,11 @@ pub fn remux_ts_to_mp4(ts_file: &[u8]) -> Result<(Vec<u8>, Vec<u8>), CustomError
     // Audio PES
     if packet.pid == audio_elem_pid {
       let pes = pes_packet::PESPacket::parse(packet.data)?;
-      // println!("AUDIO PTS: {:?}; DTS: {:?}", pes.pts, pes.dts);
-      // println!("PES DATA: {:02X?}", pes.payload_data);
-      
-      // if let Some(mut audio_extractor) = audio_ts_extractor.as_ref() {
-      //   audio_extractor.accumulate_pes_payload(pes)?;
-      // }
       audio_ts_extractor
         .as_mut()
         .and_then(|tse| {
           tse.accumulate_pes_payload(pes).ok()
         });
-      // panic!("DONE");
     }
 
     index = index + TS_PACKET_SIZE;

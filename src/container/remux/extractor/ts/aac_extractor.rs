@@ -14,7 +14,6 @@ pub struct AACExtractor {
 impl TSExtractor for AACExtractor {
   fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) -> Result<(), CustomError> {
     // Flush bucket since we are encountering a new ADTS sequence
-    // println!("PTS IS SOME {} && BUCKET NOT EMPTY {}", pes.pts.is_some(), !self.bucket.is_empty());
     if pes.pts.is_some() && !self.bucket.is_empty() {
       let adts_packet = self.bucket.clone();
       self.bucket.clear();
@@ -26,7 +25,6 @@ impl TSExtractor for AACExtractor {
           return std::mem::take(frame)
         })
         .collect();
-      // println!("ADTS FRAME DATA: {:02X?}", adts_frames[0].data);
       self.adts_frames.append(&mut adts_frames);
 
       // If we have an aac frame, we can immediatley begin generating the init segment

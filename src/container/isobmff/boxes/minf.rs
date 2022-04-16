@@ -67,17 +67,9 @@ impl BoxBuilder for MINFBuilder {
 mod tests {
 
   use super::*;
-  use crate::{container::isobmff::boxes::vmhd::VMHDBuilder, error::CustomError};
+  use crate::container::isobmff::boxes::vmhd::VMHDBuilder;
   use crate::container::isobmff::boxes::stbl::STBLBuilder;
   use crate::container::isobmff::boxes::stsd::STSDBuilder;
-
-  // struct MockHandler {}
-
-  // impl BoxBuilder for MockHandler {
-  //   fn build(&self) -> Result<Vec<u8>, CustomError> {
-  //     Ok(vec![0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
-  //   }
-  // }
 
   #[test]
   fn test_build_minf() {
