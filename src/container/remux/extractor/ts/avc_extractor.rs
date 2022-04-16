@@ -117,6 +117,7 @@ impl TSExtractor for AVCExtractor {
       pts: self.current_pts,
       dts: self.current_dts,
     });
+    
     if let Some(cb) = &self.media_callback {
       cb(AVCExtractor::convert_nal_units_to_sample_infos(self.media_nal.to_owned()));
     }

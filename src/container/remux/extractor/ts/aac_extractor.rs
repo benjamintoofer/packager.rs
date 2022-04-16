@@ -14,15 +14,23 @@ pub struct AACExtractor {
 impl TSExtractor for AACExtractor {
   fn accumulate_pes_payload(&mut self, pes: pes_packet::PESPacket) -> Result<(), CustomError> {
     // Flush bucket since we are encountering a new ADTS sequence
+    // println!("PTS IS SOME {} && BUCKET NOT EMPTY {}", pes.pts.is_some(), !self.bucket.is_empty());
     if pes.pts.is_some() && !self.bucket.is_empty() {
       let adts_packet = self.bucket.clone();
       self.bucket.clear();
+      let mut adts_frames: Vec<ADTSFrame> = ADTS::parse(&adts_packet)?
+        .iter_mut()
+        .map(|frame|{
+          frame.set_pts(self.current_pts);
+          frame.set_dts(self.current_dts);
+          return std::mem::take(frame)
+        })
+        .collect();
+      // println!("ADTS FRAME DATA: {:02X?}", adts_frames[0].data);
+      self.adts_frames.append(&mut adts_frames);
 
-     let mut adts_frames = ADTS::parse(&adts_packet)?;
-     self.adts_frames.append(&mut adts_frames);
-
-     // If we have an aac frame, we can immediatley begin generating the init segment
-     if !self.mp4a_sample_entry_is_set && self.adts_frames.len() > 0 {
+      // If we have an aac frame, we can immediatley begin generating the init segment
+      if !self.mp4a_sample_entry_is_set && self.adts_frames.len() > 0 {
         if let Some(cb) = &self.init_callback {
           let frame = &self.adts_frames[0];
           let sample_entry = MP4ASampleEntryBuilder::create_builder()
@@ -49,7 +57,7 @@ impl TSExtractor for AACExtractor {
           cb(sample_entry);
         }
         self.mp4a_sample_entry_is_set = true;
-     }
+      }
     }
 
     if let Some(pts) = pes.pts {
@@ -59,7 +67,6 @@ impl TSExtractor for AACExtractor {
     }
 
     self.bucket.append(&mut pes.payload_data.to_vec());
-
     Ok(())
   }
 
@@ -72,12 +79,24 @@ impl TSExtractor for AACExtractor {
   }
 
   fn build_sample_entry(self) -> Vec<u8> {
-      todo!()
+    todo!()
   }
 
   fn flush_final_media(&mut self) -> Result<(), CustomError> {
-    let mut adts_frames = ADTS::parse(&self.bucket)?;
+    let mut adts_frames = ADTS::parse(&self.bucket)?
+      .iter_mut()
+      .map(|frame|{
+        frame.set_pts(self.current_pts);
+        frame.set_dts(self.current_dts);
+        return std::mem::take(frame)
+      })
+      .collect();
+    println!("ADTS FRAMES {}", self.adts_frames.len());
     self.adts_frames.append(&mut adts_frames);
+
+    if let Some(cb) = &self.media_callback {
+      cb(AACExtractor::convert_adts_frame_to_sample_infos(std::mem::take(&mut self.adts_frames)));
+    }
     Ok(())
   }
 
@@ -101,5 +120,20 @@ impl AACExtractor {
       media_callback: None,
       mp4a_sample_entry_is_set: false,
     }
+  }
+
+  fn convert_adts_frame_to_sample_infos(adts_frames: Vec<ADTSFrame>) -> Vec<SampleInfo> {
+    let sample_infos: Vec<SampleInfo> = adts_frames
+      .iter() 
+      .map(|af| {
+        // Create the sample data
+        return SampleInfo{
+          data: af.data.to_owned(),
+          dts: af.dts,
+          pts: af.pts,
+        }
+      })
+      .collect();
+    sample_infos
   }
 }

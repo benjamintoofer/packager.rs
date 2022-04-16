@@ -64,7 +64,7 @@ impl Mp4Writer {
       "Handler type not set".to_string(),
       file!(),
       line!()))?;
-    let media_header: Box<BoxBuilder> = match handler_type {
+    let media_header: Box<dyn BoxBuilder> = match handler_type {
       HandlerType::VIDE => Box::new(VMHDBuilder::create_builder()),
       HandlerType::SOUN => Box::new(SMHDBuilder::create_builder()),
       _ => Box::new(VMHDBuilder::create_builder())
@@ -131,7 +131,7 @@ impl Mp4Writer {
           TRAFBuilder::create_builder()
             .tfhd(
               TFHDBuilder::create_builder()
-                .sample_duration(3000) // CHANGE THIS
+                .sample_duration(1024) // CHANGE THIS
                 .track_id(1) // CHANGE THIS
             )
             .tfdt(
