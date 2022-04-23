@@ -4,7 +4,6 @@ use std::str;
 
 use crate::{container::writer::mp4_writer::SampleInfo, iso_box::{IsoBox, IsoFullBox, find_box}};
 use crate::{error::{CustomError, construct_error, error_code::{ISOBMFFMinorCode, MajorCode}}};
-use crate::container::isobmff::nal::NalRep;
 use crate::util;
 
 static CLASS: &str = "TRUN";

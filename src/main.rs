@@ -7,6 +7,8 @@ pub mod media;
 pub mod app;
 pub mod codec;
 
+use std::fs::File;
+use std::io::Write;
 use std::{fs, str::FromStr};
 use std::collections::hash_map::DefaultHasher;
 use uuid::Uuid;
@@ -93,7 +95,19 @@ fn tranmux_test(file_path: &str) {
   if let Ok(ts_file )= fs::read(file_path) {
     let temp = remux_ts_to_mp4(&ts_file);
     match temp {
-        Ok(_) => {}
+        Ok(data) => {
+            let mut file_init = File::create("/Users/benjamintoofer/Desktop/my_own_audio_init_2.mp4").unwrap();
+            match file_init.write_all(&data.audio.init_segment.unwrap()) {
+              Ok(_) => {println!("FINISHED WRITING INIT SEGMENT!!!")}
+              Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
+            }
+
+            let mut file_media = File::create("/Users/benjamintoofer/Desktop/my_own_audio_media_2.mp4").unwrap();
+            match file_media.write_all(&data.audio.media_segment.unwrap()) {
+              Ok(_) => {println!("FINISHED WRITING MEDIA SEGMENT!!!")}
+              Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
+          }
+        }
         Err(err) => {
           println!("{}", err);
         }

@@ -155,7 +155,7 @@ impl MVHD {
 }
 
 pub struct MVHDBuilder {
-  timescale: usize,
+  timescale: u32,
 }
 
 impl MVHDBuilder {
@@ -165,13 +165,13 @@ impl MVHDBuilder {
     }
   }
 
-  pub fn timescale(mut self, timescale: usize) -> MVHDBuilder {
+  pub fn timescale(mut self, timescale: u32) -> MVHDBuilder {
     self.timescale = timescale;
     self
   }
 
   pub fn build(&self) -> Vec<u8> {
-    let timescale_array = util::transform_usize_to_u8_array(self.timescale);
+    let timescale_array = util::transform_u32_to_u8_array(self.timescale);
     // Default to version 0; 32 bit values instead of 64 bit
     vec![
       // Size

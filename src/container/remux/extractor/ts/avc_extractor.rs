@@ -1,4 +1,4 @@
-use crate::{container::{isobmff::nal::NalRep, remux::extractor::TSExtractor, transport_stream::pes_packet, writer::mp4_writer::SampleInfo}, error::CustomError};
+use crate::{container::{isobmff::{nal::NalRep, HandlerType}, remux::extractor::TSExtractor, transport_stream::pes_packet, writer::mp4_writer::{SampleInfo, Mp4Writer}}, error::CustomError};
 use crate::container::isobmff::nal::{nal_unit::NALUnit, NALType};
 use crate::container::isobmff::configuration_records::avcC::AVCDecoderConfigurationRecordBuilder;
 use crate::container::isobmff::sample_entry::{visual_sample_entry::VisualSampleEntryBuilder, sample_entry::SampleEntryBuilder, avc_sample_entry::AVCSampleEntryBuilder};
@@ -10,8 +10,6 @@ pub struct AVCExtractor {
   pps_nal: Vec<u8>,
   media_nal: Vec<NalRep>,
   bucket: Vec<u8>,
-  init_callback: Option<fn(Vec<u8>)>,
-  media_callback: Option<fn(Vec<SampleInfo>)>,
   signed_comp_offset: bool,
   all_same_timestamps: bool,
   current_pts: u64,
@@ -51,29 +49,6 @@ impl TSExtractor for AVCExtractor {
         let nal_type = NALType::get_type(nal_unit_value)?;
 
         self.handle_nal_unit(nal_type, &nal_unit);
-        // Have the data to create the init segment
-        if self.sps_nal.len() > 0 && self.pps_nal.len() > 0 {
-          if let Some(cb) = &self.init_callback {
-            let sps = self.sps_nal[0..].to_vec();
-            let pps = self.pps_nal[0..].to_vec();
-            self.sps_nal.clear();
-            self.pps_nal.clear();
-              let sample_entry = AVCSampleEntryBuilder::create_builder()
-                .sample_entry(
-                  SampleEntryBuilder::create_builder()
-                )
-                .visual_sample_entry(
-                  VisualSampleEntryBuilder::create_builder()
-                    .sps(&sps)
-                )
-                .avc_c(
-                  AVCDecoderConfigurationRecordBuilder::create_builder()
-                    .sps(&sps)
-                    .pps(&pps)
-                ).build()?;
-            cb(sample_entry);
-          }
-        }
       }
       index += boundary as usize;
       nal_start_index = index;
@@ -107,8 +82,29 @@ impl TSExtractor for AVCExtractor {
     self.signed_comp_offset
   }
 
-  fn build_sample_entry(self) -> Vec<u8> {
-      todo!()
+  fn build_sample_entry(&mut self) -> Result<Vec<u8>, CustomError> {
+    if self.sps_nal.len() > 0 && self.pps_nal.len() > 0 {
+      let sps = self.sps_nal[0..].to_vec();
+      let pps = self.pps_nal[0..].to_vec();
+      self.sps_nal.clear();
+      self.pps_nal.clear();
+      return AVCSampleEntryBuilder::create_builder()
+        .sample_entry(
+          SampleEntryBuilder::create_builder()
+        )
+        .visual_sample_entry(
+          VisualSampleEntryBuilder::create_builder()
+            .sps(&sps)
+        )
+        .avc_c(
+          AVCDecoderConfigurationRecordBuilder::create_builder()
+            .sps(&sps)
+            .pps(&pps)
+        ).build();
+    }
+
+    println!("AVCExtractor :: build_sample_entry :: No sps or pps available. Returning empty vector");
+    Ok(vec![])
   }
 
   fn flush_final_media(&mut self) -> Result<(), CustomError> {
@@ -117,20 +113,31 @@ impl TSExtractor for AVCExtractor {
       pts: self.current_pts,
       dts: self.current_dts,
     });
-    
-    if let Some(cb) = &self.media_callback {
-      cb(AVCExtractor::convert_nal_units_to_sample_infos(self.media_nal.to_owned()));
-    }
 
     Ok(())
   }
 
-  fn listen_for_init_data(&mut self, callback: fn(Vec<u8>)) {
-    self.init_callback = Some(callback);
+  fn get_timescale(&self) -> u32 {
+    90000
   }
 
-  fn listen_for_media_data(&mut self, callback: fn(Vec<SampleInfo>)) {
-    self.media_callback = Some(callback);
+  fn get_init_segment(&mut self) -> Result<Vec<u8>, CustomError> {
+    // let temp = self.into();
+    let sample_entry_data = self.build_sample_entry()?.clone();
+    let track_id = 1usize;
+
+    Mp4Writer::create_mp4_writer()
+      .timescale(self.get_timescale())
+      .handler(HandlerType::VIDE)
+      .build_init_segment(sample_entry_data, track_id)
+  }
+
+  fn get_media_segment(&mut self) -> Result<Vec<u8>, CustomError> {
+    let media_data = AVCExtractor::convert_nal_units_to_sample_infos(self.media_nal.to_owned());
+    Mp4Writer::create_mp4_writer()
+      .timescale(self.get_timescale())
+      .samples(media_data)
+      .build_media_segment()
   }
 }
 
@@ -141,8 +148,6 @@ impl AVCExtractor {
       pps_nal: vec![],
       media_nal: vec![],
       bucket: vec![],
-      init_callback: None,
-      media_callback: None,
       all_same_timestamps: true,
       signed_comp_offset: false,
       current_pts: 0,

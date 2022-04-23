@@ -171,7 +171,7 @@ impl MDHDReader {
 }
 
 pub struct MDHDBuilder {
-  timescale: usize,
+  timescale: u32,
   language: &'static str,
 }
 
@@ -183,7 +183,7 @@ impl MDHDBuilder {
     }
   }
 
-  pub fn timescale(mut self, timescale: usize) -> MDHDBuilder {
+  pub fn timescale(mut self, timescale: u32) -> MDHDBuilder {
     self.timescale = timescale;
     self
   }
@@ -194,7 +194,7 @@ impl MDHDBuilder {
   }
 
   pub fn build(&self) -> Result<Vec<u8>, CustomError>{
-    let timescale_array = util::transform_usize_to_u8_array(self.timescale);
+    let timescale_array = util::transform_u32_to_u8_array(self.timescale);
     let langauge = ISO639::adjust_string_to_iso_639_2(self.language)?;
 
     Ok(

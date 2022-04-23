@@ -13,7 +13,7 @@ pub struct Mp4Writer{
   samples: Vec<SampleInfo>,
   width: usize,
   height: usize,
-  timescale: usize,
+  timescale: u32,
   handler_type: Option<HandlerType>
 }
 
@@ -32,7 +32,7 @@ impl Mp4Writer {
 
 impl Mp4Writer {
   
-  pub fn timescale(mut self, timescale: usize) -> Mp4Writer {
+  pub fn timescale(mut self, timescale: u32) -> Mp4Writer {
     self.timescale = timescale;
     self
   }
@@ -57,7 +57,7 @@ impl Mp4Writer {
     self
   }
 
-  pub fn build_init_segment(self, sample_entry: Vec<u8>) -> Result<Vec<u8>, CustomError> {
+  pub fn build_init_segment(self, sample_entry: Vec<u8>, track_id: usize) -> Result<Vec<u8>, CustomError> {
     let handler_type = self.handler_type.ok_or_else(||construct_error(
       MajorCode::REMUX,
       Box::new(TransportStreamMinorCode::PARSE_TS_ERROR),
@@ -81,7 +81,7 @@ impl Mp4Writer {
           TRAKBuilder::create_builder()
             .tkhd(
               TKHDBuilder::create_builder()
-                .track_id(1) // CHANGE THIS
+                .track_id(track_id) 
                 .width(self.width)
                 .height(self.height)
             )

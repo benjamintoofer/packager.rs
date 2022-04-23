@@ -1,4 +1,4 @@
-use crate::{container::{isobmff::{descriptors::{aac_audio_specific_config::AACAudioSpecificConfigBuilder, dec_config_descriptor::DecoderConfigDescriptorBuilder, es_descriptor::ESDescriptorBuidler}, sample_entry::{audio_sample_entry::AudioSampleEntryBuilder, mp4a_sample_entry::MP4ASampleEntryBuilder, sample_entry::SampleEntryBuilder}}, remux::{extractor::TSExtractor, map_sample_frequency_index}, transport_stream::{adts::ADTSFrame, pes_packet, adts::ADTS}, writer::mp4_writer::SampleInfo}, error::CustomError};
+use crate::{container::{isobmff::{descriptors::{aac_audio_specific_config::AACAudioSpecificConfigBuilder, dec_config_descriptor::DecoderConfigDescriptorBuilder, es_descriptor::ESDescriptorBuidler}, sample_entry::{audio_sample_entry::AudioSampleEntryBuilder, mp4a_sample_entry::MP4ASampleEntryBuilder, sample_entry::SampleEntryBuilder}, HandlerType}, remux::{extractor::TSExtractor, map_sample_frequency_index}, transport_stream::{adts::ADTSFrame, pes_packet, adts::ADTS}, writer::mp4_writer::{SampleInfo, Mp4Writer}}, error::CustomError};
 use crate::container::isobmff::BoxBuilder;
 
 pub struct AACExtractor {
@@ -6,9 +6,7 @@ pub struct AACExtractor {
   current_pts: u64,
   current_dts: u64,
   adts_frames: Vec<ADTSFrame>,
-  init_callback: Option<fn(Vec<u8>)>,
-  media_callback: Option<fn(Vec<SampleInfo>)>,
-  mp4a_sample_entry_is_set: bool
+  sample_frequency_index: Option<u8>
 }
 
 impl TSExtractor for AACExtractor {
@@ -26,36 +24,6 @@ impl TSExtractor for AACExtractor {
         })
         .collect();
       self.adts_frames.append(&mut adts_frames);
-
-      // If we have an aac frame, we can immediatley begin generating the init segment
-      if !self.mp4a_sample_entry_is_set && self.adts_frames.len() > 0 {
-        if let Some(cb) = &self.init_callback {
-          let frame = &self.adts_frames[0];
-          let sample_entry = MP4ASampleEntryBuilder::create_builder()
-            .sample_entry(
-              SampleEntryBuilder::create_builder()
-            )
-            .audio_sample_entry(
-              AudioSampleEntryBuilder::create_builder()
-                .channel_count(frame.header.channel_configuration.into())
-                .sample_rate(map_sample_frequency_index(frame.header.sampling_frequency_index))
-            )
-            .esds(
-              ESDescriptorBuidler::create_builder()
-                .dec_conf_desc(
-                  DecoderConfigDescriptorBuilder::create_builder()
-                    .aac_audio_specific_config(
-                      AACAudioSpecificConfigBuilder::create_builder()
-                        .channel_count(frame.header.channel_configuration.into())
-                        .sampling_frequency_index(frame.header.sampling_frequency_index.into())
-                    )
-                )
-            )
-            .build()?;
-          cb(sample_entry);
-        }
-        self.mp4a_sample_entry_is_set = true;
-      }
     }
 
     if let Some(pts) = pes.pts {
@@ -76,14 +44,41 @@ impl TSExtractor for AACExtractor {
     false
   }
 
-  fn build_sample_entry(self) -> Vec<u8> {
-    todo!()
+  fn build_sample_entry(&mut self) -> Result<Vec<u8>, CustomError> {
+    if self.adts_frames.len() > 0 {
+      let frame = &self.adts_frames[0];
+      return MP4ASampleEntryBuilder::create_builder()
+        .sample_entry(
+          SampleEntryBuilder::create_builder()
+        )
+        .audio_sample_entry(
+          AudioSampleEntryBuilder::create_builder()
+            .channel_count(frame.header.channel_configuration.into())
+            .sample_rate(map_sample_frequency_index(frame.header.sampling_frequency_index))
+        )
+        .esds(
+          ESDescriptorBuidler::create_builder()
+            .dec_conf_desc(
+              DecoderConfigDescriptorBuilder::create_builder()
+                .aac_audio_specific_config(
+                  AACAudioSpecificConfigBuilder::create_builder()
+                    .channel_count(frame.header.channel_configuration.into())
+                    .sampling_frequency_index(frame.header.sampling_frequency_index.into())
+                )
+            )
+        )
+        .build();
+    }
+    println!("AACExtractor :: build_sample_entry :: No ADTS frames available. Returning empty vector");
+    Ok(vec![])
   }
 
   fn flush_final_media(&mut self) -> Result<(), CustomError> {
     let mut adts_frames = ADTS::parse(&self.bucket)?
       .iter_mut()
       .map(|frame|{
+        // If the sample_frequency_index has not been set yet, we will store it to be used to determine the timescale for later.
+        self.sample_frequency_index = Some(frame.header.sampling_frequency_index);
         frame.set_pts(self.current_pts);
         frame.set_dts(self.current_dts);
         return std::mem::take(frame)
@@ -92,18 +87,31 @@ impl TSExtractor for AACExtractor {
     println!("ADTS FRAMES {}", self.adts_frames.len());
     self.adts_frames.append(&mut adts_frames);
 
-    if let Some(cb) = &self.media_callback {
-      cb(AACExtractor::convert_adts_frame_to_sample_infos(std::mem::take(&mut self.adts_frames)));
-    }
     Ok(())
   }
 
-  fn listen_for_init_data(&mut self, callback: fn(Vec<u8>)) {
-    self.init_callback = Some(callback);
+  fn get_timescale(&self) -> u32 {
+    self.sample_frequency_index
+      .and_then(|x|Some(map_sample_frequency_index(x)))
+      .unwrap_or_default()
   }
 
-  fn listen_for_media_data(&mut self, callback: fn(Vec<SampleInfo>)) {
-    self.media_callback = Some(callback);
+  fn get_init_segment(&mut self) -> Result<Vec<u8>, CustomError> {
+    let sample_entry_data = self.build_sample_entry()?;
+    let track_id = 2usize;
+
+    Mp4Writer::create_mp4_writer()
+      .timescale(self.get_timescale())
+      .handler(HandlerType::SOUN)
+      .build_init_segment(sample_entry_data, track_id)
+  }
+
+  fn get_media_segment(&mut self) -> Result<Vec<u8>, CustomError> {
+    let media_data = AACExtractor::convert_adts_frame_to_sample_infos(std::mem::take(&mut self.adts_frames));
+    Mp4Writer::create_mp4_writer()
+      .timescale(self.get_timescale())
+      .samples(media_data)
+      .build_media_segment()
   }
 }
 
@@ -114,9 +122,7 @@ impl AACExtractor {
       adts_frames: vec![],
       current_pts: 0,
       current_dts: 0,
-      init_callback: None,
-      media_callback: None,
-      mp4a_sample_entry_is_set: false,
+      sample_frequency_index: None,
     }
   }
 
