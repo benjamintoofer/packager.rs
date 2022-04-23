@@ -14,6 +14,7 @@ pub struct Mp4Writer{
   width: usize,
   height: usize,
   timescale: u32,
+  track_id: usize,
   handler_type: Option<HandlerType>
 }
 
@@ -24,6 +25,7 @@ impl Mp4Writer {
       timescale: 0,
       width: 0,
       height: 0,
+      track_id: 1,
       samples: vec![],
       handler_type: None
     }
@@ -52,12 +54,17 @@ impl Mp4Writer {
     self
   }
 
+  pub fn track_id(mut self, track_id: usize) -> Mp4Writer {
+    self.track_id = track_id;
+    self
+  }
+
   pub fn handler(mut self, handler_type: HandlerType) -> Mp4Writer {
     self.handler_type = Some(handler_type);
     self
   }
 
-  pub fn build_init_segment(self, sample_entry: Vec<u8>, track_id: usize) -> Result<Vec<u8>, CustomError> {
+  pub fn build_init_segment(self, sample_entry: Vec<u8>) -> Result<Vec<u8>, CustomError> {
     let handler_type = self.handler_type.ok_or_else(||construct_error(
       MajorCode::REMUX,
       Box::new(TransportStreamMinorCode::PARSE_TS_ERROR),
@@ -81,7 +88,7 @@ impl Mp4Writer {
           TRAKBuilder::create_builder()
             .tkhd(
               TKHDBuilder::create_builder()
-                .track_id(track_id) 
+                .track_id(self.track_id) 
                 .width(self.width)
                 .height(self.height)
             )
@@ -114,7 +121,7 @@ impl Mp4Writer {
           MVEXBuilder::create_builder()
             .trex(
               TREXBuilder::create_builder()
-                .track_id(1) // CHANGE THIS
+                .track_id(self.track_id) // CHANGE THIS
                 .default_sample_size(0)// CHANGE THIS
                 .default_sample_duration(0) // CHANGE THIS
                 .default_sample_flags(0) // CHANGE THIS
@@ -132,7 +139,7 @@ impl Mp4Writer {
             .tfhd(
               TFHDBuilder::create_builder()
                 .sample_duration(1024) // CHANGE THIS
-                .track_id(1) // CHANGE THIS
+                .track_id(self.track_id) // CHANGE THIS
             )
             .tfdt(
               TFDTBuilder::create_builder()

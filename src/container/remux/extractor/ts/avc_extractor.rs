@@ -129,12 +129,15 @@ impl TSExtractor for AVCExtractor {
     Mp4Writer::create_mp4_writer()
       .timescale(self.get_timescale())
       .handler(HandlerType::VIDE)
-      .build_init_segment(sample_entry_data, track_id)
+      .track_id(track_id)
+      .build_init_segment(sample_entry_data)
   }
 
   fn get_media_segment(&mut self) -> Result<Vec<u8>, CustomError> {
     let media_data = AVCExtractor::convert_nal_units_to_sample_infos(self.media_nal.to_owned());
+    let track_id = 1usize;
     Mp4Writer::create_mp4_writer()
+      .track_id(track_id)
       .timescale(self.get_timescale())
       .samples(media_data)
       .build_media_segment()
