@@ -145,7 +145,9 @@ mod tests {
       .tfhd(
         TFHDBuilder::create_builder()
           .track_id(1)
-          .sample_duration(3000)
+          .sample_duration(Some(3000))
+          .sample_description_index(1)
+          .sample_flags(0x01010000)
       )
       .tfdt(
         TFDTBuilder::create_builder()

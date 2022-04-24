@@ -113,8 +113,13 @@ impl TSExtractor for AACExtractor {
     Mp4Writer::create_mp4_writer()
       .track_id(track_id)
       .timescale(self.get_timescale())
+      .default_sample_duration(self.get_default_sample_duration())
       .samples(media_data)
       .build_media_segment()
+  }
+
+  fn get_default_sample_duration(&self) -> u32 {
+    return 1024
   }
 }
 

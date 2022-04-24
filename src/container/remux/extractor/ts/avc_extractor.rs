@@ -142,6 +142,11 @@ impl TSExtractor for AVCExtractor {
       .samples(media_data)
       .build_media_segment()
   }
+
+  fn get_default_sample_duration(&self) -> u32 {
+    // self.get_timescale() / fps
+    0
+  }
 }
 
 impl AVCExtractor {

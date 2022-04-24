@@ -15,6 +15,7 @@ pub struct Mp4Writer{
   height: usize,
   timescale: u32,
   track_id: usize,
+  default_sample_duration: Option<u32>,
   handler_type: Option<HandlerType>
 }
 
@@ -25,6 +26,7 @@ impl Mp4Writer {
       timescale: 0,
       width: 0,
       height: 0,
+      default_sample_duration: None,
       track_id: 1,
       samples: vec![],
       handler_type: None
@@ -56,6 +58,11 @@ impl Mp4Writer {
 
   pub fn track_id(mut self, track_id: usize) -> Mp4Writer {
     self.track_id = track_id;
+    self
+  }
+
+  pub fn default_sample_duration(mut self, default_sample_duration: u32) -> Mp4Writer {
+    self.default_sample_duration = Some(default_sample_duration);
     self
   }
 
@@ -121,7 +128,7 @@ impl Mp4Writer {
           MVEXBuilder::create_builder()
             .trex(
               TREXBuilder::create_builder()
-                .track_id(self.track_id) // CHANGE THIS
+                .track_id(self.track_id)
                 .default_sample_size(0)// CHANGE THIS
                 .default_sample_duration(0) // CHANGE THIS
                 .default_sample_flags(0) // CHANGE THIS
@@ -132,14 +139,17 @@ impl Mp4Writer {
   }
 
   pub fn build_media_segment(self) -> Result<Vec<u8>, CustomError> {
+
     Ok([
       MOOFBuilder::create_builder()
         .traf(
           TRAFBuilder::create_builder()
             .tfhd(
               TFHDBuilder::create_builder()
-                .sample_duration(1024) // CHANGE THIS
-                .track_id(self.track_id) // CHANGE THIS
+                .sample_duration(self.default_sample_duration)
+                .sample_description_index(1)
+                .sample_flags(0x01010000) // CHANGE THIS
+                .track_id(self.track_id) 
             )
             .tfdt(
               TFDTBuilder::create_builder()
@@ -148,8 +158,8 @@ impl Mp4Writer {
             .trun(
               TRUNBuilder::create_builder()
                 .version(0)
-                .flags(0x0205)
-                .first_sample_flags(0x2000000)
+                .flags(0x0205) // CHANGE THIS
+                .first_sample_flags(0x2000000) // CHANGE THIS
                 .samples(self.samples.clone())
             )
         )

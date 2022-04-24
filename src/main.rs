@@ -96,13 +96,13 @@ fn tranmux_test(file_path: &str) {
     let temp = remux_ts_to_mp4(&ts_file);
     match temp {
         Ok(data) => {
-            let mut file_init = File::create("/Users/benjamintoofer/Desktop/my_own_audio_init_2.mp4").unwrap();
+            let mut file_init = File::create("/Users/benjamintoofer/Desktop/demo_dad_audio_init.mp4").unwrap();
             match file_init.write_all(&data.audio.init_segment.unwrap()) {
               Ok(_) => {println!("FINISHED WRITING INIT SEGMENT!!!")}
               Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
             }
 
-            let mut file_media = File::create("/Users/benjamintoofer/Desktop/my_own_audio_media_2.mp4").unwrap();
+            let mut file_media = File::create("/Users/benjamintoofer/Desktop/demo_dad_audio_media.mp4").unwrap();
             match file_media.write_all(&data.audio.media_segment.unwrap()) {
               Ok(_) => {println!("FINISHED WRITING MEDIA SEGMENT!!!")}
               Err(_) => {println!("FUCKED UP WRITING SEGMENT")}

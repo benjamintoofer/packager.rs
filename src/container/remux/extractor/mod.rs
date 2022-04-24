@@ -16,11 +16,10 @@ pub trait TSExtractor {
     fn is_signed_comp_offset(self) -> bool;
     fn build_sample_entry(&mut self) -> Result<Vec<u8>, CustomError>;
     fn flush_final_media(&mut self) -> Result<(), CustomError>;
-    // fn listen_for_init_data(&mut self, callback: fn(Vec<u8>));
-    // fn listen_for_media_data(&mut self, callback: fn(Vec<SampleInfo>));
     fn get_init_segment(&mut self) -> Result<Vec<u8>, CustomError>;
     fn get_media_segment(&mut self) -> Result<Vec<u8>, CustomError>;
     fn get_timescale(&self) -> u32;
+    fn get_default_sample_duration(&self) -> u32;
 }
 
 pub fn get_ts_extractor(
