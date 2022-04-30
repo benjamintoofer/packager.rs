@@ -93,6 +93,7 @@ mod tests {
     let samples = vec![
       SampleInfo{
         sample_flags: None,
+        sample_duration: None,
         pts: 1,
         dts: 1,
         data: vec![
@@ -104,6 +105,7 @@ mod tests {
       },
       SampleInfo{
         sample_flags: None,
+        sample_duration: None,
         pts: 2,
         dts: 2,
         data: vec![
@@ -115,6 +117,7 @@ mod tests {
       },
       SampleInfo{
         sample_flags: None,
+        sample_duration: None,
         pts: 3,
         dts: 3,
         data: vec![

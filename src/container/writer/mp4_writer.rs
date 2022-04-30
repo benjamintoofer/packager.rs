@@ -8,6 +8,7 @@ pub struct SampleInfo {
   pub dts: u64,
   pub pts: u64,
   pub sample_flags: Option<u32>,
+  pub sample_duration: Option<u32>,
   pub data: Vec<u8>,
 }
 

@@ -141,6 +141,7 @@ impl AACExtractor {
         // Create the sample data
         return SampleInfo{
           sample_flags: None, // Nothing for now. Determine later if this needs to be set
+          sample_duration: None,
           data: af.data.to_owned(),
           dts: af.dts,
           pts: af.pts,

@@ -19,6 +19,7 @@ use crate::{
 pub struct AVCExtractor {
     sps_nal: Vec<u8>,
     pps_nal: Vec<u8>,
+    hold_nal_rep: Option<NalRep>, // This is to hold the current nal rep until we reach the next nal and can determine its duration
     media_nal: Vec<NalRep>,
     bucket: Vec<u8>,
     signed_comp_offset: bool,
@@ -120,10 +121,20 @@ impl TSExtractor for AVCExtractor {
     }
 
     fn flush_final_media(&mut self) -> Result<(), CustomError> {
+        let mut duration: u64 = 0;
+        if let Some(nal_rep) = self.hold_nal_rep.as_mut() {
+            duration = self.current_dts - nal_rep.dts;
+            nal_rep.duration = duration as u32;
+            self.media_nal.push(nal_rep.clone());
+        }
+
         self.media_nal.push(NalRep {
             nal_unit: self.bucket.to_vec(),
             pts: self.current_pts,
             dts: self.current_dts,
+            // This isn't great. I need to get the total duration of the segment (in PTS)(also not sure how to get that right now)
+            // and substract it from the current dts to determine the duration of the last sample
+            duration: duration as u32,
         });
 
         Ok(())
@@ -174,6 +185,7 @@ impl TSExtractor for AVCExtractor {
 impl AVCExtractor {
     pub fn create() -> AVCExtractor {
         AVCExtractor {
+            hold_nal_rep: None,
             sps_nal: vec![],
             pps_nal: vec![],
             media_nal: vec![],
@@ -192,11 +204,24 @@ impl AVCExtractor {
             }
             NALType::PPS => self.pps_nal = nal_unit.to_vec(),
             NALType::AUD => {}
-            _ => self.media_nal.push(NalRep {
-                nal_unit: nal_unit.to_vec(),
-                pts: self.current_pts,
-                dts: self.current_dts,
-            }),
+            _ => {
+                if let Some(nal_rep) = self.hold_nal_rep.as_mut() {
+                    let duration = self.current_dts - nal_rep.dts;
+                    nal_rep.duration = duration as u32;
+                    self.media_nal.push(nal_rep.clone());
+                }
+                // self.media_nal.push(NalRep {
+                //     nal_unit: nal_unit.to_vec(),
+                //     pts: self.current_pts,
+                //     dts: self.current_dts,
+                // })
+                self.hold_nal_rep = Some(NalRep {
+                    nal_unit: nal_unit.to_vec(),
+                    pts: self.current_pts,
+                    dts: self.current_dts,
+                    duration: 0,
+                });
+            },
         }
     }
 
@@ -209,10 +234,7 @@ impl AVCExtractor {
                 let nal_size_array = util::transform_u32_to_u8_array(nal_size).to_vec();
                 let sample = [
                     vec![
-                        nal_size_array[3],
-                        nal_size_array[2],
-                        nal_size_array[1],
-                        nal_size_array[0],
+                        nal_size_array[3], nal_size_array[2], nal_size_array[1], nal_size_array[0],
                     ],
                     nu.nal_unit.to_owned(),
                 ]
@@ -222,6 +244,7 @@ impl AVCExtractor {
                     dts: nu.dts,
                     pts: nu.pts,
                     sample_flags: None,
+                    sample_duration: Some(nu.duration),
                 };
             })
             .collect();
