@@ -8,7 +8,6 @@ use crate::container::isobmff::boxes::stsz::STSZBuilder;
 use crate::container::isobmff::boxes::stco::STCOBuilder;
 
 // SampleTableBox 14496-12; 8.5.1
-
 pub struct STBLBuilder {
   stsd_builder: Option<STSDBuilder>
 }
@@ -63,15 +62,6 @@ impl STBLBuilder {
 #[cfg(test)]
 mod tests {
   use super::*;
-  use crate::container::isobmff::BoxBuilder;
-
-  // struct MockHandler {}
-
-  // impl BoxBuilder for MockHandler {
-  //   fn build(&self) -> Result<Vec<u8>, CustomError> {
-  //     Ok(vec![0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
-  //   }
-  // }
 
   #[test]
   fn test_build_stbl() {
@@ -108,9 +98,8 @@ mod tests {
       0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00,
     ];
-    // let handler = Box::new(MockHandler{});
+
     let stsd_builder = STSDBuilder::create_builder()
-      // .sample_entry(handler);
       .sample_entry(vec![0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
     let stbl = STBLBuilder::create_builder()
       .stsd(stsd_builder)

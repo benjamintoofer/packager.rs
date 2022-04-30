@@ -7,13 +7,20 @@ use crate::container::isobmff::BoxBuilder;
 pub struct SampleInfo {
   pub dts: u64,
   pub pts: u64,
+  pub sample_flags: Option<u32>,
+  pub sample_duration: Option<u32>,
   pub data: Vec<u8>,
 }
+
 pub struct Mp4Writer{
   samples: Vec<SampleInfo>,
   width: usize,
   height: usize,
-  timescale: usize,
+  timescale: u32,
+  track_id: usize,
+  trun_version: u8,
+  is_all_same_timestamps: bool,
+  default_sample_duration: Option<u32>,
   handler_type: Option<HandlerType>
 }
 
@@ -24,6 +31,10 @@ impl Mp4Writer {
       timescale: 0,
       width: 0,
       height: 0,
+      trun_version: 0,
+      is_all_same_timestamps: true,
+      default_sample_duration: None,
+      track_id: 1,
       samples: vec![],
       handler_type: None
     }
@@ -32,7 +43,7 @@ impl Mp4Writer {
 
 impl Mp4Writer {
   
-  pub fn timescale(mut self, timescale: usize) -> Mp4Writer {
+  pub fn timescale(mut self, timescale: u32) -> Mp4Writer {
     self.timescale = timescale;
     self
   }
@@ -52,8 +63,28 @@ impl Mp4Writer {
     self
   }
 
+  pub fn track_id(mut self, track_id: usize) -> Mp4Writer {
+    self.track_id = track_id;
+    self
+  }
+
+  pub fn default_sample_duration(mut self, default_sample_duration: u32) -> Mp4Writer {
+    self.default_sample_duration = Some(default_sample_duration);
+    self
+  }
+
   pub fn handler(mut self, handler_type: HandlerType) -> Mp4Writer {
     self.handler_type = Some(handler_type);
+    self
+  }
+
+  pub fn trun_version(mut self, version: u8) -> Mp4Writer {
+    self.trun_version = version;
+    self
+  }
+
+  pub fn is_all_same_timestamps(mut self, same: bool) -> Mp4Writer {
+    self.is_all_same_timestamps = same;
     self
   }
 
@@ -81,7 +112,7 @@ impl Mp4Writer {
           TRAKBuilder::create_builder()
             .tkhd(
               TKHDBuilder::create_builder()
-                .track_id(1) // CHANGE THIS
+                .track_id(self.track_id) 
                 .width(self.width)
                 .height(self.height)
             )
@@ -114,7 +145,7 @@ impl Mp4Writer {
           MVEXBuilder::create_builder()
             .trex(
               TREXBuilder::create_builder()
-                .track_id(1) // CHANGE THIS
+                .track_id(self.track_id)
                 .default_sample_size(0)// CHANGE THIS
                 .default_sample_duration(0) // CHANGE THIS
                 .default_sample_flags(0) // CHANGE THIS
@@ -125,14 +156,18 @@ impl Mp4Writer {
   }
 
   pub fn build_media_segment(self) -> Result<Vec<u8>, CustomError> {
+
+
     Ok([
       MOOFBuilder::create_builder()
         .traf(
           TRAFBuilder::create_builder()
             .tfhd(
               TFHDBuilder::create_builder()
-                .sample_duration(1024) // CHANGE THIS
-                .track_id(1) // CHANGE THIS
+                .sample_duration(self.default_sample_duration)
+                .sample_description_index(1)
+                .sample_flags(0x01010000) // CHANGE THIS
+                .track_id(self.track_id) 
             )
             .tfdt(
               TFDTBuilder::create_builder()
@@ -140,9 +175,10 @@ impl Mp4Writer {
             )
             .trun(
               TRUNBuilder::create_builder()
-                .version(0)
-                .flags(0x0205)
-                .first_sample_flags(0x2000000)
+                .version(self.trun_version as usize)
+                // .flags(0x0205) // CHANGE THIS
+                .sample_composition_time_offsets_present(!self.is_all_same_timestamps)
+                .first_sample_flags(0x2000000) // CHANGE THIS
                 .samples(self.samples.clone())
             )
         )

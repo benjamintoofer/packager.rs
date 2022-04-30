@@ -8,6 +8,7 @@ pub struct NalRep {
   pub nal_unit: Vec<u8>,
   pub dts: u64,
   pub pts: u64,
+  pub duration: u32,
 }
 
 impl Debug for NalRep {

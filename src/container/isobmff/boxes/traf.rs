@@ -116,6 +116,8 @@ mod tests {
 
     let samples = vec![
       SampleInfo{
+        sample_flags: None,
+        sample_duration: None,
         pts: 1,
         dts: 1,
         data: vec![
@@ -124,6 +126,8 @@ mod tests {
         ]
       },
       SampleInfo{
+        sample_flags: None,
+        sample_duration: None,
         pts: 2,
         dts: 2,
         data: vec![
@@ -132,6 +136,8 @@ mod tests {
         ]
       },
       SampleInfo{
+        sample_flags: None,
+        sample_duration: None,
         pts: 3,
         dts: 3,
         data: vec![
@@ -145,7 +151,9 @@ mod tests {
       .tfhd(
         TFHDBuilder::create_builder()
           .track_id(1)
-          .sample_duration(3000)
+          .sample_duration(Some(3000))
+          .sample_description_index(1)
+          .sample_flags(0x01010000)
       )
       .tfdt(
         TFDTBuilder::create_builder()

@@ -5,7 +5,6 @@ use crate::container::isobmff::boxes::dinf::DINFBuilder;
 use crate::container::isobmff::boxes::stbl::STBLBuilder;
 
 // MediaInformationBox 14496-12; 8.4.4
-
 pub struct MINFBuilder {
   media_header_builder: Option<Box<dyn BoxBuilder>>,
   stbl_builder: Option<STBLBuilder>
@@ -128,7 +127,6 @@ mod tests {
         STBLBuilder::create_builder()
           .stsd(
             STSDBuilder::create_builder()
-            // .sample_entry(Box::new(MockHandler{}))
             .sample_entry(vec![0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07])
           )
       )

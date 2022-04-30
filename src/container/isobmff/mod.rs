@@ -13,7 +13,7 @@ pub trait BoxBuilder {
   fn build(&self) -> Result<Vec<u8>, CustomError>;
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum HandlerType {
   VIDE,
   SOUN,
