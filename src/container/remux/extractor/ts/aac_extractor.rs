@@ -36,11 +36,11 @@ impl TSExtractor for AACExtractor {
     Ok(())
   }
 
-  fn is_all_same_timestamps(self) -> bool {
+  fn is_all_same_timestamps(&self) -> bool {
     true
   }
 
-  fn is_signed_comp_offset(self) -> bool {
+  fn is_signed_comp_offset(&self) -> bool {
     false
   }
 
@@ -140,6 +140,7 @@ impl AACExtractor {
       .map(|af| {
         // Create the sample data
         return SampleInfo{
+          sample_flags: None, // Nothing for now. Determine later if this needs to be set
           data: af.data.to_owned(),
           dts: af.dts,
           pts: af.pts,

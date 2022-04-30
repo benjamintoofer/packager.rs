@@ -12,8 +12,8 @@ pub mod ts;
 
 pub trait TSExtractor {
     fn accumulate_pes_payload(&mut self, pes: PESPacket) -> Result<(), CustomError>;
-    fn is_all_same_timestamps(self) -> bool;
-    fn is_signed_comp_offset(self) -> bool;
+    fn is_all_same_timestamps(&self) -> bool;
+    fn is_signed_comp_offset(&self) -> bool;
     fn build_sample_entry(&mut self) -> Result<Vec<u8>, CustomError>;
     fn flush_final_media(&mut self) -> Result<(), CustomError>;
     fn get_init_segment(&mut self) -> Result<Vec<u8>, CustomError>;

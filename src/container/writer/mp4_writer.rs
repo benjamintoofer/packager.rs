@@ -7,14 +7,18 @@ use crate::container::isobmff::BoxBuilder;
 pub struct SampleInfo {
   pub dts: u64,
   pub pts: u64,
+  pub sample_flags: Option<u32>,
   pub data: Vec<u8>,
 }
+
 pub struct Mp4Writer{
   samples: Vec<SampleInfo>,
   width: usize,
   height: usize,
   timescale: u32,
   track_id: usize,
+  trun_version: u8,
+  is_all_same_timestamps: bool,
   default_sample_duration: Option<u32>,
   handler_type: Option<HandlerType>
 }
@@ -26,6 +30,8 @@ impl Mp4Writer {
       timescale: 0,
       width: 0,
       height: 0,
+      trun_version: 0,
+      is_all_same_timestamps: true,
       default_sample_duration: None,
       track_id: 1,
       samples: vec![],
@@ -68,6 +74,16 @@ impl Mp4Writer {
 
   pub fn handler(mut self, handler_type: HandlerType) -> Mp4Writer {
     self.handler_type = Some(handler_type);
+    self
+  }
+
+  pub fn trun_version(mut self, version: u8) -> Mp4Writer {
+    self.trun_version = version;
+    self
+  }
+
+  pub fn is_all_same_timestamps(mut self, same: bool) -> Mp4Writer {
+    self.is_all_same_timestamps = same;
     self
   }
 
@@ -140,6 +156,7 @@ impl Mp4Writer {
 
   pub fn build_media_segment(self) -> Result<Vec<u8>, CustomError> {
 
+
     Ok([
       MOOFBuilder::create_builder()
         .traf(
@@ -157,8 +174,9 @@ impl Mp4Writer {
             )
             .trun(
               TRUNBuilder::create_builder()
-                .version(0)
-                .flags(0x0205) // CHANGE THIS
+                .version(self.trun_version as usize)
+                // .flags(0x0205) // CHANGE THIS
+                .sample_composition_time_offsets_present(!self.is_all_same_timestamps)
                 .first_sample_flags(0x2000000) // CHANGE THIS
                 .samples(self.samples.clone())
             )

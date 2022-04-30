@@ -206,7 +206,7 @@ impl TFHDBuilder {
     self
   }
 
-  /// Something
+  /// Generate the flag and values if they are present
   fn generate_flag(&self) -> (u32, Vec<u8>) {
     let mut flag: u32 = 0x00000000;
     let mut data: Vec<u8> = vec![];

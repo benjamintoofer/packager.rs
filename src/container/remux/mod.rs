@@ -161,86 +161,13 @@ pub fn map_sample_frequency_index(index: u8) -> u32 {
 fn init_audio_extractor(
     stream_type: ElementaryStreamType,
 ) -> Result<Box<dyn TSExtractor>, CustomError> {
-    let mut audio_extractor = get_ts_extractor(stream_type)?;
-
-    // audio_extractor.listen_for_init_data(|sample_entry_data|{
-    //   let track_id = 2usize;
-    //   let timescale = 0;
-    //   // let timescale = std::mem::take(audio_extractor.get_timescale());
-    //   let init_segment = Mp4Writer::create_mp4_writer()
-    //     .timescale(timescale)
-    //     .handler(HandlerType::SOUN)
-    //     .build_init_segment(sample_entry_data, track_id);
-
-    //   match init_segment {
-    //     Ok(x) => {
-    //       let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_audio_init.mp4").unwrap();
-    //       match file.write_all(&x) {
-    //           Ok(_) => {println!("FINISHED WRITING SEGMENT!!!")}
-    //           Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
-    //       }
-    //     }
-    //     Err(err) => {
-    //       println!("{:?}", err);
-    //     }
-    //   }
-    // });
-
-    //   audio_extractor.listen_for_media_data(|media_data|{
-    //     let media_segment = Mp4Writer::create_mp4_writer()
-    //       .timescale(44100)
-    //       .samples(media_data)
-    //       .build_media_segment();
-
-    //     match media_segment {
-    //       Ok(x) => {
-    //         let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_audio_media.mp4").unwrap();
-    //         match file.write_all(&x) {
-    //             Ok(_) => {println!("FINISHED WRITING SEGMENT!!!")}
-    //             Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
-    //         }
-    //       }
-    //       Err(err) => {
-    //         println!("{:?}", err);
-    //       }
-    //     }
-    // });
-
+    let audio_extractor = get_ts_extractor(stream_type)?;
     Ok(audio_extractor)
 }
 
 fn init_video_extractor(
     stream_type: ElementaryStreamType,
 ) -> Result<Box<dyn TSExtractor>, CustomError> {
-    let mut vid_extractor = get_ts_extractor(stream_type)?;
-    // vid_extractor.listen_for_init_data(|sample_entry_data|{
-    //   let track_id = 1usize;
-    //   let timescale = 90000usize;
-    //   let init_segment = Mp4Writer::create_mp4_writer()
-    //     .timescale(timescale)
-    //     .handler(HandlerType::VIDE)
-    //     .build_init_segment(sample_entry_data, track_id);
-
-    //   match init_segment {
-    //     Ok(x) => {
-    //       let mut file = File::create("/Users/benjamintoofer/Desktop/my_own_video_init.mp4").unwrap();
-    //       match file.write_all(&x) {
-    //           Ok(_) => {println!("FINISHED WRITING SEGMENT!!!")}
-    //           Err(_) => {println!("FUCKED UP WRITING SEGMENT")}
-    //       }
-    //     }
-    //     Err(err) => {
-    //       println!("{:?}", err);
-    //     }
-    //   }
-    // });
-
-    // vid_extractor.listen_for_media_data(|media_data|{
-    //     let media_segment = Mp4Writer::create_mp4_writer()
-    //       .timescale(90000)
-    //       .samples(media_data)
-    //       .build_media_segment();
-    // });
-
+    let vid_extractor = get_ts_extractor(stream_type)?;
     Ok(vid_extractor)
 }
