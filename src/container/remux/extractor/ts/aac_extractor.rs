@@ -84,7 +84,7 @@ impl TSExtractor for AACExtractor {
         return std::mem::take(frame)
       })
       .collect();
-    println!("ADTS FRAMES {}", self.adts_frames.len());
+
     self.adts_frames.append(&mut adts_frames);
 
     Ok(())
